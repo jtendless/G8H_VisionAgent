@@ -1,0 +1,266 @@
+#include "stdafx.h"
+#include "UnloaderMotion.h"
+#include "Vision/Devs.h"
+#include "Vision/SharedInfo.h"
+#include "CalcAlign/CalcAlign.h"
+
+CUnloaderMotion::CUnloaderMotion()
+{
+}
+
+
+CUnloaderMotion::~CUnloaderMotion()
+{
+}
+
+
+BOOL CUnloaderMotion::InitProcess()
+{
+	//m_bTerminate = FALSE;
+	m_StateFinish = TRUE;
+	//SetProcessLog(Process_Msg);
+	//SetAlarmLog(Alarm_Msg);
+	hMotionHandle = CreateEvent(NULL, TRUE, FALSE, NULL);
+	SetHandle(hMotionHandle);
+	pMotionThread = AfxBeginThread(MotionThreadFunction, this);// , THREAD_PRIORITY_ABOVE_NORMAL);
+
+	return TRUE;
+}
+
+BOOL CUnloaderMotion::EndProcess()
+{
+	int i = 0;
+
+	m_StateFinish = FALSE;
+
+	SetStep(eUNLOADER_MOTION_IDLE, FALSE);
+
+	if (hMotionHandle != NULL)
+	{
+		CloseHandle(hMotionHandle);
+		hMotionHandle = NULL;
+	}
+#if 0
+	do
+	{
+		Sleep(10);
+	} while (m_bTerminate == 0);
+#endif
+	//delete this;
+
+	return TRUE;
+}
+
+BOOL CUnloaderMotion::Start()
+{
+	m_bMotionDone = FALSE;
+	m_bStopBit = FALSE;
+	m_nCurStep = eUNLOADER_MOTION_START;
+	SetStep(m_nCurStep, _T("m_nCurStep"));
+	return TRUE;
+}
+
+BOOL CUnloaderMotion::Stop()
+{
+	if (this == NULL)
+		return FALSE;
+
+	m_bStopBit = TRUE;
+	return TRUE;
+}
+
+UINT CUnloaderMotion::MotionThreadFunction(LPVOID lpParam)
+{
+	CUnloaderMotion* pUnloaderMotion = NULL;
+
+	pUnloaderMotion = (CUnloaderMotion*)lpParam;
+
+	pUnloaderMotion->MotionThreadFunctionEntry();
+
+	pUnloaderMotion->m_bTerminate = 1;
+
+	return 0;
+}
+
+VOID CUnloaderMotion::MotionThreadFunctionEntry(VOID)
+{
+	int ErrorCheck = 0;
+	CString szMsg;
+
+	while (m_StateFinish)
+	{
+		WaitForSingleObject(hMotionHandle, INFINITE);
+		ResetEvent(hMotionHandle);
+
+		if (m_bStopBit == TRUE)
+		{
+			m_bStopBit = FALSE;
+			SetStop();
+			continue;
+		}
+		switch (GetCurrentTotalStep())
+		{
+		case eUNLOADER_MOTION_START:
+			SetStep(eUNLOADER_MOTION_DONE, _T("eUNLOADER_MOTION_DONE"));
+			break;
+
+
+		case eUNLOADER_MOTION_DONE:
+			m_bMotionDone = TRUE;
+			SetStep(eUNLOADER_MOTION_IDLE, _T("eUNLOADER_MOTION_IDLE"));
+			break;
+
+		case eUNLOADER_MOTION_EXIT:
+			m_StateFinish = FALSE;
+			break;
+		}
+	}
+}
+
+BOOL CUnloaderMotion::IsAxisHome(UINT nAxisNo)
+{
+	return SharedInfo::AxisHomeStatus[nAxisNo];
+}
+
+BOOL CUnloaderMotion::MoveAxis(enum_Axis eAxis, double dPos)
+{
+	double	dSpeed = 0.0, dAccel = 0.0, dDecel = 0.0;
+
+	//현재 모터의 파라미터 받아오기
+	if (!GetAxisWorkParam(eAxis, &dSpeed, &dAccel, &dDecel)) return FALSE;
+	//해당 모터에 파라미터 전달
+	AbsMove(eAxis, dPos, dSpeed, dAccel, dDecel);
+	return TRUE;
+}
+BOOL CUnloaderMotion::IsMoveDone(enum_Axis eAxis, double dPos)
+{
+	double dCmdPos = SharedInfo::GetCmdPos(eAxis);
+	return (IsSamePosition(dCmdPos, dPos) && IsMotionDone(eAxis));
+}
+
+#pragma region //Unloader Y
+//Move
+BOOL CUnloaderMotion::UnloaderY_WaitPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_YL;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderY_Wait_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Unloader Y Move To Wait Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+BOOL CUnloaderMotion::UnloaderY_LoadPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_YL;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderY_Load_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Unloader Y Move To Load Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+BOOL CUnloaderMotion::UnloaderY_UnloadPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_YL;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderY_Unload_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Unloader Y Move To Unload Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+//MoveDone Check
+BOOL CUnloaderMotion::Is_UnloaderY_WaitPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_YL;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderY_Wait_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+BOOL CUnloaderMotion::Is_UnloaderY_LoadPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_YL;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderY_Load_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+BOOL CUnloaderMotion::Is_UnloaderY_UnloadPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_YL;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderY_Unload_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+#pragma endregion
+
+#pragma region //Unloader X
+//Move
+BOOL CUnloaderMotion::UnloaderX_WaitPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_X;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderX_Wait_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Unloader X Move To Wait Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+//MoveDone Check
+BOOL CUnloaderMotion::Is_UnloaderX_WaitPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_X;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderX_Wait_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+#pragma endregion
+
+#pragma region //Unloader Z
+//Move
+BOOL CUnloaderMotion::UnloaderZ_WaitPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_Z;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderZ_Wait_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Unloader Z Move To Wait Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+BOOL CUnloaderMotion::UnloaderZ_LoadPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_Z;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderZ_Load_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Unloader Z Move To Load Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+BOOL CUnloaderMotion::UnloaderZ_UnloadPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_Z;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderZ_Unload_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Unloader Z Move To Unload Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+//MoveDone Check
+BOOL CUnloaderMotion::Is_UnloaderZ_WaitPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_Z;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderZ_Wait_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+BOOL CUnloaderMotion::Is_UnloaderZ_LoadPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_Z;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderZ_Load_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+BOOL CUnloaderMotion::Is_UnloaderZ_UnloadPos()
+{
+	enum_Axis eAxis = AXIS_UNLOADER_Z;
+	double dPos = CManualData::m_ManualDataUnloader.Unloader.m_dUnloaderZ_Unload_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+#pragma endregion

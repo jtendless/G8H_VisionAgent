@@ -1,0 +1,344 @@
+
+// VisionAgentDlg.h : 헤더 파일
+//
+
+#define RESOURCE_SPACE		1
+#define QUICK_DATA_SPREAD_MAX_COL 5
+#define QUICK_DATA_SPREAD_SCROLL_SIZE 20
+#pragma once
+
+//Log Define
+#define _MSG_LOG_		WM_USER + 1000
+#define MAX_LOG_RAW			10
+
+
+#include "resource.h"
+//Button Head 추가.
+#include "Control/ColorStatic.h"
+#include "Control/ClrButton.h"
+#include "Vision/VisionAgentDefine.h"
+#include "DrawMask.h"
+#include "VisionAgentLogDlg.h"
+
+#include "ServerClient/SocketManager.h"
+#include "ServerClient/TCPIP.h" //KJT 20200823
+
+#include "Common/ClientInterface.h"
+
+//SimulationView
+#include "VisionAgentSimulationViewDlg.h"
+
+class CVisionAgentDlgAutoProxy;
+
+struct stPOSITION {
+	stPOSITION() {
+		ID[0] = 1;
+		sprintf(STICKID, "");
+		sprintf(STICKNO, "");
+	}
+	BYTE ID[2];
+	char STICKID[30];
+	char STICKNO[3];
+};
+
+// CVisionAgentDlg 대화 상자
+class CModelDlg;
+class CSystemDlg;
+class CManualDlg;
+class CMeasurementDlg;
+class CCommunicationDlg;
+class CMachineDlg;
+class CVisionAgentAlarmDlg;
+class CVisionAgentProcessDlg;
+class CLogger;
+
+class CVisionAgentDlg : public CDialogEx
+{
+// 생성입니다.
+public:
+	CVisionAgentDlg(CWnd* pParent = NULL);	// 표준 생성자입니다.
+	~CVisionAgentDlg();	
+// 대화 상자 데이터입니다.
+	enum { IDD = IDD_MAIN_DLG};
+		
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 지원입니다.
+
+// 구현입니다.
+protected:
+	CVisionAgentDlgAutoProxy* m_pAutoProxy;
+	HICON m_hIcon;
+	
+	// 생성된 메시지 맵 함수
+	virtual BOOL OnInitDialog();
+	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
+	afx_msg void OnPaint();
+	afx_msg HCURSOR OnQueryDragIcon();
+	DECLARE_MESSAGE_MAP()
+public:
+
+	virtual void OnCancel();
+
+	//Main Dialog
+	BOOL m_bEntry = FALSE;
+	//Network-------------------------------------------------------------------------------------
+	int m_nStatusSocketConnect;
+
+	char m_chReceiveData[10000];
+	int m_nFuncAddr;
+	int m_nReturn;
+	byte m_byArg[10000];
+	
+	BOOL  m_bFlowAlignRun;
+	BOOL  m_bFlowRun;
+	
+	//Pop Up Dlg
+	CModelDlg				*m_pModelDlg;
+	CManualDlg				*m_pManualDlg;
+	CSystemDlg				*m_pSystemDlg;
+	CMeasurementDlg			*m_pMeasurementDlg;
+	CCommunicationDlg		*m_pCommunicationDlg;
+	CMachineDlg				*m_pMahcineDlg;
+	CVisionAgentAlarmDlg	*m_pAlarmDlg;
+	CVisionAgentProcessDlg	*m_pProcessDlg;
+
+	//////////////////////////////////////////////////////////////
+	CWinThread* m_pMonitoringThread;
+	int m_nIsRunningMonitoringThread;
+	int m_nStopMonitoringThread;
+
+	CWinThread* m_pStatusThread;
+	int m_nIsRunningStatusThread;
+	int m_nStopStatusThread;
+
+	//창 Open 확인.
+	BOOL m_bShowModelModeless;
+	BOOL m_bShowManualModeless;
+	BOOL m_bShowMachineModeless;
+	BOOL m_bShowCommunicationModeless;
+	BOOL m_bShowMeasurementModeless;
+	BOOL m_bShowAlarmModeless;
+	BOOL m_bShowVisionModeless;
+	BOOL m_bShowSystemModeless;
+	BOOL m_bShowMachineStateModeless;
+	BOOL m_bShowProcessDlg;
+
+
+	CFont m_fontStcMainLogo;
+	CFont m_fontStcHansongLogo;
+	CFont m_fontAutoRunDisp;
+	CFont m_fontStateBar;
+	CFont m_fontMainMenu;
+	CFont m_fontFlow;
+	CFont m_fontFlowPrcess;
+	CFont m_fontQuickData;
+	CFont m_fontNaming;
+
+	TCHAR m_nRun[3];
+	INT m_nAutoCnt;
+	//Display Mode
+	BOOL m_bDisplay;
+	//Main State
+	CClrButton m_btnSubMenu;
+	CColorStatic m_stcMainTitle;
+	CColorStatic m_stcHansongTitle;
+
+	CColorStatic m_stc_btnMainMenu[MAX_MAIN_MENU_BTN];
+	CColorStatic m_stcStateBar_Name[MAX_STATE_MENU_STC];
+	CColorStatic m_stcStateBar_Value[MAX_STATE_MENU_STC];
+
+	//Naming
+	CColorStatic m_stcLogNaming;
+	CColorStatic m_stcReview10X_Cam_Naming;
+	//CColorStatic m_stcReview20X_Cam_Naming;
+	//CColorStatic m_stcPreAlign_Cam_Naming;
+	CColorStatic m_stcBoxAlignLeft_Cam_Naming;
+	CColorStatic m_stcBoxAlignRight_Cam_Naming;
+
+	//Process----------------------------------
+	double			m_dStart_Tick;
+	bool			m_bFlow_Flash;
+	//-----------------------------------------
+	//Auto Run Display ------------------------------------------------------------------
+	CColorStatic m_stcAutoRunDisp;
+
+	//Network
+	CClientInterface m_ClientInterface;
+
+	CSocketManager m_SocketWrite;
+	CSocketManager m_SocketReceive;
+	CSocketManager m_SocketVisionWrite;
+	CSocketManager m_SocketVisionReceive;
+
+	SockAddrIn m_SockPeer;
+
+	BOOL m_bConnectWorkNetwork;
+	BOOL m_bStateConnectWorkNetwork;
+	BOOL m_bVisionConnectWorkNetwork;
+
+	BOOL ConnectWorkNetwork();
+	void GetNetworkStatus();
+
+#pragma region //AOI Server. KJT 20200823
+	CTCPIP m_SocketServer_AOI;
+	BOOL AOIServerOpen();
+	BOOL AOIServerClose();
+#pragma endregion
+
+	BOOL SetDefaultOutput();
+
+	int m_nPrevConnect;
+	int m_nConnect;
+	int m_nRetryCnt;
+	int m_nStateConnect;
+	int m_nVisionConnect;
+
+	CColorStatic				m_btnLogSelect[6];
+	CColorStatic				m_btnLogViewer;
+	
+	CRect						m_LogSize;
+	int							m_nCurrSubDlg;
+	CVisionAgentLogDlg			*m_VisionAgentLogAllDlg;
+	CVisionAgentLogDlg			*m_VisionAgentLogProcessDlg;
+	CVisionAgentLogDlg			*m_VisionAgentLogVisionDlg;
+	CVisionAgentLogDlg			*m_VisionAgentLogSystemDlg;
+	CVisionAgentLogDlg			*m_VisionAgentLogEtcDlg;
+	CVisionAgentLogDlg			*m_VisionAgentLogAlarmDlg;
+	CVisionAgentLogDlg			*m_pCurrSubDlg;
+
+	//Simulation View
+	CVisionAgentSimulationViewDlg m_VisionAgentSimulationViewDlg;
+
+	stPOSITION	m_POSITION[POSITION_COUNT + 1];
+
+	void DialogInit();
+	void NetworkInit();
+
+	void	InitSubDlg();
+	void	Init_Log_Dlg();
+
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+
+	void AuthorityDisplay();
+	void StateDisplay();
+	void AlarmDisplay();
+	void LogInUserID();
+
+	void	ShowLogDlg(int nDlgNo);
+	void	HideLogDlg();
+	CString  m_strOldTemp;
+
+	//파일 입출력
+	//File Path-------------------------------------------------------------------------------------
+	//CString m_StrVisionAgentPath;
+	CString m_StrModelFrameParaFilePath;
+
+	void ResetModel();
+
+	BOOL m_bHomeChk;
+	double	m_dAxisCmdFinishPos[DIRECT_AXIS_AJIN_MAX];
+	BOOL	m_bAxisFinalHomeStatus[DIRECT_AXIS_AJIN_MAX];
+	void AjinHomeRecovery();
+	int SaveAjinHomeParameter();
+	int LoadAjinHomeParameter();
+
+	int m_nAXLOpen;
+	int m_nVisionMaxAxisSize;
+
+	int GetBoardInfo();
+	int GetMotionPara();
+	CString m_StrMotFilePath;
+	CString m_StrHomeFilePath;
+	
+	//Log Function
+	CListBox m_listLog;
+	//int m_nInsertItemNum;
+	
+
+	//Thread------------------------------
+	//1. Safety Check
+	CWinThread* m_pSafety_Thread;
+	int m_nIsRunningSafetyThread;
+	int m_nStopSafetyThread;
+	
+	//3. Ajin Check
+	CWinThread* m_pStatus_Ajin_Thread;
+	int m_nIs_Running_Status_Ajin_Thread;
+	int m_nStopStatusAjinThread;
+	//4. Laser Dist & Load Cell Check
+	CWinThread* m_pData_Thread;
+	int m_nIs_Running_Data_Thread;
+	int m_nStop_Data_Thread;
+	//5. DIO & AI Check
+	CWinThread* m_pSensing_Thread;
+	int m_nIs_Running_Sensing_Thread;
+	int m_nStop_Sensing_Thread;
+
+public :
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnStnClickedStaticModelBtn();
+	afx_msg void OnStnClickedStaticCommunicationBtn();
+	afx_msg void OnStnClickedStaticManualBtn();
+	afx_msg void OnStnClickedStaticSystemBtn();
+	afx_msg void OnStnClickedStaticHansongTitle();
+	afx_msg void OnStnClickedStaticStopBtn();
+//	afx_msg void OnStnClickedStaticMainTitle();
+	afx_msg void OnStnClickedStaticMeasurementBtn();
+	afx_msg void OnStnClickedStaticAutoRunBtn();
+	afx_msg void OnStnDblclickStaticWorkModeState();
+	afx_msg void OnStnClickedStaticAutoRunDisplay();
+	afx_msg void OnStnDblclickStaticAutoRunDisplay();
+
+	virtual BOOL DestroyWindow();
+	
+	afx_msg void OnStnClickedStaticEcsBtn();
+	afx_msg void OnStnClickedStaticFrameLoadBtn();
+	afx_msg void OnStnClickedStaticReadyBtn();
+	afx_msg void OnStnClickedLogAll();
+	afx_msg void OnStnClickedLogProcess();
+	afx_msg void OnStnClickedLogSystem();
+	afx_msg void OnStnClickedLogVision();
+	afx_msg void OnStnClickedLogEtc();
+	afx_msg void OnStnClickedLogAlarm();
+	afx_msg void OnStnClickedLogViewer();
+	afx_msg void OnBnClickedCheckShowProcessSub();
+	afx_msg void OnStnClickedStaticMachineBtn();
+	CButton m_radioReview10X;
+	CButton m_radioReview20X;
+	CButton m_radioPreAlign;
+	afx_msg void OnBnClickedRdoCameraReview10x();
+	afx_msg void OnBnClickedRdoCameraReview20x();
+	afx_msg void OnBnClickedRdoCameraPreAlign();
+	void ChangeCamera(int nCamNo);
+	afx_msg void OnStnDblclickStaticMainTitle();
+	afx_msg void OnStnClickedStaticMainAlarm();
+
+#pragma region //Label
+	AxisLabel m_AxisLabel[AXIS_MAX];
+	DInputLabel m_DInputLabel[MAX_DINPUT_SIZE];
+	DOutputLabel m_DOutputLabel[MAX_DOUTPUT_SIZE];
+	AInputLabel m_AInputLabel[MAX_AINPUT_SIZE];
+	AOutputLabel m_AOutputLabel[MAX_AOUTPUT_SIZE];
+	int SaveAxisLabelParameter();
+	int SaveDInputLabelParameter();
+	int SaveDOutputLabelParameter();
+	int SaveAInputLabelParameter();
+	int SaveAOutputLabelParameter();
+	int LoadAxisLabelParameter();
+	int LoadDInputLabelParameter();
+	int LoadDOutputLabelParameter();
+	int LoadAInputLabelParameter();
+	int LoadAOutputLabelParameter();
+	CString LoadFileData(CStdioFile* csfInFile, CString strSrcData, CString strCompData);
+#pragma endregion
+};
+
+UINT Status_Ajin_Thread_Proc(LPVOID lpParam);
+UINT Safety_Thread_Proc(LPVOID lpParam);
+UINT Data_Thread_Proc(LPVOID lpParam);
+
+#ifndef USE_MIL_CAMERA
+UINT CameraDispThread(LPVOID pParent);
+#endif

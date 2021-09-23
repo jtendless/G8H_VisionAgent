@@ -1,0 +1,66 @@
+﻿#pragma once
+
+enum
+{
+	_eMANUAL_BOX_INDEX_LOADING_STAGE_UVW_WAIT_POS = 0,
+	_eMANUAL_BOX_INDEX_LOADING_STAGE_UVW_STICK_LOAD_POS,
+	_eMANUAL_BOX_INDEX_LOADING_STAGE_UVW_STICK_UNLOAD_POS,
+
+	_eMANUAL_BOX_INDEX_BOX_ALIGN_CAMERA_Y_LEFT_WAIT_POS,
+	_eMANUAL_BOX_INDEX_BOX_ALIGN_CAMERA_Y_LEFT_INSPECTION_POS,
+	_eMANUAL_BOX_INDEX_BOX_ALIGN_CAMERA_Y_RIGHT_WAIT_POS,
+	_eMANUAL_BOX_INDEX_BOX_ALIGN_CAMERA_Y_RIGHT_INSPECTION_POS,
+
+	_eMANUAL_BOX_INDEX_MAX,
+};
+// CManual_Sub_Box_Manual 대화 상자
+
+class CManual_Sub_Box_Manual : public CDialogEx
+{
+	DECLARE_DYNAMIC(CManual_Sub_Box_Manual)
+
+public:
+	CManual_Sub_Box_Manual(CWnd* pParent = nullptr);   // 표준 생성자입니다.
+	virtual ~CManual_Sub_Box_Manual();
+
+// 대화 상자 데이터입니다.
+#ifdef AFX_DESIGN_TIME
+	enum { IDD = IDD_DLG_MANUAL_SUB_BOX_MANUAL };
+#endif
+
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
+	virtual BOOL OnInitDialog();
+
+	DECLARE_MESSAGE_MAP()
+
+public:
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+
+	CColorStatic	m_stLamp_Work[_eMANUAL_BOX_INDEX_MAX];
+	int				m_nWork_State[_eMANUAL_BOX_INDEX_MAX];
+	bool			m_bWork_Lamp_State[_eMANUAL_BOX_INDEX_MAX];
+	double			m_dMotion_Strt_Tick[_eMANUAL_BOX_INDEX_MAX];
+	BOOL			m_bPrevStatus_InPos[_eMANUAL_BOX_INDEX_MAX];
+	BOOL			m_bMotionDone[_eMANUAL_BOX_INDEX_MAX];
+
+	CColorStatic	m_stLamp_LaserPoint;
+
+	void	InitCtrl();
+	BOOL	Is_Comp_Usable();
+	void	InitPara();
+	void	ChangeData();
+
+	BOOL	m_bPrevLaserPoint;
+
+	afx_msg void OnBnClickedButtonManualSubBoxManualLoadingStageUvwWaitPos();
+	afx_msg void OnBnClickedButtonManualSubBoxManualLoadingStageUvwStickLoadPos();
+	afx_msg void OnBnClickedButtonManualSubBoxManualLoadingStageUvwStickUnloadPos();
+	afx_msg void OnBnClickedButtonManualSubBoxManualBoxAlignCameraLeftYWaitPos();
+	afx_msg void OnBnClickedButtonManualSubBoxManualBoxAlignCameraLeftYInspectionPos();
+	afx_msg void OnBnClickedButtonManualSubBoxManualBoxAlignCameraRightYWaitPos2();
+	afx_msg void OnBnClickedButtonManualSubBoxManualBoxAlignCameraRightYInspectionPos();
+	afx_msg void OnBnClickedButtonManualSubBoxManualLaserPoint();
+};

@@ -1,0 +1,445 @@
+#include "stdafx.h"
+#include "ModelData.h"
+CModelDataInfo		CModelData::m_Mdl_Data_Info;
+CMaterialPara			CModelData::m_MaterialPara;
+CAtMaterialPara		CModelData::m_AtMaterialPara;
+CInspectionPara		CModelData::m_InspectionPara;
+CStretchPara			CModelData::m_StretchPara;
+
+CModelDataOption	CModelData::m_Mdl_Data_Option;
+CModelDataFrame		CModelData::m_Mdl_Data_Frame;
+//-------------------------------------------------------
+void	CModelDataInfo::Init()
+{
+	Info.nModelCode = 0;
+	_tcscpy(Info.strModelName, _T(""));
+}
+//-------------------------------------------------------
+BOOL	CModelDataInfo::Save()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Infomation.dat"));
+	file.Open(szFilePath, CFile::modeCreate);
+	file.Close();
+	file.Open(szFilePath, CFile::modeWrite);
+	file.Write(&Info, sizeof(MODEL_DATA_INFO));
+	file.Close();
+
+	return TRUE;
+}
+//-------------------------------------------------------
+BOOL	CModelDataInfo::Load()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Infomation.dat"));
+	if (!FileExist(szFilePath)) return FALSE;
+	file.Open(szFilePath, CFile::modeRead);
+	file.Read(&Info, sizeof(MODEL_DATA_INFO));
+	file.Close();
+	return TRUE;
+}
+//-------------------------------------------------------
+#pragma region //MaterialPara
+void CMaterialPara::Init()
+{
+}
+BOOL CMaterialPara::Save()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\MaterialPara.dat"));
+	file.Open(szFilePath, CFile::modeCreate);
+	file.Close();
+	file.Open(szFilePath, CFile::modeWrite);
+	file.Write(&dataInfo, sizeof(CMaterialParaInfo));
+	file.Close();
+
+	return TRUE;
+}
+BOOL CMaterialPara::Load()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\MaterialPara.dat"));
+	if (!FileExist(szFilePath)) return FALSE;
+	file.Open(szFilePath, CFile::modeRead);
+	file.Read(&dataInfo, sizeof(CMaterialParaInfo));
+	file.Close();
+	return TRUE;
+}
+#pragma endregion
+#pragma region //AtMaterialPara
+void CAtMaterialPara::Init()
+{
+}
+BOOL CAtMaterialPara::Save()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\AtMaterialPara.dat"));
+	file.Open(szFilePath, CFile::modeCreate);
+	file.Close();
+	file.Open(szFilePath, CFile::modeWrite);
+	file.Write(&dataInfo, sizeof(CAtMaterialParaInfo));
+	file.Close();
+
+	return TRUE;
+}
+BOOL CAtMaterialPara::Load()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\AtMaterialPara.dat"));
+	if (!FileExist(szFilePath)) return FALSE;
+	file.Open(szFilePath, CFile::modeRead);
+	file.Read(&dataInfo, sizeof(CAtMaterialParaInfo));
+	file.Close();
+	return TRUE;
+}
+#pragma endregion
+
+#pragma region //InspectionPara
+void CInspectionPara::Init()
+{
+}
+BOOL CInspectionPara::Save()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\InspectionPara.dat"));
+	file.Open(szFilePath, CFile::modeCreate);
+	file.Close();
+	file.Open(szFilePath, CFile::modeWrite);
+	file.Write(&dataInfo, sizeof(CInspectionParaInfo));
+	file.Close();
+
+	return TRUE;
+}
+BOOL CInspectionPara::Load()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\InspectionPara.dat"));
+	if (!FileExist(szFilePath)) return FALSE;
+	file.Open(szFilePath, CFile::modeRead);
+	file.Read(&dataInfo, sizeof(CInspectionParaInfo));
+	file.Close();
+	return TRUE;
+}
+#pragma endregion
+
+#pragma region //StretchPara
+void CStretchPara::Init()
+{
+}
+BOOL CStretchPara::Save()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\StretchPara.dat"));
+	file.Open(szFilePath, CFile::modeCreate);
+	file.Close();
+	file.Open(szFilePath, CFile::modeWrite);
+	file.Write(&dataInfo, sizeof(CStretchParaInfo));
+	file.Close();
+
+	return TRUE;
+}
+BOOL CStretchPara::Load()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\StretchPara.dat"));
+	if (!FileExist(szFilePath)) return FALSE;
+	file.Open(szFilePath, CFile::modeRead);
+	file.Read(&dataInfo, sizeof(CStretchParaInfo));
+	file.Close();
+	return TRUE;
+}
+#pragma endregion
+/*-----------------------------------------------------*/
+
+void	CModelDataOption::Init()
+{
+	//Frame----------------
+	Option.m_bUse_Frame_Align = false;
+	Option.m_bUse_Frame_Align_Calculate = false;
+	//Mask-----------------
+	Option.m_bUse_Review_Cam_Cover_Align = false;
+	Option.m_bUse_Review_Cam_Howling_Align = false;
+	Option.m_bUse_All_Cover_Inspection = false;
+	Option.m_bUse_All_Howling_Inspection = false;
+	Option.m_bUse_Cover_Mask_Create = false;
+	Option.m_bUse_Howling_Mask_Create = false;
+	Option.m_bUse_Measure_Howling_Align = false;
+	//Welding--------------
+	Option.m_bUse_Welding_Before_Meas = false;
+	Option.m_bUse_Welding_After_Meas = false;
+	Option.m_bUse_Welding_Check_Mode = false;
+	Option.m_bUse_Welding_Check_Msg = false;
+	Option.m_bUse_Welding_Pass = false;
+	//Other----------------	
+	Option.m_bUse_Measure_All_Teg_Hole = false;
+	Option.m_bUse_Teg_Hole_Meas_Cam_Mode_Align_or_Review = false;
+	Option.m_bUse_Groove_Check = false;
+	Option.m_bUse_Dry_Run_Mode = false;
+	Option.m_bUse_Target_Glass = false;
+}
+//-------------------------------------------------------
+BOOL	CModelDataOption::Save()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Option.dat"));
+	file.Open(szFilePath, CFile::modeCreate);
+	file.Close();
+	file.Open(szFilePath, CFile::modeWrite);
+	file.Write(&Option, sizeof(CModelDataOptionInfo));
+	file.Close();
+
+	return TRUE;
+}
+//-------------------------------------------------------
+BOOL	CModelDataOption::Load()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Option.dat"));
+	if (!FileExist(szFilePath)) return FALSE;
+	file.Open(szFilePath, CFile::modeRead);
+	file.Read(&Option, sizeof(CModelDataOptionInfo));
+	file.Close();
+	return TRUE;
+}
+//-------------------------------------------------------
+void	CModelDataFrame::Init()
+{
+	//Frame Infomation----------------------
+	_tcscpy(Frame.m_strFrame_ID, _T(""));
+	Frame.m_dProduct_Size_X = 0.000;
+	Frame.m_dProduct_Size_Y = 0.000;
+	Frame.m_dProduct_Size_Height = 0.000;
+	Frame.m_dFrame_Groove_Cover = 0.000;
+	Frame.m_dFrame_Groove_Howling = 0.000;
+	//Frame Align Information-------------------------------------------------------------------------------------------------------------
+	Frame.m_nUse_Align_Point_4_or_2_Point = 0;
+	Frame.m_dFrame_Center_X = 0.000;
+	Frame.m_dFrame_Center_Y = 0.000;
+	Frame.m_dAlign_Target_X_Pos = 0.000;
+	Frame.m_dAlign_Target_Y_Pos = 0.000;
+	Frame.m_dAlign_Target_Theta = 0.000;
+	Frame.m_dFrame_Mark_Size_X = 0.000;
+	Frame.m_dFrame_Mark_Size_Y = 0.000;
+	for (int k = 0; k < 4; k++)
+	{
+		Frame.m_dFrame_Align_Hole_X_Pos[k] = 0.000;
+		Frame.m_dFrame_Align_Hole_Y_Pos[k] = 0.000;
+	}
+	//CountForce--------------------------------------------------------------	-----------------------------------------------------------
+	Frame.m_dCount_Force_X_Target_Load_Min = 0.000;
+	Frame.m_dCount_Force_X_Target_Load_Max = 0.000;
+	Frame.m_dCount_Force_Y_Target_Load_Min = 0.000;
+	Frame.m_dCount_Force_Y_Target_Load_Max = 0.000;
+	//Flatness------------------------------------------------------------------------------------------------------------------------
+	Frame.m_dFrame_Flatness_Min = 0.000;
+	Frame.m_dFrame_Flatness_Max = 0.000;
+	Frame.m_nFrame_Flatness_Meas_Point_Count = 0;
+	for (int k = 0; k < MAX_DATA_ARRAY_CNT; k++)
+	{
+		Frame.m_nFrame_Flatness_Meas_Point_Order[k] = 0;
+		Frame.m_dFrame_Flatness_Meas_Point_X[k] = 0.000;
+		Frame.m_dFrame_Flatness_Meas_Point_Y[k] = 0.000;
+	}
+}
+//-------------------------------------------------------
+BOOL	CModelDataFrame::Save()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Frame.dat"));
+	file.Open(szFilePath, CFile::modeCreate);
+	file.Close();
+	file.Open(szFilePath, CFile::modeWrite);
+	file.Write(&Frame, sizeof(CModelDataFrameInfo));
+	file.Close();
+
+	return TRUE;
+}
+//-------------------------------------------------------
+BOOL	CModelDataFrame::Load()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Model"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\"));
+	szFilePath.AppendFormat(SharedInfo::m_strModelNames.GetAt(SharedInfo::Active.nRecipeNum));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Frame.dat"));
+	if (!FileExist(szFilePath)) return FALSE;
+	file.Open(szFilePath, CFile::modeRead);
+	file.Read(&Frame, sizeof(CModelDataFrameInfo));
+	file.Close();
+	return TRUE;
+}
+CModelData::CModelData()
+{
+
+}
+//-------------------------------------------------------
+CModelData::~CModelData()
+{
+
+}
+//-------------------------------------------------------
+void CModelData::Initialize(void)
+{
+	m_Mdl_Data_Info.Init();
+	m_MaterialPara.Init();
+	m_AtMaterialPara.Init();
+	m_InspectionPara.Init();
+	m_StretchPara.Init();
+
+	m_Mdl_Data_Option.Init();
+	m_Mdl_Data_Frame.Init();
+}
+//-------------------------------------------------------
+void CModelData::Finalize(void)
+{
+
+}
+//-------------------------------------------------------
+void CModelData::Save()
+//-------------------------------------------------------
+{
+	m_Mdl_Data_Info.Save();
+	m_MaterialPara.Save();
+	m_AtMaterialPara.Save();
+	m_InspectionPara.Save();
+	m_StretchPara.Save();
+
+	m_Mdl_Data_Option.Save();
+	m_Mdl_Data_Frame.Save();
+}
+//-------------------------------------------------------
+void CModelData::Load()
+{
+	m_Mdl_Data_Info.Load();
+	m_MaterialPara.Load();
+	m_AtMaterialPara.Load();
+	m_InspectionPara.Load();
+	m_StretchPara.Load();
+
+	m_Mdl_Data_Option.Load();
+	m_Mdl_Data_Frame.Load();
+}
+//-------------------------------------------------------

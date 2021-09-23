@@ -1,0 +1,1979 @@
+﻿#include "stdafx.h"
+#include "SharedInfo.h"
+#include "Data/ModelData.h"
+#include "Data/ManualData.h"
+#include "Data/SystemData.h"
+#include "VisionAgentDlg.h"
+#include "VisionAgent.h"
+
+//!
+//! File path constants 
+//!
+LPCTSTR SharedInfo::STR_MODEL_PARA_FILE_DIR = _T("Data\\Model");
+LPCTSTR SharedInfo::STR_INSPECT_PARA_FILE_DIR = _T("Data\\Inspect");
+
+LPCTSTR SharedInfo::STR_ALARM_LIST_FILE_PATH = _T("Data\\Alarm\\Alarm.Txt");
+
+LPCTSTR SharedInfo::STR_SYSTEM_FILE_PATH = _T("Data\\System\\system.xml");
+LPCTSTR SharedInfo::STR_VELOCITY_PARA_FILE_PATH = _T("Data\\System\\VelocityPara.Txt");
+
+//CString SharedInfo::VisionAgentPath;			//!< the location of executable.
+
+ACTIVE_STATE			SharedInfo::Active;
+CURRENT_STATE			SharedInfo::MachineState;
+MACHINE_RECIPE_TABLE	SharedInfo::m_MachineRecipeTable;
+RESULT_STATE			SharedInfo::Result;
+
+CStringArray			SharedInfo::m_strModelNames;
+
+enum_Axis SharedInfo::m_eAxisJog;
+INT SharedInfo::m_nJogDir;
+int SharedInfo::m_eAxisJogInterlock;
+INT SharedInfo::m_nJogInterlockDir;
+
+double  SharedInfo::dStretchCmdPos[MAX_STRETCH_AXIS_SIZE];//Left, Right
+double  SharedInfo::dStretchCmdVel[MAX_STRETCH_AXIS_SIZE];//Left, Right
+double  SharedInfo::dStretchValue[MAX_STRETCH_AXIS_SIZE];//Left, Right
+double  SharedInfo::dStretchTargetValue[MAX_STRETCH_AXIS_SIZE];//Left, Right
+int SharedInfo::nStretchStatus[MAX_STRETCH_AXIS_SIZE];
+
+//clamp
+double SharedInfo::m_nClampTorquedMonitorValue[MAX_STRETCH_AXIS_SIZE];
+double SharedInfo::dSF_LoadcellForce[MAX_SF_NUM];
+
+double SharedInfo::dVisionoffsetX[2];
+double	SharedInfo::AlignCamMarkPixelSize[2];
+double	SharedInfo::AlignCamMarkPos[2];
+int		SharedInfo::AlignCamMarkCD[2];
+double		SharedInfo::AlignCamScore;
+BOOL	SharedInfo::bResult;
+
+BOOL	SharedInfo::bAlignVisionReceiveFlag;
+
+//Other Alarm
+//0번 제진대 알람, 1번 Gripper Gantry Break
+int SharedInfo::m_nOtherAlarm[10];
+
+BOOL SharedInfo::bAlignVisionSetLightFlag;
+BOOL SharedInfo::bAlignVisionLightOnFlag;
+
+//Machine Stop Flag - parkcm
+BOOL SharedInfo::bMachineStopFlag;
+
+DIRECT_AXIS_HOME			SharedInfo::DirectAixsHome;
+//Flow State  저장 관련 - parkcm
+int SharedInfo::nCurFlowID;
+int SharedInfo::nCurFlowStep;
+
+#pragma region BoxAndCassette
+CString SharedInfo::m_strBoxId;
+BOOL SharedInfo::m_bBoxDataInterface[eBOX_DATA_INTERFACE_MAX] = { FALSE, };
+CString SharedInfo::m_strMaskIdInBox[MASK_IN_BOX_COUNT] = { _T(""), };
+BOOL SharedInfo::m_bMaskInBox[MASK_IN_BOX_COUNT] = { FALSE, };
+CString SharedInfo::m_strMaskIdInCassette[CASSETTE_ROW][CASSETTE_SLOT] = { _T(""), };
+BOOL SharedInfo::m_bMaskInCassette[CASSETTE_ROW][CASSETTE_SLOT] = { FALSE, };
+#pragma endregion
+
+int		SharedInfo::Is_Umac_Open;
+int		SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_MAX];
+int		SharedInfo::Umac_Axis_Home_Signal[REMOTE_AXIS_UMAC_MAX];
+int		SharedInfo::Umac_Axis_PLimit_Signal[REMOTE_AXIS_UMAC_MAX];
+int		SharedInfo::Umac_Axis_NLimit_Signal[REMOTE_AXIS_UMAC_MAX];
+int		SharedInfo::Umac_Axis_ServoOn_Status[REMOTE_AXIS_UMAC_MAX];
+int		SharedInfo::Umac_Axis_Alarm_Status[REMOTE_AXIS_UMAC_MAX];
+int		SharedInfo::Umac_Axis_Isolator_Alarm;
+int		SharedInfo::Umac_Axis_Status[REMOTE_AXIS_UMAC_MAX]; //0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+int		SharedInfo::Umac_Axis_InMotion_Status[REMOTE_AXIS_UMAC_MAX];
+double	SharedInfo::Umac_Axis_Cmd_Pos[REMOTE_AXIS_UMAC_MAX];
+double	SharedInfo::Umac_Axis_Act_Pos[REMOTE_AXIS_UMAC_MAX];
+double	SharedInfo::Umac_Axis_Cmd_Vel[REMOTE_AXIS_UMAC_MAX];
+
+// Ajin Axis
+int		SharedInfo::Is_Ajin_Open;
+int		SharedInfo::Ajin_Axis_HomeStatus[REMOTE_AXIS_AJIN_MAX];
+int		SharedInfo::Ajin_Axis_HomeSignal[REMOTE_AXIS_AJIN_MAX];
+int		SharedInfo::Ajin_Axis_PLimitSignal[REMOTE_AXIS_AJIN_MAX];
+int		SharedInfo::Ajin_Axis_NLimitSignal[REMOTE_AXIS_AJIN_MAX];
+int		SharedInfo::Ajin_Axis_ServoOnStatus[REMOTE_AXIS_AJIN_MAX];
+int		SharedInfo::Ajin_Axis_AlarmStatus[REMOTE_AXIS_AJIN_MAX];
+int		SharedInfo::Ajin_Axis_InMotionStatus[REMOTE_AXIS_AJIN_MAX];
+int		SharedInfo::Ajin_Axis_Status[REMOTE_AXIS_AJIN_MAX]; //0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+double	SharedInfo::Ajin_Axis_Cmd_Pos[REMOTE_AXIS_AJIN_MAX];
+double	SharedInfo::Ajin_Axis_Act_Pos[REMOTE_AXIS_AJIN_MAX];
+double	SharedInfo::Ajin_Axis_Cmd_Vel[REMOTE_AXIS_AJIN_MAX];
+
+double SharedInfo::m_dLaserDispVal;
+
+int SharedInfo::MotionAgentAXLOpen;
+int SharedInfo::MaxAxisSize;
+int SharedInfo::MaxDInputSize;
+int SharedInfo::MaxDOutputSize;
+int SharedInfo::MaxAInputSize;
+int SharedInfo::MaxAOutputSize;
+
+//! Common
+int SharedInfo::SystemHomeStatus;
+int SharedInfo::SystemHomeSignal;
+int SharedInfo::SystemNLimitSignal;
+int SharedInfo::SystemPLimitSignal;
+int SharedInfo::SystemServoOnStatus;
+int SharedInfo::SystemAlarmStatus;
+int SharedInfo::SystemMotionDoneStatus;
+int SharedInfo::SystemStatus; //0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+
+//! Ajin
+int SharedInfo::AxisHomeStatus[MAX_AXIS_SIZE];
+int SharedInfo::AxisHomeSignal[MAX_AXIS_SIZE];
+int SharedInfo::AxisPLimitSignal[MAX_AXIS_SIZE];
+int SharedInfo::AxisNLimitSignal[MAX_AXIS_SIZE];
+int SharedInfo::AxisServoOnStatus[MAX_AXIS_SIZE];
+int SharedInfo::AxisAlarmStatus[MAX_AXIS_SIZE];
+int SharedInfo::AxisInMotionStatus[MAX_AXIS_SIZE];	// 0:End Move, 1:Moving
+int SharedInfo::AxisStatus[MAX_AXIS_SIZE];	//0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+double SharedInfo::AxisCmdPos[MAX_AXIS_SIZE];
+double SharedInfo::AxisActPos[MAX_AXIS_SIZE];	// wkoh 추가
+double SharedInfo::AxisCmdVel[MAX_AXIS_SIZE];
+double SharedInfo::AxisTorque[MAX_AXIS_SIZE];
+
+//! Umac
+int SharedInfo::UmacHomeStatus[MAX_UMAC_AXIS_SIZE];
+int SharedInfo::UmacHomeSignal[MAX_UMAC_AXIS_SIZE];
+int SharedInfo::UmacPLimitSignal[MAX_UMAC_AXIS_SIZE];
+int SharedInfo::UmacNLimitSignal[MAX_UMAC_AXIS_SIZE];
+int SharedInfo::UmacServoOnStatus[MAX_UMAC_AXIS_SIZE];
+int SharedInfo::UmacAlarmStatus[MAX_UMAC_AXIS_SIZE];
+int SharedInfo::UmacInMotionStatus[MAX_UMAC_AXIS_SIZE];
+int SharedInfo::UmacStatus[MAX_UMAC_AXIS_SIZE];	//0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+double SharedInfo::UmacCmdPos[MAX_UMAC_AXIS_SIZE];
+double SharedInfo::UmacActPos[MAX_UMAC_AXIS_SIZE];
+double SharedInfo::UmacCmdVel[MAX_UMAC_AXIS_SIZE];
+double SharedInfo::UmacTorque[MAX_UMAC_AXIS_SIZE];
+
+//! VisionAgent 직접 제어 축
+int SharedInfo::VisionAxisHomeStatus[DIRECT_AXIS_AJIN_MAX];
+int SharedInfo::VisionAxisHomeSignal[DIRECT_AXIS_AJIN_MAX];
+int SharedInfo::VisionAxisPLimitSignal[DIRECT_AXIS_AJIN_MAX];
+int SharedInfo::VisionAxisNLimitSignal[DIRECT_AXIS_AJIN_MAX];
+int SharedInfo::VisionAxisServoOnStatus[DIRECT_AXIS_AJIN_MAX];
+int SharedInfo::VisionAxisAlarmStatus[DIRECT_AXIS_AJIN_MAX];
+int SharedInfo::VisionAxisInMotionStatus[DIRECT_AXIS_AJIN_MAX];	// 0:End Move, 1:Moving
+int SharedInfo::VisionAxisStatus[DIRECT_AXIS_AJIN_MAX];	//0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+double SharedInfo::VisionAxisCmdPos[DIRECT_AXIS_AJIN_MAX]; //
+double SharedInfo::VisionAxisActPos[DIRECT_AXIS_AJIN_MAX];
+double SharedInfo::VisionAxisCmdVel[DIRECT_AXIS_AJIN_MAX];
+double SharedInfo::VisionAxisTorque[DIRECT_AXIS_AJIN_MAX];
+
+//! Dio
+int SharedInfo::DInputValue[MAX_DINPUT_SIZE];
+int SharedInfo::DOutputValue[MAX_DOUTPUT_SIZE];
+DWORD SharedInfo::DInputDWordValue[MAX_DINPUT_DWORD_SIZE];
+DWORD SharedInfo::DOutputDWordValue[MAX_DOUTPUT_DWORD_SIZE];
+
+//! Aio
+double SharedInfo::AInputValue[MAX_AINPUT_SIZE] = { 0.0, };
+double SharedInfo::AOutputValue[MAX_AOUTPUT_SIZE] = { 0.0, };
+
+//! UVW
+double SharedInfo::UvwCmdPos[MAX_UVW][3];
+double SharedInfo::UvwCmdVel[MAX_UVW][3];
+int SharedInfo::UvwHomeStatus[MAX_UVW];
+int SharedInfo::UvwServoOnStatus[MAX_UVW];
+int SharedInfo::UvwAlarmStatus[MAX_UVW];
+int SharedInfo::UvwMotionDoneStatus[MAX_UVW];
+int SharedInfo::UvwStatus[MAX_UVW];	//0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+
+//Clamp
+double SharedInfo::dClampValue[GRIPPER_ROW];//Left, Right
+int SharedInfo::nClampStatus[GRIPPER_ROW];//Left, Right
+int SharedInfo::nClampAllUnClampStatus;
+int SharedInfo::nClampAlarmStatus;
+
+CString SharedInfo::m_DInputName[MAX_DINPUT_SIZE] = { _T(""), };
+CString SharedInfo::m_DOutputName[MAX_DOUTPUT_SIZE] = { _T(""), };
+CString SharedInfo::m_AInputName[MAX_AINPUT_SIZE] = { _T(""), };
+CString SharedInfo::m_AOutputName[MAX_AOUTPUT_SIZE] = { _T(""), };
+
+ALARM_LIST SharedInfo::AlarmList[100];
+int	SharedInfo::AlarmCount = 0;
+
+void DIRECT_AXIS_HOME::Save()
+{
+	CString szMsg;
+	CFile file;
+	szMsg.Format(_T("%s\\Dat\\HomeStatus.Dat"), SharedInfo::GetExeFilePath());
+	file.Open(szMsg, CFile::modeCreate | CFile::modeWrite);
+	file.Write(&Info, sizeof(Info));
+	file.Close();
+
+}
+void DIRECT_AXIS_HOME::Load()
+{
+	CString szMsg;
+	CFile file;
+	szMsg.Format(_T("%s\\Dat\\HomeStatus.Dat"), SharedInfo::GetExeFilePath());
+	if (file.Open(szMsg, CFile::modeRead) == FALSE)
+		file.Open(szMsg, CFile::modeRead | CFile::modeCreate);
+
+	file.Read(&Info, sizeof(Info));
+	file.Close();
+
+
+}
+
+SharedInfo::SharedInfo()
+{
+
+}
+
+
+SharedInfo::~SharedInfo()
+{
+
+}
+
+
+void SharedInfo::Initialize(void)
+{
+	int k = 0;
+	for (k = 0; k < REMOTE_AXIS_UMAC_MAX; k++)
+	{
+		Is_Umac_Open = 0;
+		Umac_Axis_Home_Status[k] = 0;
+		Umac_Axis_Home_Signal[k] = 0;
+		Umac_Axis_PLimit_Signal[k] = 0;
+		Umac_Axis_NLimit_Signal[k] = 0;
+		Umac_Axis_ServoOn_Status[k] = 0;
+		Umac_Axis_Alarm_Status[k] = 0;
+		Umac_Axis_Status[k] = 0; //0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+		Umac_Axis_InMotion_Status[k] = 0;
+		Umac_Axis_Cmd_Pos[k] = 0.000;
+		Umac_Axis_Act_Pos[k] = 0.000;
+		Umac_Axis_Cmd_Vel[k] = 0.000;
+	}
+	for (k = 0; k < REMOTE_AXIS_AJIN_MAX; k++)
+	{
+		Is_Ajin_Open = 0;
+		Ajin_Axis_HomeStatus[k] = 0;
+		Ajin_Axis_HomeSignal[k] = 0;
+		Ajin_Axis_PLimitSignal[k] = 0;
+		Ajin_Axis_NLimitSignal[k] = 0;
+		Ajin_Axis_ServoOnStatus[k] = 0;
+		Ajin_Axis_AlarmStatus[k] = 0;
+		Ajin_Axis_Status[k] = 0; //0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus		
+		Ajin_Axis_InMotionStatus[k] = 0;
+		Ajin_Axis_Cmd_Pos[k] = 0.000;
+		Ajin_Axis_Act_Pos[k] = 0.000;
+		Ajin_Axis_Cmd_Vel[k] = 0.000;
+	}
+	for (k = 0; k < MAX_DINPUT_SIZE; k++)
+	{
+		DInputValue[k] = 0;
+	}
+	for (k = 0; k < MAX_DOUTPUT_SIZE; k++)
+	{
+		DOutputValue[k] = 0;
+	}
+	for (k = 0; k < MAX_AINPUT_SIZE; k++)
+	{
+		AInputValue[k] = 0;
+	}
+
+	ActiveInfoLoad();
+	ResultInfoLoad();
+}
+
+void SharedInfo::Finalize(void)
+{
+
+}
+
+void SharedInfo::ActiveInfoSave()
+{
+	CFile File;
+	CString szMsg;
+	szMsg.Format(_T("%s\\dat\\ActiveInfo.dat"), GetExeFilePath());
+	File.Open(szMsg, CFile::modeCreate | CFile::modeWrite);
+	File.Write(&Active, sizeof(ACTIVE_STATE));
+	File.Close();
+
+}
+
+void SharedInfo::ActiveInfoLoad()
+{
+	CFile File;
+	CString szMsg;
+	szMsg.Format(_T("%s\\dat\\ActiveInfo.dat"), GetExeFilePath());
+	if (File.Open(szMsg, CFile::modeRead) == FALSE)
+		File.Open(szMsg, CFile::modeRead);
+	File.Read(&Active, sizeof(ACTIVE_STATE));
+	File.Close();
+
+}
+
+void SharedInfo::ResultInfoSave()
+{
+	CFile File;
+	CString szMsg;
+	szMsg.Format(_T("%s\\dat\\ResultInfo.dat"), GetExeFilePath());
+	File.Open(szMsg, CFile::modeCreate | CFile::modeWrite);
+	File.Write(&Result, sizeof(RESULT_STATE));
+	File.Close();
+
+}
+
+void SharedInfo::ResultInfoLoad()
+{
+	CFile File;
+	CString szMsg;
+	szMsg.Format(_T("%s\\dat\\ResultInfo.dat"), GetExeFilePath());
+	if (File.Open(szMsg, CFile::modeRead) == FALSE)
+		File.Open(szMsg, CFile::modeRead);
+	File.Read(&Result, sizeof(RESULT_STATE));
+	File.Close();
+
+}
+
+int SharedInfo::FindCurrentRecipeNumber(CString strRecipeName)
+{
+	CString szMsgCmp;
+	for (int i = 0; i < MAX_RECIPE_COUNT; i++)
+	{
+		if (m_MachineRecipeTable.bRecipeTableUseFlag[i] == TRUE)
+		{
+			szMsgCmp.Format(_T("%S"), m_MachineRecipeTable.strRecipeName[i]);
+			if (szMsgCmp == strRecipeName)
+			{
+				return m_MachineRecipeTable.wRecipeNumber[i];
+			}
+		}
+	}
+	return -1;
+}
+
+int SharedInfo::FindRecipeNumber(WORD wRecipeID)
+{
+	for (int i = 0; i < MAX_RECIPE_COUNT; i++)
+	{
+		if (m_MachineRecipeTable.bRecipeTableUseFlag[i] == TRUE)
+		{
+			if (m_MachineRecipeTable.wRecipeNumber[i] == wRecipeID)
+			{
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+
+CString SharedInfo::FindRecipeName(INT nReceipeNumber)
+{
+	CString strTemp = _T("");
+
+	strTemp = m_MachineRecipeTable.strRecipeName[nReceipeNumber];
+
+	return strTemp;
+}
+
+CString SharedInfo::GetExeFilePath()
+{
+	CString szMsg;
+	CString strVisionAgentPath;
+	CFile file;
+	int i, nSize;
+	TCHAR tchPathName[_MAX_PATH];
+	GetModuleFileName(NULL, tchPathName, MAX_PATH);
+	nSize = (int)wcslen(tchPathName);
+	for (i = nSize; i >= 0; i--)
+	{
+		if (tchPathName[i] == '\\')
+		{
+			tchPathName[i] = NULL;
+			break;
+		}
+	}
+
+	strVisionAgentPath.Format(_T("%s"), tchPathName);
+
+	return strVisionAgentPath;
+}
+
+BOOL SharedInfo::FindRecipeUse(INT nNumber)
+{
+	BOOL bTemp = FALSE;
+	if (nNumber < 0 || nNumber > MAX_RECIPE_COUNT)
+		return FALSE;
+
+	bTemp = m_MachineRecipeTable.bRecipeTableUseFlag[nNumber];
+
+	return bTemp;
+}
+
+BOOL SharedInfo::RecipeCheck()
+{
+	BOOL bResult, bChangeFlag = FALSE;
+	CString szMsg, szMsgCmp;
+	CFile file;
+	int DetectCnt = 0;
+
+	USES_CONVERSION;
+
+	szMsg.Format(_T("%s\\dat\\MachineRecipeTable.dat"), SharedInfo::GetExeFilePath());
+	if (file.Open(szMsg, CFile::modeRead) == FALSE)
+		file.Open(szMsg, CFile::modeRead);
+	file.Read(&m_MachineRecipeTable, sizeof(MACHINE_RECIPE_TABLE));
+	file.Close();
+
+	for (int i = 0; i < m_strModelNames.GetSize(); i++)
+	{
+		szMsg = m_strModelNames.GetAt(i);
+		bResult = FALSE;
+		bChangeFlag = FALSE;
+		for (int j = 0; j < MAX_RECIPE_COUNT; j++)
+		{
+			if (m_MachineRecipeTable.bRecipeTableUseFlag[j] == TRUE)
+			{
+				szMsgCmp.Format(_T("%S"), m_MachineRecipeTable.strRecipeName[j]);
+				if (szMsgCmp == szMsg)
+				{
+					bResult = TRUE;
+					DetectCnt++;
+					break;
+				}
+			}
+			if (DetectCnt == m_MachineRecipeTable.wRecipeCount && m_MachineRecipeTable.wRecipeCount != 0)
+				break;
+		}
+
+		if (bResult == FALSE)
+		{
+			for (int j = 0; j < MAX_RECIPE_COUNT; j++)
+			{
+				if (m_MachineRecipeTable.bRecipeTableUseFlag[j] == FALSE)
+				{
+					m_MachineRecipeTable.bRecipeTableUseFlag[j] = TRUE;
+					strcpy_s((char*)(m_MachineRecipeTable.strRecipeName + j), szMsg.GetLength() + 1, CT2A(szMsg));
+					m_MachineRecipeTable.wRecipeNumber[j] = j;
+					m_MachineRecipeTable.wRecipeCount++;
+					DetectCnt++;
+					bChangeFlag = TRUE;
+					break;
+				}
+			}
+		}
+	}
+
+	if (DetectCnt < m_MachineRecipeTable.wRecipeCount)
+	{
+		for (int i = 0; i < MAX_RECIPE_COUNT; i++)
+		{
+			bResult = FALSE;
+			if (m_MachineRecipeTable.bRecipeTableUseFlag[i] == TRUE)
+			{
+				szMsgCmp.Format(_T("%S"), m_MachineRecipeTable.strRecipeName[i]);
+				for (int j = 0; j < m_strModelNames.GetSize(); j++)
+				{
+					szMsg = m_strModelNames.GetAt(j);
+					if (szMsgCmp == szMsg)
+					{
+						bResult = TRUE;
+						break;
+					}
+
+				}
+				if (bResult == FALSE)
+				{
+					m_MachineRecipeTable.bRecipeTableUseFlag[i] = FALSE;
+					memset(m_MachineRecipeTable.strRecipeName[i], 0x0, 100);
+					m_MachineRecipeTable.wRecipeNumber[i] = 0;
+					m_MachineRecipeTable.wRecipeCount--;
+					bChangeFlag = TRUE;
+
+
+				}
+			}
+		}
+
+	}
+	szMsg.Format(_T("%s\\dat\\MachineRecipeTable.dat"), GetExeFilePath());
+	file.Open(szMsg, CFile::modeCreate | CFile::modeWrite);
+	file.Write(&m_MachineRecipeTable, sizeof(MACHINE_RECIPE_TABLE));
+	file.Close();
+
+	return bChangeFlag;
+}
+//----------------------------------------
+BOOL SharedInfo::SaveModelData()
+{
+	CModelData::Save();
+	return TRUE;
+}
+//----------------------------------------
+BOOL SharedInfo::LoadModelData()
+{
+	CModelData::m_Mdl_Data_Info.Init();
+	CModelData::m_MaterialPara.Init();
+	CModelData::m_AtMaterialPara.Init();
+	CModelData::m_InspectionPara.Init();
+	CModelData::m_StretchPara.Init();
+
+	CModelData::m_Mdl_Data_Option.Init();
+	CModelData::m_Mdl_Data_Frame.Init();
+	CModelData::Load();
+	return TRUE;
+}
+//----------------------------------------
+BOOL SharedInfo::SaveManualData()
+{
+	CManualData::Save();
+	return TRUE;
+}
+//----------------------------------------
+BOOL SharedInfo::LoadManualData()
+{
+	CManualData::m_ManualDataGantry.Init();
+	CManualData::m_ManualDataBox.Init();
+	CManualData::m_ManualDataLoader.Init();
+	CManualData::m_ManualDataGripper.Init();
+	CManualData::m_ManualDataUnloader.Init();
+	CManualData::m_ManualDataCassette.Init();
+	CManualData::Load();
+	return TRUE;
+}
+//----------------------------------------
+BOOL SharedInfo::SaveMaachineData()
+{
+	CMachineData::Save();
+	return TRUE;
+}
+//----------------------------------------
+BOOL SharedInfo::LoadMaachineData()
+{
+	CMachineData::m_MachineDataMotor.Init();
+	CMachineData::Load();
+	return TRUE;
+}
+//----------------------------------------
+BOOL SharedInfo::SaveSystemData()
+{
+	CString filePath = GetHomeDir();
+	filePath.AppendFormat(_T("Data\\"));
+	::CreateDirectory(filePath, NULL);
+	filePath.AppendFormat(_T("System"));
+	::CreateDirectory(filePath, NULL);
+
+	CSystemData::Save();
+	return TRUE;
+}
+//----------------------------------------
+BOOL	SharedInfo::LoadSystemData()
+{
+	CString filePath = GetHomeDir();
+	filePath.AppendFormat(_T("Data\\"));
+	::CreateDirectory(filePath, NULL);
+	filePath.AppendFormat(_T("System"));
+	::CreateDirectory(filePath, NULL);	
+
+	CSystemData::Load();
+
+	return TRUE;
+
+}
+//----------------------------------------
+BOOL SharedInfo::SaveNewModelData(LPCTSTR strDirectory)
+{
+	CString filePath;
+	filePath.Format(_T("%s\\%s"), strDirectory, FILENAME_MODELDATA);
+
+	try
+	{
+		CModelData::Save();
+	}
+	catch (CFileException* e)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+//----------------------------------------
+void SharedInfo::FindModelNames()
+{
+	CFileFind finder;
+	CString strPathFind;
+	CString strDirName;
+
+	strPathFind.Format(_T("%s\\*.*"), GetModelDataFolder());
+	BOOL bWorking = finder.FindFile(strPathFind);
+	while (bWorking)
+	{
+		Sleep(10);
+		bWorking = finder.FindNextFile();
+		if (finder.IsDirectory())
+		{
+			strDirName = finder.GetFileName();
+			if (strDirName == _T(".") || strDirName == _T("..")) continue;
+			m_strModelNames.Add(strDirName);
+		}
+	}
+}
+
+BOOL SharedInfo::NewDirectoryFile(LPCTSTR RootDir)
+{
+	if (RootDir == NULL)
+	{
+		return FALSE;
+	}
+
+	BOOL bRval = FALSE;
+
+	bRval = CreateDirectory(RootDir, NULL);
+
+	if (bRval)
+	{
+		SaveNewModelData(RootDir);
+		//Manual Data는 System처럼 동작하도록 변경. 2018. 12. 23.
+		//pVisionAgentDlg->SaveNewManualData(RootDir);
+	}
+
+	return bRval;
+}
+
+BOOL SharedInfo::LoadModelData(CString strModelName)
+{
+	CString filePath;
+	CString strActiveMdlName;
+	if (strModelName != _T(""))
+	{
+		filePath = GetHomeDir();
+		filePath.AppendFormat(_T("Model\\"));
+		::CreateDirectory(filePath, NULL);
+		filePath.AppendFormat(strModelName);
+
+		strActiveMdlName = (LPSTR)CSystemData::m_System_Option.m_strActiveModelName;
+		if (strActiveMdlName != strModelName)
+		{
+			_tcscpy(CSystemData::m_System_Option.m_strActiveModelName, strModelName);
+			SaveSystemData();
+		}
+		//else
+		//{
+		//	AfxMessageBox(_T("It is Selected Done"));
+		//	return FALSE;
+		//}
+		try
+		{
+			CModelData::Load();
+		}
+		catch (CFileException* e)
+		{
+			return FALSE;
+		}
+	}
+
+	else
+	{
+		AfxMessageBox(_T("Please Select Model"));
+	}
+
+	MachineState.bRecipeChangeDone = TRUE;
+
+	return TRUE;
+}
+
+BOOL SharedInfo::DeleteDirectoryFile(LPCTSTR RootDir)
+{
+	if (RootDir == NULL)
+	{
+		AfxMessageBox(_T("It's not Selected Model"));
+		return FALSE;
+	}
+
+	BOOL bRval = FALSE;
+	CString szRoot = _T("");
+
+	// ÇØ´ç µð·ºÅä¸®ÀÇ ¸ðµç ÆÄÀÏÀ» °Ë»çÇÑ´Ù.
+	szRoot.Format(_T("%s\\*.*"), RootDir);
+	CFileFind find;
+	bRval = find.FindFile(szRoot);
+	if (bRval == FALSE)
+	{
+		return bRval;
+	}
+	while (bRval)
+	{		
+		bRval = find.FindNextFile();
+		// . or .. ÀÎ °æ¿ì ¹«½Ã ÇÑ´Ù.  
+		if (find.IsDots() == FALSE)
+		{
+			// Directory ÀÏ °æ¿ì Àç±ÍÈ£Ãâ ÇÑ´Ù.
+			if (find.IsDirectory())
+			{
+				DeleteDirectoryFile(find.GetFilePath());
+			}
+			// fileÀÏ °æ¿ì »èÁ¦ 
+			else
+			{
+				bRval = DeleteFile(find.GetFilePath());
+			}
+		}
+	}
+	find.Close();
+	bRval = RemoveDirectory(RootDir);
+	return bRval;
+}
+
+BOOL SharedInfo::RenameDirectoryFile(LPCTSTR NewDirName, CString strSelName)
+{
+	CFile file;
+	CString strTemp = _T("");
+	CString strTemp2 = _T("");
+	CString strSelectedFolderDir = _T("");
+	CString strNewFoldername = _T("");
+	int nPreRecipeId = -1;
+	strTemp = GetModelDataFolder();
+
+	strSelectedFolderDir = strSelName;
+	strNewFoldername = strTemp;
+	strTemp.Append(_T("\\"));
+	strTemp += strSelectedFolderDir;
+
+	strTemp2.AppendFormat(_T("%s"), NewDirName);
+	strNewFoldername.AppendFormat(_T("\\%s"), NewDirName);
+
+
+
+	nPreRecipeId = SharedInfo::FindCurrentRecipeNumber(strSelectedFolderDir);
+	strcpy_s((char*)(SharedInfo::m_MachineRecipeTable.strRecipeName + (nPreRecipeId - 1)), strTemp2.GetLength() + 1, CT2A(strTemp2));
+
+	file.Rename(strTemp, strNewFoldername);
+
+	return 0;
+}
+
+void SharedInfo::AddMachineRecipeTable(WORD wRecipID, CString strNewDirName)
+{
+	CFile file;
+
+	CString szMsg = _T("");
+	SharedInfo::m_MachineRecipeTable.bRecipeTableUseFlag[wRecipID] = TRUE;
+	strcpy_s((char*)(SharedInfo::m_MachineRecipeTable.strRecipeName + (wRecipID)), strNewDirName.GetLength() + 1, CT2A(strNewDirName));
+	SharedInfo::m_MachineRecipeTable.wRecipeNumber[wRecipID] = wRecipID;
+	SharedInfo::m_MachineRecipeTable.wRecipeCount++;
+
+	szMsg.Format(_T("%s\\dat\\MachineRecipeTable.dat"), SharedInfo::GetExeFilePath());
+	file.Open(szMsg, CFile::modeCreate | CFile::modeWrite);
+	file.Write(&SharedInfo::m_MachineRecipeTable, sizeof(MACHINE_RECIPE_TABLE));
+	file.Close();
+}
+
+void SharedInfo::ResetModel()
+{
+	CFileFind finder;
+	CString strPathFind;
+	CString strDirName;
+
+	m_strModelNames.RemoveAll();
+	strPathFind.Format(_T("%s\\*.*"), GetModelDataFolder());
+	BOOL bWorking = finder.FindFile(strPathFind);
+	while (bWorking)
+	{
+		bWorking = finder.FindNextFile();
+		if (finder.IsDirectory())
+		{
+			strDirName = finder.GetFileName();
+			if (strDirName == _T(".") || strDirName == _T("..")) continue;
+			m_strModelNames.Add(strDirName);
+		}
+	}
+}
+
+BOOL SharedInfo::SaveRecipeTable()
+{
+	CString szMsg;
+	CFile file;
+	szMsg.Format(_T("%s\\dat\\MachineRecipeTable.dat"), SharedInfo::GetExeFilePath());
+	file.Open(szMsg, CFile::modeCreate | CFile::modeWrite);
+	file.Write(&SharedInfo::m_MachineRecipeTable, sizeof(MACHINE_RECIPE_TABLE));
+	file.Close();
+
+	return TRUE;
+}
+
+
+
+CString SharedInfo::GetBeamAxisDataFolder()
+{
+	CString m_path = _T("");
+	SYSTEMTIME st;
+
+	GetLocalTime(&st);
+	m_path.AppendFormat(_T("\\Result\\BeamAxis\\%04d%02d%02d%02d%02d%02d_BeamAxis.csv"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+
+	return GetExeFilePath() + m_path;
+}
+
+CString SharedInfo::GetLcmDataFolder()
+{
+	CString m_path = _T("");
+	SYSTEMTIME st;
+
+	GetLocalTime(&st);
+	m_path.AppendFormat(_T("\\Result\\Lcm\\%04d%02d%02d%02d%02d%02d_Lcm.csv"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+
+	return GetExeFilePath() + m_path;
+}
+
+CString SharedInfo::GetLclDataFolder()
+{
+	CString m_path = _T("");
+	SYSTEMTIME st;
+
+	GetLocalTime(&st);
+	m_path.AppendFormat(_T("\\Result\\Lcl\\%04d%02d%02d%02d%02d%02d_Lcl.csv"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+
+	return GetExeFilePath() + m_path;
+}
+
+CString SharedInfo::GetBlackLcDataFolder()
+{
+	CString m_path = _T("");
+	SYSTEMTIME st;
+
+	GetLocalTime(&st);
+	m_path.AppendFormat(_T("\\Result\\BlackLc\\%04d%02d%02d%02d%02d%02d_BlackLc.csv"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+
+	return GetExeFilePath() + m_path;
+}
+
+CString SharedInfo::GetSamplePolDataFolder()
+{
+	CString m_path = _T("");
+	SYSTEMTIME st;
+
+	GetLocalTime(&st);
+	m_path.AppendFormat(_T("\\Result\\SamplePol\\%04d%02d%02d%02d%02d%02d_SamplePol.csv"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+
+	return GetExeFilePath() + m_path;
+}
+CString SharedInfo::GetBluSettingDataFolder()
+{
+	CString m_path = _T("");
+	SYSTEMTIME st;
+
+	GetLocalTime(&st);
+	m_path.AppendFormat(_T("\\Result\\SamplePol\\%04d%02d%02d%02d%02d%02d_LCAutoBlu.csv"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+
+	return GetExeFilePath() + m_path;
+}
+
+BOOL SharedInfo::SetAlarm(UINT nErrCode)
+{
+	CVisionAgentDlg *pVisionAgentDlg = (CVisionAgentDlg*)theApp.m_pMainWnd;
+
+	MachineState.bErrorFlag = TRUE;
+
+	//pVisionAgentDlg->m_pAlarmDlg->SetAlarm(nErrCode);
+
+	return TRUE;
+}
+
+BOOL SharedInfo::SetAutoAlarm()
+{
+	MachineState.bErrorFlag = GetFlowAlarm();
+
+	return MachineState.bErrorFlag;
+}
+
+BOOL SharedInfo::GetFlowAlarm()
+{
+	//Flow Alarm 상태 체크해서 리턴.
+
+	//if (Devs::m_AutoRunFlow.GetAlarm())
+	//	return TRUE;
+	
+	return FALSE;
+}
+
+BOOL SharedInfo::GetAlarm()
+{
+	//Flow Alarm 상태 체크해서 리턴.
+	if (MachineState.bErrorFlag)
+		return TRUE;
+
+	BOOL bResult = GetFlowAlarm();
+	if (bResult)
+		return TRUE;
+	
+	return FALSE;
+}
+
+BOOL SharedInfo::ResetAlarm()
+{
+	BOOL bResult = FALSE;
+
+	Devs::m_Mask_Align_Flow.Stop();
+	Devs::m_Mask_Insert_Flow.Stop();
+	Devs::m_Mask_Loading_Flow.Stop();
+	Devs::m_Mask_Tension_Flow.Stop();
+	
+	Devs::m_Centering_Unit_Flow.Stop();
+	Devs::m_Gantry_Unit_Flow.Stop();
+	Devs::m_Strech_Unit_Flow.Stop();
+	Devs::m_Transper_Unit_Flow.Stop();	
+	
+	MachineState.bSemiAutoRunFlag = FALSE;
+	MachineState.bErrorFlag = FALSE;
+		
+	return bResult;
+}
+
+BOOL SharedInfo::GetActualAxisNoByEnumAxis(enum_Axis eAxis, int* pAxisType, int* nRemoteAxis)
+{
+	int nType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxis = -1;
+	BOOL bResult = TRUE;
+
+	switch (eAxis)
+	{
+	case AXIS_GANTRY_YL:			nType = AXIS_TYPE_REMOTE_UMAC;		nAxis = REMOTE_AXIS_UMAC_GANTRY_YL;		break;
+	case AXIS_GANTRY_YR:			nType = AXIS_TYPE_REMOTE_UMAC;		nAxis = REMOTE_AXIS_UMAC_GANTRY_YR;		break;
+	case AXIS_GANTRY_X:				nType = AXIS_TYPE_REMOTE_UMAC;		nAxis = REMOTE_AXIS_UMAC_GANTRY_X;		break;
+
+	case AXIS_CAMERA_Z1:			nType = AXIS_TYPE_DIRECT_AJIN;		nAxis = DIRECT_AXIS_AJIN_CAMERA_Z1;		break;
+	case AXIS_CAMERA_Z2:			nType = AXIS_TYPE_DIRECT_AJIN;		nAxis = DIRECT_AXIS_AJIN_CAMERA_Z2;		break;
+
+	case AXIS_LOADER_Z:				nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_LOADER_Z;			break;
+	case AXIS_BACKLIGHT_X:			nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_BACKLIGHT_X;		break;
+	case AXIS_GRIPPER_CLAMP_L1:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L1;		break;
+	case AXIS_GRIPPER_CLAMP_L2:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L2;		break;
+	case AXIS_GRIPPER_CLAMP_L3:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L3;		break;
+	case AXIS_GRIPPER_CLAMP_L4:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L4;		break;
+	case AXIS_GRIPPER_CLAMP_L5:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L5;		break;
+	case AXIS_GRIPPER_CLAMP_L6:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L6;		break;
+	case AXIS_GRIPPER_CLAMP_L7:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L7;		break;
+	case AXIS_GRIPPER_CLAMP_L8:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L8;		break;
+	case AXIS_GRIPPER_CLAMP_R1:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R1;		break;
+	case AXIS_GRIPPER_CLAMP_R2:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R2;		break;
+	case AXIS_GRIPPER_CLAMP_R3:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R3;		break;
+	case AXIS_GRIPPER_CLAMP_R4:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R4;		break;
+	case AXIS_GRIPPER_CLAMP_R5:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R5;		break;
+	case AXIS_GRIPPER_CLAMP_R6:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R6;		break;
+	case AXIS_GRIPPER_CLAMP_R7:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R7;		break;
+	case AXIS_GRIPPER_CLAMP_R8:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R8;		break;
+	case AXIS_GRIPPER_STRETCH_L1:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L1;		break;
+	case AXIS_GRIPPER_STRETCH_L2:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L2;		break;
+	case AXIS_GRIPPER_STRETCH_L3:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L3;		break;
+	case AXIS_GRIPPER_STRETCH_L4:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L4;		break;
+	case AXIS_GRIPPER_STRETCH_L5:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L5;		break;
+	case AXIS_GRIPPER_STRETCH_L6:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L6;		break;
+	case AXIS_GRIPPER_STRETCH_L7:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L7;		break;
+	case AXIS_GRIPPER_STRETCH_L8:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L8;		break;
+	case AXIS_GRIPPER_STRETCH_R1:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R1;		break;
+	case AXIS_GRIPPER_STRETCH_R2:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R2;		break;
+	case AXIS_GRIPPER_STRETCH_R3:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R3;		break;
+	case AXIS_GRIPPER_STRETCH_R4:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R4;		break;
+	case AXIS_GRIPPER_STRETCH_R5:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R5;		break;
+	case AXIS_GRIPPER_STRETCH_R6:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R6;		break;
+	case AXIS_GRIPPER_STRETCH_R7:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R7;		break;
+	case AXIS_GRIPPER_STRETCH_R8:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R8;		break;
+	case AXIS_GRIPPER_PITCH_L1:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L1;		break;
+	case AXIS_GRIPPER_PITCH_L2:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L2;		break;
+	case AXIS_GRIPPER_PITCH_L3:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L3;		break;
+	case AXIS_GRIPPER_PITCH_L4:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L4;		break;
+	case AXIS_GRIPPER_PITCH_L5:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L5;		break;
+	case AXIS_GRIPPER_PITCH_L6:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L6;		break;
+	case AXIS_GRIPPER_PITCH_L7:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L7;		break;
+	case AXIS_GRIPPER_PITCH_L8:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L8;		break;
+	case AXIS_GRIPPER_PITCH_R1:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R1;		break;
+	case AXIS_GRIPPER_PITCH_R2:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R2;		break;
+	case AXIS_GRIPPER_PITCH_R3:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R3;		break;
+	case AXIS_GRIPPER_PITCH_R4:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R4;		break;
+	case AXIS_GRIPPER_PITCH_R5:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R5;		break;
+	case AXIS_GRIPPER_PITCH_R6:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R6;		break;
+	case AXIS_GRIPPER_PITCH_R7:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R7;		break;
+	case AXIS_GRIPPER_PITCH_R8:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R8;		break;
+	case AXIS_GRIPPER_WEDGE_ZL:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_WEDGE_ZL;		break;
+	case AXIS_GRIPPER_WEDGE_ZR:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_WEDGE_ZR;		break;
+	case AXIS_BOX_ALIGN_CAMERA_YL:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_BOX_ALIGN_CAMERA_YL;		break;
+	case AXIS_BOX_ALIGN_CAMERA_YR:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_BOX_ALIGN_CAMERA_YR;		break;
+	case AXIS_3D_CAMERA_MAIN_Z:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_3D_CAMERA_Z1;		break;
+	case AXIS_3D_CAMERA_SUB_Z:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_3D_CAMERA_Z2;		break;
+	case AXIS_UNLOADER_Z:			nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_UNLOADER_Z;		break;
+	case AXIS_UNLOADER_YL:			nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_UNLOADER_YL;		break;
+	case AXIS_UNLOADER_YR:			nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_UNLOADER_YR;		break;
+	case AXIS_MAGAZINE_LIFT_Z:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_MAGAZINE_LIFT_Z;		break;
+	case AXIS_INKJET_Y:				nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_INKJET_Y;		break;
+
+	case AXIS_LOADER_X:				nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_LOADER_X;		break;
+	case AXIS_LOADING_STAGE_X1:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_LOADING_STAGE_X1;		break;
+	case AXIS_LOADING_STAGE_X2:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_LOADING_STAGE_X2;		break;
+	case AXIS_LOADING_STAGE_Y:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_LOADING_STAGE_Y;			break;
+	case AXIS_INSPECTION_STAGE_X:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_INSPECTION_STAGE_X;		break;
+	case AXIS_INSPECTION_STAGE_Y1:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_INSPECTION_STAGE_Y1;		break;
+	case AXIS_INSPECTION_STAGE_Y2:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_INSPECTION_STAGE_Y2;		break;
+	case AXIS_UNLOADER_X:			nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_UNLOADER_X;		break;
+
+	case AXIS_VIRTUAL_GANTRY_Y:		nType = AXIS_TYPE_REMOTE_UMAC;		nAxis = REMOTE_AXIS_UMAC_VIRTUAL_GANTRY_Y;		break;
+	default: bResult = FALSE;
+		break;
+	}
+#pragma endregion
+
+	*pAxisType = nType;
+	*nRemoteAxis = nAxis;
+
+	return bResult;
+}
+//-------------------------------------------------------
+enum_Axis SharedInfo::GetUmacAxisNoByActualAxis(enum_REMOTE_AXIS_UMAC eUAxis)
+{
+	enum_Axis eAxis;
+	switch (eUAxis)
+	{
+	case REMOTE_AXIS_UMAC_GANTRY_YL:
+	{
+		eAxis = AXIS_VIRTUAL_GANTRY_Y;
+		break;
+	}
+	case REMOTE_AXIS_UMAC_GANTRY_YR:
+	{
+		eAxis = AXIS_VIRTUAL_GANTRY_Y;
+		break;
+	}
+	case REMOTE_AXIS_UMAC_GANTRY_X:
+	{
+		eAxis = AXIS_GANTRY_X;
+		break;
+	}
+	case REMOTE_AXIS_UMAC_VIRTUAL_GANTRY_Y:
+	{
+		eAxis = AXIS_VIRTUAL_GANTRY_Y;
+		break;
+	}
+	}
+	
+	return eAxis;
+}
+//-------------------------------------------------------
+enum_Axis SharedInfo::GetAjinAxisNoByActualAxis(enum_REMOTE_AXIS_AJIN eAAxis)
+{	
+	enum_Axis eAxis = (enum_Axis)-1;
+	switch (eAAxis)
+	{
+		
+	}
+	return eAxis;
+}
+//-------------------------------------------------------
+bool SharedInfo::GetInMotion(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	bool bRet = 0.0;
+
+	GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_REMOTE_UMAC:
+	{
+		bRet = Umac_Axis_InMotion_Status[nAxisNo];
+		break;
+	}
+	case AXIS_TYPE_REMOTE_AJIN:
+	{
+		bRet = Ajin_Axis_InMotionStatus[nAxisNo];
+		break;
+	}
+	}
+
+	return bRet;
+}
+//---------------------------------------------------------
+double SharedInfo::GetCmdPos(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	double dPos = 0.0;
+
+	enum_Axis eTemp = eAxis;
+
+	//Virtual Gantry Y축의 CmdPos는 Gantry YL 기준으로 가져온다.
+	if (eTemp == AXIS_VIRTUAL_GANTRY_Y)
+		eTemp = AXIS_GANTRY_YL;
+
+	GetActualAxisNoByEnumAxis(eTemp, &nAxisType, &nAxisNo);
+
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN:
+	{
+		dPos = Ajin_Axis_Cmd_Pos[nAxisNo];
+		break;
+	}
+	case AXIS_TYPE_REMOTE_UMAC:
+	{
+		dPos = Umac_Axis_Cmd_Pos[nAxisNo];
+		break;
+	}
+	case AXIS_TYPE_REMOTE_AJIN:
+	{
+		dPos = Ajin_Axis_Cmd_Pos[nAxisNo];
+		break;
+	}
+	}
+	return dPos;
+}
+//---------------------------------------------------------
+double SharedInfo::SetCmdPos(enum_Axis eAxis, double dPos)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	//double dPos = 0.0;
+
+	enum_Axis eTemp = eAxis;
+
+	GetActualAxisNoByEnumAxis(eTemp, &nAxisType, &nAxisNo);
+
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN:
+	{
+		Ajin_Axis_Cmd_Pos[nAxisNo] = dPos;
+		break;
+	}
+	case AXIS_TYPE_REMOTE_UMAC:
+	{
+		Umac_Axis_Cmd_Pos[nAxisNo] = dPos;
+		break;
+	}
+	case AXIS_TYPE_REMOTE_AJIN:
+	{
+		Ajin_Axis_Cmd_Pos[nAxisNo] = dPos;
+		break;
+	}
+	}
+	return dPos;
+}
+//---------------------------------------------------------
+double SharedInfo::GetActPos(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	double dPos = 0.0;
+
+	enum_Axis eTemp = eAxis;
+
+	//Virtual Gantry Y축의 CmdPos는 Gantry YL 기준으로 가져온다.
+	if (eTemp == AXIS_VIRTUAL_GANTRY_Y)
+		eTemp = AXIS_GANTRY_YL;
+
+	GetActualAxisNoByEnumAxis(eTemp, &nAxisType, &nAxisNo);
+
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_REMOTE_UMAC:
+	{
+		dPos = Umac_Axis_Act_Pos[nAxisNo];
+		break;
+	}
+	case AXIS_TYPE_REMOTE_AJIN:
+	{
+		dPos = Ajin_Axis_Act_Pos[nAxisNo];
+		break;
+	}
+	}
+
+	return dPos;
+}
+//---------------------------------------------------------
+double SharedInfo::SetActPos(enum_Axis eAxis, double dPos)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+
+	enum_Axis eTemp = eAxis;
+
+	GetActualAxisNoByEnumAxis(eTemp, &nAxisType, &nAxisNo);
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_REMOTE_UMAC:
+	{
+		Umac_Axis_Act_Pos[nAxisNo] = dPos;
+		break;
+	}
+	case AXIS_TYPE_REMOTE_AJIN:
+	{
+		Ajin_Axis_Act_Pos[nAxisNo] = dPos;
+		break;
+	}
+	}
+	return dPos;
+}
+//---------------------------------------------------------
+double	SharedInfo::SetCmdVel(enum_Axis eAxis, double dVel)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+
+	GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_REMOTE_UMAC:
+	{
+		Umac_Axis_Cmd_Vel[nAxisNo] = dVel;
+		break;
+	}
+	case AXIS_TYPE_REMOTE_AJIN:
+	{
+		Ajin_Axis_Cmd_Vel[nAxisNo] = dVel;
+		break;
+	}
+	}
+
+	return dVel;
+}
+
+double SharedInfo::GetCmdVel(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	double value = 0.0;
+
+	GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN: value = VisionAxisCmdVel[nAxisNo]; break; //####
+	case AXIS_TYPE_REMOTE_UMAC: value = UmacCmdVel[nAxisNo]; break;
+	case AXIS_TYPE_REMOTE_AJIN: value = AxisCmdVel[nAxisNo]; break;
+	}
+
+	return value;
+}
+int	SharedInfo::GetHomeStatus(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	int value = -1;
+
+	GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN: value = VisionAxisHomeStatus[nAxisNo]; break; //####
+	case AXIS_TYPE_REMOTE_UMAC: value = UmacHomeStatus[nAxisNo]; break;
+	case AXIS_TYPE_REMOTE_AJIN: value = AxisHomeStatus[nAxisNo]; break;
+	}
+
+	return value;
+}
+int	SharedInfo::GetHomeSignal(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	int value = 0;
+
+	GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN: value = VisionAxisHomeSignal[nAxisNo]; break; //####
+	case AXIS_TYPE_REMOTE_UMAC: value = UmacHomeSignal[nAxisNo]; break;
+	case AXIS_TYPE_REMOTE_AJIN: value = AxisHomeSignal[nAxisNo]; break;
+	}
+
+	return value;
+}
+int	SharedInfo::GetPLimitSignal(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	int value = 0;
+
+	GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN: value = VisionAxisPLimitSignal[nAxisNo]; break; //####
+	case AXIS_TYPE_REMOTE_UMAC: value = UmacPLimitSignal[nAxisNo]; break;
+	case AXIS_TYPE_REMOTE_AJIN: value = AxisPLimitSignal[nAxisNo]; break;
+	}
+
+	return value;
+}
+int	SharedInfo::GetNLimitSignal(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	int value = 0;
+
+	GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN: value = VisionAxisNLimitSignal[nAxisNo]; break; //####
+	case AXIS_TYPE_REMOTE_UMAC: value = UmacNLimitSignal[nAxisNo]; break;
+	case AXIS_TYPE_REMOTE_AJIN: value = AxisNLimitSignal[nAxisNo]; break;
+	}
+
+	return value;
+}
+int	SharedInfo::GetServoOnStatus(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	int value = -1;
+
+	GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN: value = VisionAxisServoOnStatus[nAxisNo]; break; //####
+	case AXIS_TYPE_REMOTE_UMAC: value = UmacServoOnStatus[nAxisNo]; break;
+	case AXIS_TYPE_REMOTE_AJIN: value = AxisServoOnStatus[nAxisNo]; break;
+	}
+
+	return value;
+}
+
+
+int SharedInfo::GetAlarmStatus(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	int value = 1;
+#ifndef SIM_MODE
+	GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN: value = SharedInfo::VisionAxisAlarmStatus[nAxisNo]; break; //####
+	case AXIS_TYPE_REMOTE_UMAC: value = SharedInfo::UmacAlarmStatus[nAxisNo]; break;
+	case AXIS_TYPE_REMOTE_AJIN: value = SharedInfo::AxisAlarmStatus[nAxisNo]; break;
+	}
+#endif // !SIM_MODE
+
+	return value;
+}
+//---------------------------------------------------------
+//DI
+BOOL	SharedInfo::Is_Dig_Input(int nIndex)
+{
+	return	DInputValue[nIndex];
+}
+//---------------------------------------------------------
+//DO
+BOOL	SharedInfo::Set_Dig_Output(int nIndex, bool bOnOff)
+{
+	DOutputValue[nIndex] = bOnOff;
+	return Is_Dig_Output(nIndex);
+}
+//---------------------------------------------------------
+BOOL	SharedInfo::Is_Dig_Output(int nIndex)
+{
+	return	DOutputValue[nIndex];
+}
+//---------------------------------------------------------
+//AI
+double	SharedInfo::Get_AI_Data(int nIndex)
+{
+	return AInputValue[nIndex];
+}
+//---------------------------------------------------------
+int SharedInfo::GetFrameAlignMode()
+{
+	if (CModelData::m_Mdl_Data_Frame.Frame.m_nUse_Align_Point_4_or_2_Point)
+	{
+		return 4;
+	}
+	else
+	{
+		return 2;
+	}
+}
+//---------------------------------------------------------
+BOOL SharedInfo::LoadDInputNameData()
+{
+	try
+	{
+		CString szFilePath = _T("");
+		CString strSection, strKey, Str;
+		C_FileIni fileIni;
+		int i = 0, j = 0;
+
+		szFilePath = SharedInfo::GetExeFilePath();
+		szFilePath.AppendFormat(_T("\\Data"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\Label"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\DInputName.ini"));
+		if (!FileExist(szFilePath))
+		{
+			Str = _T("File Not Exist !! (") + szFilePath + _T(")");
+			LogMsg_Etc(Str);
+			return FALSE;
+		}
+
+		fileIni.m_file.Format(_T("%s"), szFilePath);
+
+		strSection.Format(_T("DInputName"));
+
+		for (i = 0; i < MAX_DINPUT_SIZE; i++)
+		{
+			strKey.Format(_T("DInput%d"), i);
+			Str = fileIni._GetProfileString(strSection, strKey);
+			m_DInputName[i] = Str.TrimLeft();
+		}
+
+		Str = _T("LoadDInputNameData Ok (") + szFilePath + _T(")");
+		LogMsg_Etc(Str);
+	}
+	catch (CFileException* e)
+	{
+		LogMsg_Etc(_T("LoadDInputNameData Error !!"));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+BOOL SharedInfo::SaveDInputNameData(int nStartNum)
+{
+	try
+	{
+		CString szFilePath = _T("");
+		CString strSection, strKey, Str;
+		C_FileIni fileIni;
+		int i = 0, j = 0;
+
+		szFilePath = SharedInfo::GetExeFilePath();
+		szFilePath.AppendFormat(_T("\\Data"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\Label"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\DInputName.ini"));
+
+		fileIni.m_file.Format(_T("%s"), szFilePath); //필수
+
+		strSection.Format(_T("DInputName"));
+
+		for (i = 0; i < 16; i++)
+		{
+			strKey.Format(_T("DInput%d"), i + nStartNum);
+			fileIni._WriteProfileString(strSection, strKey, m_DInputName[i + nStartNum]);
+		}
+
+		Str = _T("SaveDInputNameData Ok (") + szFilePath + _T(")");
+		LogMsg_Etc(Str);
+	}
+	catch (CFileException* e)
+	{
+		LogMsg_Etc(_T("SaveDInputNameData Error !!"));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+BOOL SharedInfo::LoadDOutputNameData()
+{
+	try
+	{
+		CString szFilePath = _T("");
+		CString strSection, strKey, Str;
+		C_FileIni fileIni;
+		int i = 0, j = 0;
+
+		szFilePath = SharedInfo::GetExeFilePath();
+		szFilePath.AppendFormat(_T("\\Data"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\Label"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\DOutputName.ini"));
+		if (!FileExist(szFilePath))
+		{
+			Str = _T("File Not Exist !! (") + szFilePath + _T(")");
+			LogMsg_Etc(Str);
+			return FALSE;
+		}
+
+		fileIni.m_file.Format(_T("%s"), szFilePath); //필수
+
+		strSection.Format(_T("DOutputName"));
+
+		for (i = 0; i < MAX_DOUTPUT_SIZE; i++)
+		{
+			strKey.Format(_T("DOutput%d"), i);
+			Str = fileIni._GetProfileString(strSection, strKey);
+			m_DOutputName[i] = Str.TrimLeft();
+		}
+
+		Str = _T("LoadDOutputNameData Ok (") + szFilePath + _T(")");
+		LogMsg_Etc(Str);
+	}
+	catch (CFileException* e)
+	{
+		LogMsg_Etc(_T("LoadDOutputNameData Error !!"));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+BOOL SharedInfo::SaveDOutputNameData(int nStartNum)
+{
+	try
+	{
+		CString szFilePath = _T("");
+		CString strSection, strKey, Str;
+		C_FileIni fileIni;
+		int i = 0, j = 0;
+
+		szFilePath = SharedInfo::GetExeFilePath();
+		szFilePath.AppendFormat(_T("\\Data"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\Label"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\DOutputName.ini"));
+
+		fileIni.m_file.Format(_T("%s"), szFilePath); //필수
+
+		strSection.Format(_T("DOutputName"));
+
+		for (i = 0; i < 16; i++)
+		{
+			strKey.Format(_T("DOutput%d"), i + nStartNum);
+			fileIni._WriteProfileString(strSection, strKey, m_DOutputName[i + nStartNum]);
+		}
+
+		Str = _T("SaveDOutputNameData Ok (") + szFilePath + _T(")");
+		LogMsg_Etc(Str);
+	}
+	catch (CFileException* e)
+	{
+		LogMsg_Etc(_T("SaveDOutputNameData Error !!"));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL SharedInfo::LoadAInputNameData()
+{
+	try
+	{
+		CString szFilePath = _T("");
+		CString strSection, strKey, Str;
+		C_FileIni fileIni;
+		int i = 0, j = 0;
+
+		szFilePath = SharedInfo::GetExeFilePath();
+		szFilePath.AppendFormat(_T("\\Data"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\Label"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\AInputName.ini"));
+		if (!FileExist(szFilePath))
+		{
+			Str = _T("File Not Exist !! (") + szFilePath + _T(")");
+			LogMsg_Etc(Str);
+			return FALSE;
+		}
+
+		fileIni.m_file.Format(_T("%s"), szFilePath); //필수
+
+		strSection.Format(_T("AInputName"));
+
+		for (i = 0; i < MAX_AINPUT_SIZE; i++)
+		{
+			strKey.Format(_T("AInput%d"), i);
+			Str = fileIni._GetProfileString(strSection, strKey);
+			m_AInputName[i] = Str.TrimLeft();
+		}
+
+		Str = _T("LoadAInputNameData Ok (") + szFilePath + _T(")");
+		LogMsg_Etc(Str);
+	}
+	catch (CFileException* e)
+	{
+		LogMsg_Etc(_T("LoadAInputNameData Error !!"));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+BOOL SharedInfo::SaveAInputNameData(int nStartNum)
+{
+	try
+	{
+		CString szFilePath = _T("");
+		CString strSection, strKey, Str;
+		C_FileIni fileIni;
+		int i = 0, j = 0;
+
+		szFilePath = SharedInfo::GetExeFilePath();
+		szFilePath.AppendFormat(_T("\\Data"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\Label"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\AInputName.ini"));
+
+		fileIni.m_file.Format(_T("%s"), szFilePath); //필수
+
+		strSection.Format(_T("AInputName"));
+
+		for (i = 0; i < 16; i++)
+		{
+			strKey.Format(_T("AInput%d"), i + nStartNum);
+			fileIni._WriteProfileString(strSection, strKey, m_AInputName[i + nStartNum]);
+		}
+
+		Str = _T("SaveAInputNameData Ok (") + szFilePath + _T(")");
+		LogMsg_Etc(Str);
+	}
+	catch (CFileException* e)
+	{
+		LogMsg_Etc(_T("SaveAInputNameData Error !!"));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+BOOL SharedInfo::LoadAOutputNameData()
+{
+	try
+	{
+		CString szFilePath = _T("");
+		CString strSection, strKey, Str;
+		C_FileIni fileIni;
+		int i = 0, j = 0;
+
+		szFilePath = SharedInfo::GetExeFilePath();
+		szFilePath.AppendFormat(_T("\\Data"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\Label"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\AOutputName.ini"));
+		if (!FileExist(szFilePath))
+		{
+			Str = _T("File Not Exist !! (") + szFilePath + _T(")");
+			LogMsg_Etc(Str);
+			return FALSE;
+		}
+
+		fileIni.m_file.Format(_T("%s"), szFilePath); //필수
+
+		strSection.Format(_T("AOutputName"));
+
+		for (i = 0; i < MAX_AOUTPUT_SIZE; i++)
+		{
+			strKey.Format(_T("AOutput%d"), i);
+			Str = fileIni._GetProfileString(strSection, strKey);
+			m_AOutputName[i] = Str.TrimLeft();
+		}
+
+		Str = _T("LoadAOutputNameData Ok (") + szFilePath + _T(")");
+		LogMsg_Etc(Str);
+	}
+	catch (CFileException* e)
+	{
+		LogMsg_Etc(_T("LoadAOutputNameData Error !!"));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+BOOL SharedInfo::SaveAOutputNameData()
+{
+	try
+	{
+		CString szFilePath = _T("");
+		CString strSection, strKey, Str;
+		C_FileIni fileIni;
+		int i = 0, j = 0;
+
+		szFilePath = SharedInfo::GetExeFilePath();
+		szFilePath.AppendFormat(_T("\\Data"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\Label"));
+		::CreateDirectory(szFilePath, NULL);
+		szFilePath.AppendFormat(_T("\\AOutputName.ini"));
+
+		fileIni.m_file.Format(_T("%s"), szFilePath);
+
+		strSection.Format(_T("AOutputName"));
+
+		for (i = 0; i < 16; i++)
+		{
+			strKey.Format(_T("AOutput%d"), i);
+			fileIni._WriteProfileString(strSection, strKey, m_AOutputName[i]);
+		}
+
+		Str = _T("SaveAOutputNameData Ok (") + szFilePath + _T(")");
+		LogMsg_Etc(Str);
+	}
+	catch (CFileException* e)
+	{
+		LogMsg_Etc(_T("SaveAOutputNameData Error !!"));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+BOOL SharedInfo::GetActualIoNumByEnumDo(enum_Do eIoNum, int* pAxisNo)
+{
+
+	*pAxisNo = (int)eIoNum;
+
+	return TRUE;
+}
+
+BOOL SharedInfo::GetActualIoNumByEnumAo(enum_Ao eIoNum, int* pAxisNo)
+{
+
+	*pAxisNo = (int)eIoNum;
+
+	return TRUE;
+}
+
+BOOL SharedInfo::GetActualIoNumByEnumDi(enum_Di eIoNum, int* pAxisNo)
+{
+
+	*pAxisNo = (int)eIoNum;
+
+	return TRUE;
+}
+
+BOOL SharedInfo::GetActualIoNumByEnumAi(enum_Ai eIoNum, int* pAxisNo)
+{
+
+	*pAxisNo = (int)eIoNum;
+
+	return TRUE;
+}
+
+int SharedInfo::SaveAlarmList()
+{
+	CStdioFile OutFile;
+
+	int i, nRtn = TRUE;
+	TCHAR tchPathName[256] = { NULL };
+	TCHAR tchFileName[256] = { NULL };
+	TCHAR tchReviewFileName[256] = { NULL };
+	CString Str, StrStickID;
+
+	wsprintf(tchPathName, _T("%s\\%s"), GetExeFilePath(), SharedInfo::STR_ALARM_LIST_FILE_PATH);
+
+	if (OutFile.Open((LPCTSTR)tchPathName, CFile::modeWrite | CFile::modeCreate | CFile::typeText) == FALSE) return 0;
+
+	Str.Format(_T("\t#BEGIN\n"));
+	OutFile.WriteString(Str);
+
+	for (i = 0; i < 100; i++)
+	{
+		if (AlarmList[i].AlarmDate.IsEmpty())
+			break;
+
+		Str.Format(_T("%s, %s, %d, %d, %s \n"), AlarmList[i].AlarmDate, AlarmList[i].AlarmTime
+			, AlarmList[i].AlarmCode, AlarmList[i].AlarmLevel, AlarmList[i].AlarmText);
+		OutFile.WriteString(Str);
+
+	}
+
+	Str.Format(_T("\t#END"));
+	OutFile.WriteString(Str);
+
+	OutFile.Close();
+
+	return 0;
+}
+
+int SharedInfo::LoadAlarmList()
+{
+	CStdioFile InFile;
+	CString strData, strDataTemp;
+	CString strPointData[5];
+	int nTokenCount = 0;
+	int nTotalCount = 0;
+
+	TCHAR* chDelimiterBlank = _T("\t");
+	TCHAR* chDelimiterComma = _T(",");
+	TCHAR* pchDelimiter = NULL;
+	TCHAR* pchToken = NULL;
+	TCHAR chData[256];
+	TCHAR tchPathName[256];
+
+	wsprintf(tchPathName, _T("%s\\%s"), GetExeFilePath(), SharedInfo::STR_ALARM_LIST_FILE_PATH);
+
+	if (InFile.Open((LPCTSTR)tchPathName, CFile::modeRead | CFile::typeText) == FALSE) return 0;
+
+
+	while (InFile.ReadString(strData) != FALSE) {
+		strData.TrimLeft();
+		//strData.TrimRight();
+
+		if (!strData.Compare(_T("#BEGIN")) || strData.GetLength() < 1) continue;
+		if (!strData.Compare(_T("#END")) || strData == EOF) break;
+
+		if (!pchDelimiter) {
+			if (strData.Find((LPWSTR)chDelimiterComma) != -1) {
+				pchDelimiter = chDelimiterComma;
+			}
+			else {
+				pchDelimiter = chDelimiterBlank;
+			}
+		}
+
+		wsprintf(chData, _T("%s"), strData);
+		pchToken = _tcstok(chData, pchDelimiter);
+
+		nTokenCount = 0;
+
+		while (pchToken != NULL) {
+
+			strPointData[nTokenCount].Format(_T("%s"), pchToken);
+			strPointData[nTokenCount].TrimLeft();
+			strPointData[nTokenCount].TrimRight();
+
+			//pchToken = strtok(NULL, pchDelimiter);   
+			pchToken = _tcstok(NULL, pchDelimiter);
+			nTokenCount++;
+		}
+
+		AlarmList[nTotalCount].AlarmDate = strPointData[0];
+		AlarmList[nTotalCount].AlarmTime = strPointData[1];
+		AlarmList[nTotalCount].AlarmCode = _ttoi(strPointData[2]);
+		AlarmList[nTotalCount].AlarmLevel = _ttoi(strPointData[3]);
+		AlarmList[nTotalCount].AlarmText = strPointData[4];
+
+		nTotalCount++;
+	}
+
+	InFile.Close();
+
+	AlarmCount = nTotalCount;
+
+	return 0;
+}
+
+BOOL SharedInfo::GetAutoSpeed(enum_Axis eAxis, double *pdVel, double *pdAccel, double *pdDecel)
+{
+	double dVel = 0.0, dAccel = 0.0, dDecel = 0.0;
+	
+	dVel = CMachineData::m_MachineDataMotor.Info.dAutoVel[eAxis];
+	dAccel = CMachineData::m_MachineDataMotor.Info.dAutoAccel[eAxis];
+	dDecel = CMachineData::m_MachineDataMotor.Info.dAutoDecel[eAxis];
+
+	*pdVel = dVel;
+	*pdAccel = dAccel;
+	*pdDecel = dDecel;
+
+	return TRUE;
+}
+BOOL SharedInfo::GetManualSpeed(enum_Axis eAxis, enum_AXIS_SPEED eSpeedType, double *pdVel, double *pdAccel, double *pdDecel)
+{
+	double dVel = 0.0, dAccel = 0.0, dDecel = 0.0;
+
+	switch (eSpeedType)
+	{
+	case eAXIS_SPEED_LOW:
+		dVel = CMachineData::m_MachineDataMotor.Info.dManualLowVel[eAxis];
+		dAccel = CMachineData::m_MachineDataMotor.Info.dManualLowAccel[eAxis];
+		dDecel = CMachineData::m_MachineDataMotor.Info.dManualLowDecel[eAxis];
+		break;
+	case eAXIS_SPEED_MEDIUM:
+		dVel = CMachineData::m_MachineDataMotor.Info.dManualMediumVel[eAxis];
+		dAccel = CMachineData::m_MachineDataMotor.Info.dManualMediumAccel[eAxis];
+		dDecel = CMachineData::m_MachineDataMotor.Info.dManualMediumDecel[eAxis];
+		break;
+	case eAXIS_SPEED_HIGH:
+		dVel = CMachineData::m_MachineDataMotor.Info.dManualHighVel[eAxis];
+		dAccel = CMachineData::m_MachineDataMotor.Info.dManualHighAccel[eAxis];
+		dDecel = CMachineData::m_MachineDataMotor.Info.dManualHighDecel[eAxis];
+		break;
+	default:
+		return FALSE;
+	}
+
+	*pdVel = dVel;
+	*pdAccel = dAccel;
+	*pdDecel = dDecel;
+
+	return TRUE;
+}
+CString SharedInfo::GetAxisName(enum_Axis eAxis)
+{
+	CString strAxisName = _T("");
+
+	switch (eAxis)
+	{
+	case AXIS_GANTRY_YL: strAxisName = _T("Gantry YL"); break;
+	case AXIS_GANTRY_YR: strAxisName = _T("Gantry YR"); break;
+	case AXIS_GANTRY_X: strAxisName = _T("Gantry X"); break;
+	case AXIS_CAMERA_Z1: strAxisName = _T("Gantry Z1"); break;
+	case AXIS_CAMERA_Z2: strAxisName = _T("Gantry Z2"); break;
+	case AXIS_CAMERA_Z3: strAxisName = _T("Gantry Z3"); break;
+	case AXIS_LOADER_Z: strAxisName = _T("Loader Z"); break;
+	case AXIS_BACKLIGHT_X: strAxisName = _T("BackLight X"); break;
+	case AXIS_GRIPPER_CLAMP_L1: strAxisName = _T("Clamp L1"); break;
+	case AXIS_GRIPPER_CLAMP_L2: strAxisName = _T("Clamp L2"); break;
+	case AXIS_GRIPPER_CLAMP_L3: strAxisName = _T("Clamp L3"); break;
+	case AXIS_GRIPPER_CLAMP_L4: strAxisName = _T("Clamp L4"); break;
+	case AXIS_GRIPPER_CLAMP_L5: strAxisName = _T("Clamp L5"); break;
+	case AXIS_GRIPPER_CLAMP_L6: strAxisName = _T("Clamp L6"); break;
+	case AXIS_GRIPPER_CLAMP_L7: strAxisName = _T("Clamp L7"); break;
+	case AXIS_GRIPPER_CLAMP_L8: strAxisName = _T("Clamp L8"); break;
+	case AXIS_GRIPPER_CLAMP_R1: strAxisName = _T("Clamp R1"); break;
+	case AXIS_GRIPPER_CLAMP_R2: strAxisName = _T("Clamp R2"); break;
+	case AXIS_GRIPPER_CLAMP_R3: strAxisName = _T("Clamp R3"); break;
+	case AXIS_GRIPPER_CLAMP_R4: strAxisName = _T("Clamp R4"); break;
+	case AXIS_GRIPPER_CLAMP_R5: strAxisName = _T("Clamp R5"); break;
+	case AXIS_GRIPPER_CLAMP_R6: strAxisName = _T("Clamp R6"); break;
+	case AXIS_GRIPPER_CLAMP_R7: strAxisName = _T("Clamp R7"); break;
+	case AXIS_GRIPPER_CLAMP_R8: strAxisName = _T("Clamp R8"); break;
+	case AXIS_GRIPPER_STRETCH_L1: strAxisName = _T("Stretch L1"); break;
+	case AXIS_GRIPPER_STRETCH_L2: strAxisName = _T("Stretch L2"); break;
+	case AXIS_GRIPPER_STRETCH_L3: strAxisName = _T("Stretch L3"); break;
+	case AXIS_GRIPPER_STRETCH_L4: strAxisName = _T("Stretch L4"); break;
+	case AXIS_GRIPPER_STRETCH_L5: strAxisName = _T("Stretch L5"); break;
+	case AXIS_GRIPPER_STRETCH_L6: strAxisName = _T("Stretch L6"); break;
+	case AXIS_GRIPPER_STRETCH_L7: strAxisName = _T("Stretch L7"); break;
+	case AXIS_GRIPPER_STRETCH_L8: strAxisName = _T("Stretch L8"); break;
+	case AXIS_GRIPPER_STRETCH_R1: strAxisName = _T("Stretch R1"); break;
+	case AXIS_GRIPPER_STRETCH_R2: strAxisName = _T("Stretch R2"); break;
+	case AXIS_GRIPPER_STRETCH_R3: strAxisName = _T("Stretch R3"); break;
+	case AXIS_GRIPPER_STRETCH_R4: strAxisName = _T("Stretch R4"); break;
+	case AXIS_GRIPPER_STRETCH_R5: strAxisName = _T("Stretch R5"); break;
+	case AXIS_GRIPPER_STRETCH_R6: strAxisName = _T("Stretch R6"); break;
+	case AXIS_GRIPPER_STRETCH_R7: strAxisName = _T("Stretch R7"); break;
+	case AXIS_GRIPPER_STRETCH_R8: strAxisName = _T("Stretch R8"); break;
+	case AXIS_GRIPPER_PITCH_L1: strAxisName = _T("Pitch L1"); break;
+	case AXIS_GRIPPER_PITCH_L2: strAxisName = _T("Pitch L2"); break;
+	case AXIS_GRIPPER_PITCH_L3: strAxisName = _T("Pitch L3"); break;
+	case AXIS_GRIPPER_PITCH_L4: strAxisName = _T("Pitch L4"); break;
+	case AXIS_GRIPPER_PITCH_L5: strAxisName = _T("Pitch L5"); break;
+	case AXIS_GRIPPER_PITCH_L6: strAxisName = _T("Pitch L6"); break;
+	case AXIS_GRIPPER_PITCH_L7: strAxisName = _T("Pitch L7"); break;
+	case AXIS_GRIPPER_PITCH_L8: strAxisName = _T("Pitch L8"); break;
+	case AXIS_GRIPPER_PITCH_R1: strAxisName = _T("Pitch R1"); break;
+	case AXIS_GRIPPER_PITCH_R2: strAxisName = _T("Pitch R2"); break;
+	case AXIS_GRIPPER_PITCH_R3: strAxisName = _T("Pitch R3"); break;
+	case AXIS_GRIPPER_PITCH_R4: strAxisName = _T("Pitch R4"); break;
+	case AXIS_GRIPPER_PITCH_R5: strAxisName = _T("Pitch R5"); break;
+	case AXIS_GRIPPER_PITCH_R6: strAxisName = _T("Pitch R6"); break;
+	case AXIS_GRIPPER_PITCH_R7: strAxisName = _T("Pitch R7"); break;
+	case AXIS_GRIPPER_PITCH_R8: strAxisName = _T("Pitch R8"); break;
+	case AXIS_GRIPPER_WEDGE_ZL: strAxisName = _T("Gripper ZL"); break;
+	case AXIS_GRIPPER_WEDGE_ZR: strAxisName = _T("Gripper ZR"); break;
+	case AXIS_BOX_ALIGN_CAMERA_YL: strAxisName = _T("BoxAlignCamera YL"); break;
+	case AXIS_BOX_ALIGN_CAMERA_YR: strAxisName = _T("BoxAlignCamera YR"); break;
+	case AXIS_3D_CAMERA_MAIN_Z: strAxisName = _T("3D Camera Main Z"); break;
+	case AXIS_3D_CAMERA_SUB_Z: strAxisName = _T("3D Camera Sub Z"); break;
+	case AXIS_UNLOADER_Z: strAxisName = _T("Unloader Z"); break;
+	case AXIS_UNLOADER_YL: strAxisName = _T("Unloader YL"); break;
+	case AXIS_UNLOADER_YR: strAxisName = _T("Unloader YR"); break;
+	case AXIS_MAGAZINE_LIFT_Z: strAxisName = _T("Cassette Z"); break;
+	case AXIS_INKJET_Y: strAxisName = _T("Inkjet Y"); break;
+	case AXIS_LOADER_X: strAxisName = _T("Loader X"); break;
+	case AXIS_LOADING_STAGE_X1: strAxisName = _T("LoadingStage X1"); break;
+	case AXIS_LOADING_STAGE_X2: strAxisName = _T("LoadingStage X2"); break;
+	case AXIS_LOADING_STAGE_Y: strAxisName = _T("LoadingStage Y"); break;
+	case AXIS_INSPECTION_STAGE_X: strAxisName = _T("InspectionStage X"); break;
+	case AXIS_INSPECTION_STAGE_Y1: strAxisName = _T("InspectionStage Y1"); break;
+	case AXIS_INSPECTION_STAGE_Y2: strAxisName = _T("InspectionStage Y2"); break;
+	case AXIS_UNLOADER_X: strAxisName = _T("Unlaoder X"); break;
+	case AXIS_VIRTUAL_GANTRY_Y: strAxisName = _T("Virtual Gantry Y"); break;
+	}
+
+	return strAxisName;
+}

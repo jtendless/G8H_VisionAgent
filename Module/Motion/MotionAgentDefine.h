@@ -1,0 +1,237 @@
+#pragma once
+
+//////////////////////////////////////////////////////////////////////////
+/// Define
+
+#define NULL_DLG							-1
+#define MAIN_STATUS_DLG						0
+#define MOTION_DLG							1
+#define DIO_DLG								2
+#define AIO_DLG								3
+#define CONFIGURATION_DLG					4
+#define LABELING_DLG						5
+#define MAX_DIALOG_SIZE						6
+
+//////////////////////////////////////////////////////////////////////////
+/// Message
+#define WM_NUMBER_KEYPAD				(WM_USER+200)
+#define WM_CHAR_KEYPAD					(WM_USER+201)
+
+#define KOREAN							0
+#define ENGLISH							1
+
+#define USE_UMAC_WHOLE_SIZE				(14+4)
+#define USE_UMAC_AXIS_SIZE					14					//Awk Dual Gantry Au¢¯e. 
+
+#define MAX_UMAC_INFO_SIZE				(3+8)
+#define MAX_UMAC_PLC_SIZE				6
+#define MAX_UMAC_VIRTUAL_AXIS_SIZE		1 //KJT 20200812 3->1
+#define MAX_UMAC_AXIS_SIZE				4 //KJT 20200812 32->4
+#define MAX_VISION_AXIS_SIZE			3
+#ifndef GRIPPER_0
+#define MAX_AXIS_SIZE					28//68 //REMOTE_AXIS_MAX
+#else
+#define MAX_AXIS_SIZE					60 //REMOTE_AXIS_MAX
+#endif
+#define MAX_CASSETTE_TRAY				6
+
+#define MAX_DOUTPUT_SIZE				160
+#define MAX_DINPUT_SIZE					224
+#define MAX_AOUTPUT_SIZE				16
+#define MAX_AINPUT_SIZE					64
+#define MAX_DOUTPUT_DWORD_SIZE			4
+#define MAX_DINPUT_DWORD_SIZE			6
+
+#define MODULE_SIZE_DI		32
+#define MODULE_SIZE_DO		32
+#define MODULE_SIZE_AI		16
+#define MODULE_SIZE_AO		8
+
+#define MAX_MODULE_SIZE					20
+
+#define UMAC_AXIS_Y1					1
+#define UMAC_AXIS_Y2					2
+#define UMAC_AXIS_Y						21
+
+#define UMAC_AXIS_X						3
+
+#define MASK_UVW						0
+#define FRAME_UVW						1
+//#define BOX_UVW						0
+//#define ALIGN_UVW						1
+#define MAX_UVW							2
+
+//#define FRAME_UVW						0
+#define MAX_UVWX						1
+				
+#define MAX_UVW_AXIS_SIZE				3
+#define MAX_UVWX_AXIS_SIZE				4
+
+#define L_STRETCH						0
+#define R_STRETCH						1
+#define MAX_STRETCH						2
+
+#ifdef GRIPPER_8
+#define MAX_STRETCH_SIZE				8
+#define MAX_STRETCH_AXIS_SIZE			16
+#define MAX_STRETCH_AXIS_USE			8
+#define MAX_FORCE_CONTROL_SIZE			16
+#else
+#define MAX_STRETCH_SIZE				3//5
+#define MAX_STRETCH_AXIS_SIZE			6//10
+#define MAX_STRETCH_AXIS_USE			3//5
+#define MAX_FORCE_CONTROL_SIZE			6//10
+#endif
+
+#define FORCE_CONTROL_STATUS_IDLE		100
+#define FORCE_CONTROL_STATUS_EMG		200
+#define FORCE_CONTROL_STATUS_SUCCESS	300
+#define FORCE_CONTROL_STATUS_FAIL		400
+
+#define STRETCH_STATUS_IDLE				100
+#define STRETCH_STATUS_EMG				200
+#define STRETCH_STATUS_SUCCESS			300
+#define STRETCH_STATUS_FAIL				400
+
+#define STRETCH_THREAD_IDLE				-1
+#define STRETCH_THREAD_RUN				0
+#define STRETCH_THREAD_STOP				1
+
+#define FORCE_CONTROL_SF 0
+#define COUNTER_FORCE_L					0
+#define COUNTER_FORCE_R					1
+#define MAX_COUNTER_FORCE				6
+#define MAX_CENTERING					8
+#define MAX_STEP						30
+#define MAX_COUNTER_FORCE_SIZE			4
+#define MAX_COUNTER_FORCE_AXIS_SIZE		2
+
+
+#define COUNTER_FORCE_STATUS_IDLE		100
+#define COUNTER_FORCE_STATUS_EMG		200
+#define COUNTER_FORCE_STATUS_SUCCESS	300
+#define COUNTER_FORCE_STATUS_FAIL		400
+
+#define COUNTER_FORCE_THREAD_IDLE				-1
+#define COUNTER_FORCE_THREAD_RUN				0
+#define COUNTER_FORCE_THREAD_STOP			1
+
+#define CLAMP_STATUS_HOME				0
+#define CLAMP_STATUS_CLAMP				1
+#define CLAMP_STATUS_UNCLAMP			2
+#define CLAMP_STATUS_FAIL				3
+
+
+#define GANTRY_MASTER_AXIS				26
+#define GANTRY_SLAVE_AXIS				27
+
+#define AUTO_MODE						0
+#define MANUAL_MODE						1
+
+
+#define MAX_CF_NUM						8
+#define MAX_CENTERING_NUM				4
+
+#ifdef GRIPPER_8
+#define MAX_SF_NUM						16
+#else
+#define MAX_SF_NUM						6
+#endif
+
+#define MAX_PAT_X_NUM				5
+#define MAX_PAT_Y_NUM				5
+
+#define MAX_PPA_X_NUM				MAX_CELL_X_COUNT * MAX_PAT_X_NUM
+#define MAX_PPA_Y_NUM				MAX_CELL_Y_COUNT * MAX_PAT_Y_NUM
+
+#define RESOURCE_SPACE					1
+
+//Real, Sync, Virtual, Plc1, Plc2, Home, Index1, Index2
+#define UMAC_REAL_AXIS		0
+#define UMAC_SYNC_AXIS		1
+#define UMAC_VIRTUAL_AXIS	2
+#define UMAC_PLC1_NO		3
+#define UMAC_PLC2_NO		4
+#define UMAC_HOME_NO		5
+#define UMAC_INDEX1_NO		6
+#define UMAC_INDEX2_NO		7
+
+typedef enum _CAM_Z_MOVE_POSITON
+{
+	CAM_Z_MOVE_POSITON_FOCUS = 0,
+	CAM_Z_MOVE_POSITON_WAIT,
+	CAM_Z_MOVE_POSITON_UP,
+	CAM_Z_MOVE_POSITON_DOWN,
+	CAM_Z_MOVE_POSITON_MAX,			
+
+}CAM_Z_MOVE_POSITON, *PCAM_Z_MOVE_POSITON;
+
+
+
+typedef enum _CAM_SELECT_Z
+{
+	//CAM_SELECT_Z1 = 0,
+	//CAM_SELECT_Z3,
+	//CAM_SELECT_Z4,
+	//CAM_SELECT_Z6,
+	//CAM_SYN_Z1_Z3,
+	//CAM_SYN_Z4_Z6,
+	//CAM_SELECT_ZMAX,
+	CAM_SELECT_LEFT = 0,
+	CAM_SELECT_RIGHT,
+	CAM_SELECT_SYNC,
+	CAM_SELECT_ZMAX,
+
+}CAM_SELECT_Z, *PCAM_SELECT_Z;
+
+typedef enum _STICK_TYPE
+{
+	_FIND_STICK,
+	_ALIGN_STICK_UP = 101,
+	_ALIGN_STICK_DN,
+	_MAX_STICK_TYPE
+
+}STICK_TYPE, *PSTICK_TYPE;
+
+typedef enum _AXIS_SELECT
+{
+	AXIS_SELECT_X = 0,
+	AXIS_SELECT_Y,
+	//AXIS_SELECT_Z,
+	AXIS_SELECT_MAX,
+
+}AXIS_SELECT, *PAXIS_SELECT;
+
+typedef enum _L_R_SELECT
+{
+	L_R_SELECT_L = 0,
+	L_R_SELECT_R,
+	L_R_SELECT_MAX,
+
+}L_R_SELECT, *PL_R_SELECT;
+
+
+typedef enum _GUN_CAM_SELECT
+{
+	GUN_CAM_SELECT_GUN = 0,
+	GUN_CAM_SELECT_CAM,
+	CGUN_CAM_SELECT_MAX,
+
+}GUN_CAM_SELECT, *PGUN_CAM_SELECT;
+
+typedef enum _WELDING_POSITON
+{
+	WELDING_POSITON_0 = 0,
+	WELDING_POSITON_1,
+	WELDING_POSITON_2,
+	WELDING_POSITON_3,
+	WELDING_POSITON_4,
+	WELDING_POSITON_5,
+	WELDING_POSITON_6,
+	WELDING_POSITON_7,
+	WELDING_POSITON_8,
+	WELDING_POSITON_9,
+	WELDING_POSITON_MAX,
+
+}WELDING_POSITON, *PWELDING_POSITON;
+

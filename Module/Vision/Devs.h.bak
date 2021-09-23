@@ -1,0 +1,182 @@
+#pragma once
+
+
+#include "SharedInfo.h"
+//#include "../Module/Log/UserLog.h"
+#include "DirectoryManager/FileManager.h"
+#include "Common/CommonDefine.h"
+#include "Common/ClientInterface.h"
+#include "mil.h"
+
+class CWkLibBdc;
+class CWkLibCa410;
+class CWkLibPua310;
+class CWkLibVision;
+
+class CMappingProc;
+
+//Motion
+class CBaseMotion;
+class CWorkInfoMotion;
+class CFrame_Unit_Motion;
+class CGantry_Unit_Motion;
+class CBoxMotion;
+class CLoaderMotion;
+class CGripper_Unit_Motion;
+class CJogMotion;
+//Flow
+class CFrame_Loading_Flow;
+class CFrame_Align_Flow;
+class CFrame_CF_Push_Flow;
+class CFrame_CF_Release_Flow;
+class CFrame_Flatness_Flow;
+class CFrame_UnLoad_Flow;
+
+class CMask_Loading_Flow;
+class CMask_Insert_Flow;
+class CMask_Align_Flow;
+class CMask_Tension_Flow;
+class CMask_Translate_Flow;
+class CMask_Welding_Flow;
+
+
+//Unit Flow
+class CCentering_Unit_Flow;
+class CGantry_Unit_Flow;
+class CTransper_Unit_Flow;
+class CStrech_Unit_Flow;
+
+class CMotionModule;
+class Devs
+{
+public:
+	Devs();
+	~Devs();
+	
+	static void Initialize(void);
+	static void Finalize(void);
+
+	static void Reset(void);
+	static void StopAll(void);
+		
+public:
+	//Client Interface
+	static CClientInterface MotionIf;
+
+#if 0
+	//Awk Light Control
+	static CWkLibBdc		*m_LightController;
+	static CWkLibPua310		*m_Pua310;
+#endif
+
+	//Awk MIL
+	static CWkLibVision*	m_Camera10X;
+	static CWkLibVision*	m_Camera20X;
+	static CWkLibVision*	m_CameraPreAlign;
+	static CWkLibVision*	m_CameraBoxAlignLeft;
+	static CWkLibVision*	m_CameraBoxAlignRight;
+	   
+	static MIL_ID			MilApplication;
+	static MIL_ID			MilSysSol0;
+	static MIL_ID			MilSysSol1;
+	static MIL_ID			MilSysSol2;
+
+	static MIL_ID			MilDigReview10X;
+	static MIL_ID			MilDigReview20X;
+	static MIL_ID			MilDigPreAlign;
+	static MIL_ID			MilDigBoxAlignLeft;
+	static MIL_ID			MilDigBoxAlignRight;
+
+	//User Coding ÇÔ¼ö.
+	//Motion
+	static CWorkInfoMotion					m_WorkInfoMotion;
+	
+	//--------------------------------------------------
+	//Flow
+	static CMask_Loading_Flow		m_Mask_Loading_Flow;
+	static CMask_Insert_Flow		m_Mask_Insert_Flow;
+	static CMask_Align_Flow			m_Mask_Align_Flow;
+	static CMask_Tension_Flow		m_Mask_Tension_Flow;
+
+	//Unit Flow
+	static CCentering_Unit_Flow		m_Centering_Unit_Flow;
+	static CGantry_Unit_Flow		m_Gantry_Unit_Flow;
+	static CTransper_Unit_Flow		m_Transper_Unit_Flow;
+	static CStrech_Unit_Flow		m_Strech_Unit_Flow;
+	//Motion
+	static CBaseMotion				m_BaseMotion;
+	static CFrame_Unit_Motion		m_Frame_Unit_Motion;
+	static CGantry_Unit_Motion		m_Gantry_Unit_Motion;
+	static CBoxMotion		m_BoxMotion;
+	static CLoaderMotion		m_LoaderMotion;
+	static CGripper_Unit_Motion		m_Gripper_Unit_Motion;
+	static CJogMotion				m_JogMotion;
+
+	//Log
+	static CLogger				m_Logger;
+		
+	//Folder Manager
+	static CFileManager			m_FolderManager;
+
+	//static CMappingProc			m_MappingProc;
+
+#if 0
+	//Module
+	static CMotionModule		m_MotionModule;
+#endif
+
+	static CWinThread* m_pMonitoringThread;
+	static int m_nIsRunningMonitoringThread;
+	static int m_nStopMonitoringThread;
+
+	static bool m_bEntry;
+
+	//Machine State Check
+	static VOID MachineStateCheck(void);
+
+	static INT GetMainStep();
+	static INT GetSubStep();
+
+	static BOOL Delay(DOUBLE nTime)
+	{
+		INT nStart = GetTickCount();
+		while (TRUE)
+		{
+			PeekAndPump();
+
+			if (nTime < GetTickCount() - nStart)
+				break;
+
+			Sleep(10);
+		}
+
+		return TRUE;
+	}
+
+	static BOOL Delay(BOOL bCondition)
+	{
+		INT nStart = GetTickCount();
+		while (TRUE)
+		{
+			PeekAndPump();
+
+			if (bCondition)
+				break;
+
+			Sleep(10);
+		}
+
+		return TRUE;
+	}
+
+	static void	PeekAndPump()
+	{
+		MSG		msg;
+		while (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+		{
+			if (!AfxGetThread()->PumpMessage()) break;
+		}
+	}
+};
+
+UINT AppMonitoringThreadProc(LPVOID lpParam);

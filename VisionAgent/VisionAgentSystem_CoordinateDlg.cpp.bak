@@ -1,0 +1,139 @@
+﻿// VisionAgentSystem_CoordinateDlg.cpp: 구현 파일
+//
+
+#include "stdafx.h"
+#include "VisionAgent.h"
+#include "VisionAgentDlg.h"
+#include "VisionAgentSystem_CoordinateDlg.h"
+#include "afxdialogex.h"
+
+
+// CVisionAgentSystem_CoordinateDlg 대화 상자
+
+IMPLEMENT_DYNAMIC(CVisionAgentSystem_CoordinateDlg, CDialogEx)
+
+CVisionAgentSystem_CoordinateDlg::CVisionAgentSystem_CoordinateDlg(CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_VISION_AGENT_SYSTEM_COORDINATE_DIALOG, pParent)
+{
+	Create(IDD_VISION_AGENT_SYSTEM_COORDINATE_DIALOG, pParent);
+}
+
+CVisionAgentSystem_CoordinateDlg::~CVisionAgentSystem_CoordinateDlg()
+{
+}
+
+void CVisionAgentSystem_CoordinateDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+}
+
+
+BEGIN_MESSAGE_MAP(CVisionAgentSystem_CoordinateDlg, CDialogEx)
+	ON_WM_DESTROY()
+	ON_WM_SHOWWINDOW()
+END_MESSAGE_MAP()
+
+
+// CVisionAgentSystem_CoordinateDlg 메시지 처리기
+
+BOOL CVisionAgentSystem_CoordinateDlg::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	InitCtrl();
+	InitPara();
+
+	return TRUE;  // return TRUE unless you set the focus to a control
+				  // 예외: OCX 속성 페이지는 FALSE를 반환해야 합니다.
+}
+
+void CVisionAgentSystem_CoordinateDlg::OnDestroy()
+{
+	CDialogEx::OnDestroy();
+}
+
+BOOL CVisionAgentSystem_CoordinateDlg::InitCtrl()
+{
+	m_editOffsetReview10xTo20x_X.SubclassDlgItem(IDC_EDIT_CAMERA_OFFSET_REVIEW_10X_TO_20X_X, this);
+	m_editOffsetReview10xTo20x_Y.SubclassDlgItem(IDC_EDIT_CAMERA_OFFSET_REVIEW_10X_TO_20X_Y, this);
+	m_editOffsetReview10xTo20x_Z.SubclassDlgItem(IDC_EDIT_CAMERA_OFFSET_REVIEW_10X_TO_20X_Z, this);
+	m_editOffsetReview10xToPreAlign_X.SubclassDlgItem(IDC_EDIT_CAMERA_OFFSET_REVIEW_10X_TO_PRE_ALIGN_X, this);
+	m_editOffsetReview10xToPreAlign_Y.SubclassDlgItem(IDC_EDIT_CAMERA_OFFSET_REVIEW_10X_TO_PRE_ALIGN_Y, this);
+	m_editOffsetReview10xToPreAlign_Z.SubclassDlgItem(IDC_EDIT_CAMERA_OFFSET_REVIEW_10X_TO_PRE_ALIGN_Z, this);
+	m_editOffsetReview10xToAoi_X.SubclassDlgItem(IDC_EDIT_CAMERA_OFFSET_REVIEW_10X_TO_AOI_X, this);
+	m_editOffsetReview10xToAoi_Y.SubclassDlgItem(IDC_EDIT_CAMERA_OFFSET_REVIEW_10X_TO_AOI_Y, this);
+	m_editOffsetReview10xToAoi_Z.SubclassDlgItem(IDC_EDIT_CAMERA_OFFSET_REVIEW_10X_TO_AOI_Z, this);
+
+	m_editCameraZOffset[DIRECT_AXIS_AJIN_CAMERA_Z1].SubclassDlgItem(IDC_EDIT_SYSTEM_COORDINATE_CAMERA_Z_OFFSET_Z1, this);
+	m_editCameraZOffset[DIRECT_AXIS_AJIN_CAMERA_Z2].SubclassDlgItem(IDC_EDIT_SYSTEM_COORDINATE_CAMERA_Z_OFFSET_Z2, this);
+
+	return TRUE;
+}
+
+BOOL CVisionAgentSystem_CoordinateDlg::InitPara()
+{
+	m_editOffsetReview10xTo20x_X.SetWindowText(_ToStr(_T("%.5f"), CSystemData::m_Coordinate.dOffsetReview10xTo20x_X));
+	m_editOffsetReview10xTo20x_Y.SetWindowText(_ToStr(_T("%.5f"), CSystemData::m_Coordinate.dOffsetReview10xTo20x_Y));
+	m_editOffsetReview10xTo20x_Z.SetWindowText(_ToStr(_T("%.5f"), CSystemData::m_Coordinate.dOffsetReview10xTo20x_Z));
+	m_editOffsetReview10xToPreAlign_X.SetWindowText(_ToStr(_T("%.5f"), CSystemData::m_Coordinate.dOffsetReview10xToPreAlign_X));
+	m_editOffsetReview10xToPreAlign_Y.SetWindowText(_ToStr(_T("%.5f"), CSystemData::m_Coordinate.dOffsetReview10xToPreAlign_Y));
+	m_editOffsetReview10xToPreAlign_Z.SetWindowText(_ToStr(_T("%.5f"), CSystemData::m_Coordinate.dOffsetReview10xToPreAlign_Z));
+	m_editOffsetReview10xToAoi_X.SetWindowText(_ToStr(_T("%.5f"), CSystemData::m_Coordinate.dOffsetReview10xToAoi_X));
+	m_editOffsetReview10xToAoi_Y.SetWindowText(_ToStr(_T("%.5f"), CSystemData::m_Coordinate.dOffsetReview10xToAoi_Y));
+	m_editOffsetReview10xToAoi_Z.SetWindowText(_ToStr(_T("%.5f"), CSystemData::m_Coordinate.dOffsetReview10xToAoi_Z));
+
+	m_editCameraZOffset[DIRECT_AXIS_AJIN_CAMERA_Z1].SetWindowText(_ToStr(_T("%.5f"), CSystemData::m_Coordinate.dOffsetCameraZ[DIRECT_AXIS_AJIN_CAMERA_Z1]));
+	m_editCameraZOffset[DIRECT_AXIS_AJIN_CAMERA_Z2].SetWindowText(_ToStr(_T("%.5f"), CSystemData::m_Coordinate.dOffsetCameraZ[DIRECT_AXIS_AJIN_CAMERA_Z2]));
+
+	return TRUE;
+}
+
+BOOL CVisionAgentSystem_CoordinateDlg::SavePara()
+{
+	CString Str;
+
+	m_editOffsetReview10xTo20x_X.GetWindowText(Str);
+	CSystemData::m_Coordinate.dOffsetReview10xTo20x_X = _ttof(Str);
+	m_editOffsetReview10xTo20x_Y.GetWindowText(Str);
+	CSystemData::m_Coordinate.dOffsetReview10xTo20x_Y = _ttof(Str);
+	m_editOffsetReview10xTo20x_Z.GetWindowText(Str);
+	CSystemData::m_Coordinate.dOffsetReview10xTo20x_Z = _ttof(Str);
+	m_editOffsetReview10xToPreAlign_X.GetWindowText(Str);
+	CSystemData::m_Coordinate.dOffsetReview10xToPreAlign_X = _ttof(Str);
+	m_editOffsetReview10xToPreAlign_Y.GetWindowText(Str);
+	CSystemData::m_Coordinate.dOffsetReview10xToPreAlign_Y = _ttof(Str);
+	m_editOffsetReview10xToPreAlign_Z.GetWindowText(Str);
+	CSystemData::m_Coordinate.dOffsetReview10xToPreAlign_Z = _ttof(Str);
+	m_editOffsetReview10xToAoi_X.GetWindowText(Str);
+	CSystemData::m_Coordinate.dOffsetReview10xToAoi_X = _ttof(Str);
+	m_editOffsetReview10xToAoi_Y.GetWindowText(Str);
+	CSystemData::m_Coordinate.dOffsetReview10xToAoi_Y = _ttof(Str);
+	m_editOffsetReview10xToAoi_Z.GetWindowText(Str);
+	CSystemData::m_Coordinate.dOffsetReview10xToAoi_Z = _ttof(Str);
+
+	m_editCameraZOffset[DIRECT_AXIS_AJIN_CAMERA_Z1].GetWindowText(Str);
+	CSystemData::m_Coordinate.dOffsetCameraZ[DIRECT_AXIS_AJIN_CAMERA_Z1] = _ttof(Str);
+	m_editCameraZOffset[DIRECT_AXIS_AJIN_CAMERA_Z2].GetWindowText(Str);
+	CSystemData::m_Coordinate.dOffsetCameraZ[DIRECT_AXIS_AJIN_CAMERA_Z1] = _ttof(Str);
+
+	BOOL bRtn = CSystemData::Save_System_Coordinate();
+	if (bRtn == TRUE)
+		AfxMessageBox(_T("Save Ok"));
+	else
+		AfxMessageBox(_T("Save Fail !!"));
+
+	return TRUE;
+}
+
+void CVisionAgentSystem_CoordinateDlg::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	CDialogEx::OnShowWindow(bShow, nStatus);
+
+	if (bShow == TRUE)
+	{
+		InitPara();
+	}
+	else if (bShow == FALSE)
+	{
+	}
+}

@@ -1,0 +1,89 @@
+#pragma once
+
+#include "BaseMotion.h"
+
+class CLoaderMotion : public CBaseMotion, public CBaseFlow
+{
+public:
+	CLoaderMotion();
+	~CLoaderMotion();
+
+private:
+
+	CWinThread*		pMotionThread;
+	CWinThread*		pMonitoringThread;
+	int				m_nCurStep;
+	DWORD			m_dwTimeTick;
+	DWORD			m_dwTimeOut;
+	BOOL			m_StateFinish;
+	void(*m_StateComplete)(void *pArgument);
+
+
+	VOID			MotionThreadFunctionEntry(VOID);
+	static UINT		MotionThreadFunction(LPVOID lpParam);
+
+	VOID			MonitoringThreadFunctionEntry(VOID);
+	static UINT		MonitoringThreadFunction(LPVOID lpParam);
+
+	BOOL			m_bStopBit;
+
+public:
+
+	HANDLE			hMotionHandle;
+
+	BOOL			InitProcess();
+	BOOL			EndProcess();
+	BOOL			Stop();
+	//이동 완료 flag
+	BOOL			m_bMotionDone;
+
+	BOOL			m_bTerminate;
+	BOOL			IsTerminate() { return m_bTerminate; }
+
+
+	//State 시작
+	BOOL			Start();
+	enum MOTION_MODE
+	{
+		eMOTION_ABS = 0,
+		eMOTION_REL,
+		eMOTION_VEL,
+		eMOTION_MAX,
+	};
+
+	BOOL IsAxisHome(UINT nAxisNo);
+
+	//////////////////////////////////////////////////////////////////////////
+	BOOL MoveAxis(enum_Axis eAxis, double dPos);
+	BOOL IsMoveDone(enum_Axis eAxis, double dPos);
+
+	//Loader Z
+	BOOL LoaderZ_WaitPos();
+	BOOL LoaderZ_StickLoadInBoxPos();
+	BOOL LoaderZ_PaperUnloadPos();
+	BOOL LoaderZ_StickUnloadInStagePos();
+	BOOL LoaderZ_StickLoadInStagePos();
+	BOOL LoaderZ_StickUnloadInBoxPos();
+
+	BOOL IsLoaderZ_WaitPos();
+	BOOL IsLoaderZ_StickLoadInBoxPos();
+	BOOL IsLoaderZ_PaperUnloadPos();
+	BOOL IsLoaderZ_StickLoadInStagePos();
+	BOOL IsLoaderZ_StickUnloadInBoxPos();
+
+	//Loader X
+	BOOL LoaderX_WaitPos();
+
+	BOOL IsLoaderX_WaitPos();
+	
+
+	enum TLoaderMotion
+	{
+		eLOADER_MOTION_IDLE = 1,
+		eLOADER_MOTION_START,
+		
+		eLOADER_MOTION_DONE,
+		eLOADER_MOTION_EXIT
+	};
+};
+

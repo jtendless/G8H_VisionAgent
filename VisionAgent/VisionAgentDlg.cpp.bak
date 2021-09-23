@@ -1,0 +1,3256 @@
+﻿
+// VisionAgentDlg.cpp : ±¸Çö ÆÄÀÏ
+//
+
+#include "stdafx.h"
+#include "VisionAgent.h"
+#include "afxdialogex.h"
+#include "ModelDlg.h"
+#include "ManualDlg.h"
+#include "SystemDlg.h"
+#include "MeasurementDlg.h"
+#include "CommunicationDlg.h"
+#include "VisionAgentDlg.h"
+#include "MachineDlg.h"
+#include "VisionAgentAlarmDlg.h"
+#include "VisionAgentProcessDlg.h"
+#include "Vision/Devs.h"
+#include "Vision/SharedInfo.h"
+#include "Motion/BaseMotion.h"
+#include "CH8Dlg.h"//20.09.29 sjc
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+UINT MonitoringThreadProc(LPVOID lpParam)
+{
+	CVisionAgentDlg *pVisionAgentDlg;
+	pVisionAgentDlg = (CVisionAgentDlg *)lpParam;
+	int status[MAX_FORCE_CONTROL_SIZE] = { 0. };
+	int nSamplingTime = 0;
+	//	int nInPos;
+	int nBaseBitNo = 0;
+	int nSystemHomeStatus = 0;
+	int nSystemHomeSignal = 0;
+	int nSystemPLimitSignal = 0;
+	int nSystemNLimitSignal = 0;
+	int nSystemServoOnStatus = 0;
+	int nSystemAlarmStatus = 0;
+	int nSystemMotionDoneStatus = 0;
+	//	double dCmdPos, dCmdVel, dActPos;
+	double dPos[3] = { 0, };
+	//double dVolt;
+	CString Str;
+
+	DWORD TickTmp, Tick;
+	//pVisionAgentDlg->TempurInterval = 60000;
+
+	//	DWORD dwStatus, dwValue;
+
+	double dLapse = 0.0;
+
+	bool ConnectFlag = FALSE;
+	LARGE_INTEGER start, end;
+	//	DWORD TickCnt;
+	DWORD dwResult;
+	//	MOTION_INFO mi;	
+	DWORD TempTickTmp, TempTick = 0;
+	CString szMsg;
+	CString strTemp = _T("");
+	pVisionAgentDlg->m_nIsRunningMonitoringThread = 1;
+
+	while (!pVisionAgentDlg->m_nStopMonitoringThread)
+	{
+
+		TickTmp = GetTickCount();
+
+		TempTickTmp = GetTickCount();
+#if 0
+		if (TempTickTmp - TempTick > pVisionAgentDlg->TempurInterval)
+		{
+			TempTick = TempTickTmp;
+			pVisionAgentDlg->SaveTempur();
+
+		}
+#endif
+
+		if (pVisionAgentDlg->m_nConnect == 1)
+		{
+#ifndef SIM_MODE
+#if 0
+
+			g_CommTempTur.SetTempSend(0, 0);
+
+			if (pVisionAgentDlg->m_pLaserDispF != NULL)
+			{
+				if (pVisionAgentDlg->m_pLaserDispF->m_bIsOpenned) {
+					strTemp = _T("");
+					SharedInfo::m_dLaserDispFVal = pVisionAgentDlg->m_pLaserDispF->GetData();
+				}
+			}
+
+			if (pVisionAgentDlg->m_pLaserDispB != NULL)
+			{
+				if (pVisionAgentDlg->m_pLaserDispB->m_bIsOpenned) {
+					strTemp = _T("");
+					SharedInfo::m_dLaserDispBVal = pVisionAgentDlg->m_pLaserDispB->GetData();
+				}
+			}
+#endif
+#endif
+
+			nSamplingTime = 1;
+			//Umac
+			if (pVisionAgentDlg->m_nStopMonitoringThread == 1) break;
+
+			Devs::MotionIf.UmacGetCmdPos(0);
+			Sleep(nSamplingTime);
+			Devs::MotionIf.UmacGetActPos(0);
+			Sleep(nSamplingTime);
+			Devs::MotionIf.UmacGetCmdVel(0);
+			Sleep(nSamplingTime);
+
+			Devs::MotionIf.UmacGetHomeSignal(0);
+			Sleep(nSamplingTime);
+			Devs::MotionIf.UmacGetLimitSignal(0, 0);
+			Sleep(nSamplingTime);
+			Devs::MotionIf.UmacGetStatus(0);
+			Sleep(nSamplingTime);
+
+#pragma region //KJT 20200824 AOI
+			if (SharedInfo::m_bAOIAxisMoveStart[_eAOI_AXIS_INDEX_CAMERA_Z1] == TRUE && SharedInfo::m_bAOIAxisMoveDone[_eAOI_AXIS_INDEX_CAMERA_Z1] == FALSE)
+			{
+				double dCurPos = SharedInfo::GetCmdPos(AXIS_CAMERA_Z1);
+				if (Devs::m_JogMotion.IsSamePosition(dCurPos, SharedInfo::m_dAOIAxisMoveTargetPos[_eAOI_AXIS_INDEX_CAMERA_Z1]) &&
+					Devs::m_JogMotion.IsMotionDone(AXIS_CAMERA_Z1))
+				{
+					SharedInfo::m_bAOIAxisMoveStart[_eAOI_AXIS_INDEX_CAMERA_Z1] = FALSE;
+					SharedInfo::m_bAOIAxisMoveDone[_eAOI_AXIS_INDEX_CAMERA_Z1] = TRUE;
+					LogMsg_Total(_T("AOI MotionDone Camera Z1"));
+				}
+			}
+			if (SharedInfo::m_bAOIAxisMoveStart[_eAOI_AXIS_INDEX_CAMERA_Z2] == TRUE && SharedInfo::m_bAOIAxisMoveDone[_eAOI_AXIS_INDEX_CAMERA_Z2] == FALSE)
+			{
+				double dCurPos = SharedInfo::GetCmdPos(AXIS_CAMERA_Z2);
+				if (Devs::m_JogMotion.IsSamePosition(dCurPos, SharedInfo::m_dAOIAxisMoveTargetPos[_eAOI_AXIS_INDEX_CAMERA_Z2]) &&
+					Devs::m_JogMotion.IsMotionDone(AXIS_CAMERA_Z2))
+				{
+					SharedInfo::m_bAOIAxisMoveStart[_eAOI_AXIS_INDEX_CAMERA_Z2] = FALSE;
+					SharedInfo::m_bAOIAxisMoveDone[_eAOI_AXIS_INDEX_CAMERA_Z2] = TRUE;
+					LogMsg_Total(_T("AOI MotionDone Camera Z2"));
+				}
+			}
+			if (SharedInfo::m_bAOIAxisMoveStart[_eAOI_AXIS_INDEX_GANTRY_X] == TRUE && SharedInfo::m_bAOIAxisMoveDone[_eAOI_AXIS_INDEX_GANTRY_X] == FALSE)
+			{
+				double dCurPos = SharedInfo::GetCmdPos(AXIS_GANTRY_X);
+				if (Devs::m_JogMotion.IsSamePosition(dCurPos, SharedInfo::m_dAOIAxisMoveTargetPos[_eAOI_AXIS_INDEX_GANTRY_X]) &&
+					Devs::m_JogMotion.IsMotionDone(AXIS_GANTRY_X))
+				{
+					SharedInfo::m_bAOIAxisMoveStart[_eAOI_AXIS_INDEX_GANTRY_X] = FALSE;
+					SharedInfo::m_bAOIAxisMoveDone[_eAOI_AXIS_INDEX_GANTRY_X] = TRUE;
+					LogMsg_Total(_T("AOI MotionDone Gantry X"));
+				}
+			}
+			if (SharedInfo::m_bAOIAxisMoveStart[_eAOI_AXIS_INDEX_GANTRY_Y] == TRUE && SharedInfo::m_bAOIAxisMoveDone[_eAOI_AXIS_INDEX_GANTRY_Y] == FALSE)
+			{
+				double dCurPos = SharedInfo::GetActPos(AXIS_VIRTUAL_GANTRY_Y);
+				if (Devs::m_JogMotion.IsSamePosition(dCurPos, SharedInfo::m_dAOIAxisMoveTargetPos[_eAOI_AXIS_INDEX_GANTRY_Y]) &&
+					Devs::m_JogMotion.IsMotionDone(AXIS_VIRTUAL_GANTRY_Y))
+				{
+					SharedInfo::m_bAOIAxisMoveStart[_eAOI_AXIS_INDEX_GANTRY_Y] = FALSE;
+					SharedInfo::m_bAOIAxisMoveDone[_eAOI_AXIS_INDEX_GANTRY_Y] = TRUE;
+					LogMsg_Total(_T("AOI MotionDone Gantry Y"));
+				}
+			}
+			if (SharedInfo::m_bAOIAxisMoveStart[_eAOI_AXIS_INDEX_BACKLIGHT_X] == TRUE && SharedInfo::m_bAOIAxisMoveDone[_eAOI_AXIS_INDEX_BACKLIGHT_X] == FALSE)
+			{
+				double dCurPos = SharedInfo::GetActPos(AXIS_BACKLIGHT_X);
+				if (Devs::m_JogMotion.IsSamePosition(dCurPos, SharedInfo::m_dAOIAxisMoveTargetPos[_eAOI_AXIS_INDEX_BACKLIGHT_X]) &&
+					Devs::m_JogMotion.IsMotionDone(AXIS_BACKLIGHT_X))
+				{
+					SharedInfo::m_bAOIAxisMoveStart[_eAOI_AXIS_INDEX_BACKLIGHT_X] = FALSE;
+					SharedInfo::m_bAOIAxisMoveDone[_eAOI_AXIS_INDEX_BACKLIGHT_X] = TRUE;
+					LogMsg_Total(_T("AOI MotionDone BackLight X"));
+				}
+			}
+#pragma endregion
+
+#if 1
+			//Ajin
+			if (pVisionAgentDlg->m_nStopMonitoringThread == 1) break;
+			Devs::MotionIf.AxisGetActPos(0);
+			Sleep(nSamplingTime);
+			Devs::MotionIf.AxisGetCmdPos(0);
+			Sleep(nSamplingTime);
+			Devs::MotionIf.AxisGetCmdVel(0);
+			Sleep(nSamplingTime);
+
+			Devs::MotionIf.AxisGetHomeSignal(0);
+			Sleep(nSamplingTime);
+			Devs::MotionIf.AxisGetLimitSignal(0, 0);
+			Sleep(nSamplingTime);
+			Devs::MotionIf.AxisGetStatus(0);
+			Sleep(nSamplingTime);
+
+			Devs::MotionIf.ClampTorqueRead();
+			Sleep(nSamplingTime);
+			Devs::MotionIf.AInputGetChannelValue(0);
+			Sleep(nSamplingTime);
+			Devs::MotionIf.DInputGetDWordValue(0);
+			Sleep(nSamplingTime);
+			Devs::MotionIf.AOutputGetChannelValue(0);
+			Sleep(nSamplingTime);
+			Devs::MotionIf.DOutputGetDWordValue(0);
+			Sleep(nSamplingTime);
+
+
+			if (pVisionAgentDlg->m_nStopMonitoringThread == 1) break;
+			Devs::MotionIf.ForceControlGetStatus(0, status);
+			Sleep(nSamplingTime);
+			if (pVisionAgentDlg->m_nStopMonitoringThread == 1) break;
+			Devs::MotionIf.ForceControlGetStatus(1, status);
+			Sleep(nSamplingTime);
+			//if (pVisionAgentDlg->m_nStopMonitoringThread == 1) break;
+			//Devs::MotionIf.ForceControlGetStatus(2, status);
+			//Sleep(nSamplingTime);
+			//if (pVisionAgentDlg->m_nStopMonitoringThread == 1) break;
+			//Devs::MotionIf.ForceControlGetStatus(3, status);
+			//Sleep(nSamplingTime);
+			//if (pVisionAgentDlg->m_nStopMonitoringThread == 1) break;
+			//Devs::MotionIf.ForceControlGetStatus(4, status);
+			//Sleep(nSamplingTime);
+
+			Devs::MotionIf.GetForceData();
+			Sleep(nSamplingTime);
+
+			//삭제
+			//Devs::MotionIf.UvwGetCmdPos(MASK_UVW, dPos);
+			//Sleep(nSamplingTime);
+
+			//삭제
+			//Devs::MotionIf.UvwGetCmdPos(FRAME_UVW, dPos);
+			//Sleep(nSamplingTime);
+
+			Devs::MotionIf.GetAllOtherAlarm();
+			Sleep(nSamplingTime);
+
+			SharedInfo::SystemHomeStatus = nSystemHomeStatus;
+			SharedInfo::SystemHomeSignal = nSystemHomeSignal;
+			SharedInfo::SystemNLimitSignal = nSystemNLimitSignal;
+			SharedInfo::SystemPLimitSignal = nSystemPLimitSignal;
+			SharedInfo::SystemServoOnStatus = nSystemServoOnStatus;
+			SharedInfo::SystemAlarmStatus = nSystemAlarmStatus;
+			SharedInfo::SystemMotionDoneStatus = nSystemMotionDoneStatus;
+
+			Tick = GetTickCount() - TickTmp;
+			//LogMsg_Etc(_T("Tick : %d"), tick);
+			QueryPerformanceCounter(&end);
+			//dLapse = ((end.QuadPart - start.QuadPart) / (double)freq.QuadPart) * 1000;   // 문제??
+
+
+#endif
+		}
+		else if (pVisionAgentDlg->m_nConnect == 1 && SharedInfo::MaxAxisSize < 1)
+		{
+			pVisionAgentDlg->GetNetworkStatus();
+			Devs::MotionIf.SystemGetMaxAxisSize(0);
+
+			Sleep(nSamplingTime);
+
+			pVisionAgentDlg->GetNetworkStatus();
+			Devs::MotionIf.SystemGetMaxDInputSize(0);
+
+			Sleep(nSamplingTime);
+
+			pVisionAgentDlg->GetNetworkStatus();
+			Devs::MotionIf.SystemGetMaxDOutputSize(0);
+			Sleep(nSamplingTime);
+
+			pVisionAgentDlg->GetNetworkStatus();
+			Devs::MotionIf.SystemGetMaxAInputSize(0);
+			Sleep(nSamplingTime);
+
+
+			pVisionAgentDlg->GetNetworkStatus();
+			Devs::MotionIf.SystemGetMaxAOutputSize(0);
+			Sleep(nSamplingTime);
+
+#if 1
+
+
+#endif
+		}
+
+		//Sleep(nSamplingTime);
+		//tick = GetTickCount() - ticktmp;
+	//	LogMsg_Etc(_T("Tick : %d"), tick);
+		//if (pVisionAgentDlg->m_ImageView)
+		//	pVisionAgentDlg->m_ImageView.Invalidate();
+
+		//	if (pStateMan) pStateMan->SetEvent();
+	}
+
+	pVisionAgentDlg->m_nIsRunningMonitoringThread = 0;
+	//	GetWindowRect
+	return 0;
+}
+
+
+
+UINT AjinStatusThreadProc(LPVOID lpParam)
+{
+	CVisionAgentDlg *pVisionAgentDlg;
+	pVisionAgentDlg = (CVisionAgentDlg *)lpParam;
+
+	int nSamplingTime = 10;
+	int nInPos;
+	int nBaseBitNo = 0;
+	int nSystemHomeStatus;
+	int nSystemHomeSignal;
+	int nSystemPLimitSignal;
+	int nSystemNLimitSignal;
+	int nSystemServoOnStatus;
+	int nSystemAlarmStatus;
+	int nSystemMotionDoneStatus;
+	//	double dPos[3];
+	double dCmdPos, dCmdVel, dActPos;
+	//double dVolt;
+	CString Str;
+	DWORD dwStatus, dwValue;
+
+	double dLapse = 0.0;
+
+	bool ConnectFlag = FALSE;
+	//	LARGE_INTEGER start, end;
+	DWORD dwResult;
+	//CStateManager* pStateMan = CStateManager::GetInstance();
+	MOTION_INFO mi;
+
+	//CProcessStep* pProcessStep = CProcessStep::GetInstance();
+//	DWORD ticktmp, tick;
+
+
+
+	pVisionAgentDlg->m_nIsRunningStatusThread = 1;
+
+	while (!pVisionAgentDlg->m_nStopStatusThread)
+	{
+		dwResult = GetTickCount();
+#if 0
+#ifndef SIM_MODE
+		if (dwResult - SharedInfo::dConnectionCheckTimer > TIME_OUT_CONNECT && SharedInfo::dConnectionCheckTimer != 0)
+		{
+			LogMsg_Etc(_T("Connection Fail\n"));
+			pVisionAgentDlg->m_nConnect = 0;
+			pVisionAgentDlg->dConnectionCheckTimer = GetTickCount();
+			pVisionAgentDlg->ConnectWorkNetwork();
+		}
+#endif
+#endif
+
+		if (pVisionAgentDlg->m_nVisionMaxAxisSize > 1)
+		{
+
+			//ticktmp = GetTickCount();== 0
+			for (int i = 0; i < DIRECT_AXIS_AJIN_MAX; i++)
+			{
+				if (pVisionAgentDlg->m_nStopStatusThread == 1) break;
+
+				AxmStatusGetActPos(i, &dActPos);
+				AxmStatusGetCmdPos(i, &dCmdPos);
+				AxmStatusReadVel(i, &dCmdVel);
+				SharedInfo::VisionAxisActPos[i] = dActPos;
+				SharedInfo::VisionAxisCmdPos[i] = dCmdPos + CSystemData::m_Coordinate.Info.dOffsetCameraZ[i];
+
+				SharedInfo::VisionAxisCmdVel[i] = dCmdVel;
+
+				AxmHomeGetResult(i, &dwStatus);
+				if (dwStatus == HOME_SUCCESS)
+				{
+					SharedInfo::VisionAxisHomeStatus[i] = 1;
+				}
+				else
+				{
+					SharedInfo::VisionAxisHomeStatus[i] = 0;
+					nSystemHomeStatus = 0;
+				}
+
+				mi.dwMask = 0x1F; // 모든 상태 반환			
+				AxmStatusReadMotionInfo(i, &mi);
+
+				SharedInfo::VisionAxisPLimitSignal[i] = (mi.dwMechSig >> 0) & 0x01;
+				SharedInfo::VisionAxisNLimitSignal[i] = (mi.dwMechSig >> 1) & 0x01;
+				SharedInfo::VisionAxisHomeSignal[i] = (mi.dwMechSig >> 7) & 0x01;
+				SharedInfo::VisionAxisAlarmStatus[i] = (mi.dwMechSig >> 4) & 0x01;
+				nInPos = (mi.dwMechSig >> 5) & 0x01;
+
+				if (SharedInfo::VisionAxisHomeSignal[i] == 1) nSystemHomeSignal = 1;
+				if (SharedInfo::VisionAxisPLimitSignal[i] == 1) nSystemPLimitSignal = 1;
+				if (SharedInfo::VisionAxisNLimitSignal[i] == 1) nSystemNLimitSignal = 1;
+				if (SharedInfo::VisionAxisAlarmStatus[i] == 1) nSystemAlarmStatus = 1;
+
+				AxmSignalIsServoOn(i, &dwStatus);
+
+				SharedInfo::VisionAxisServoOnStatus[i] = dwStatus;
+
+				if (SharedInfo::VisionAxisServoOnStatus[i] == 0) nSystemServoOnStatus = 0;
+
+				AxmStatusReadInMotion(i, &dwStatus);
+
+				SharedInfo::VisionAxisInMotionStatus[i] = (dwStatus | (dwStatus & (nInPos)));
+
+				if (SharedInfo::VisionAxisInMotionStatus[i] == 1) nSystemMotionDoneStatus = 0;
+
+				dwStatus = 0; //0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus					
+
+				if (SharedInfo::VisionAxisHomeSignal[i] == 1)
+				{
+					dwStatus = (dwStatus | (0x01 << 0));
+				}
+				if (SharedInfo::VisionAxisServoOnStatus[i] == 1)
+				{
+					dwStatus = (dwStatus | (0x01 << 1));
+				}
+				if (SharedInfo::VisionAxisAlarmStatus[i] == 1)
+				{
+					dwStatus = (dwStatus | (0x01 << 2));
+				}
+				if (SharedInfo::VisionAxisInMotionStatus[i] == 0)
+				{
+					dwStatus = (dwStatus | (0x01 << 3));
+				}
+
+				SharedInfo::VisionAxisStatus[i] = dwStatus;
+
+				//Sleep(1);
+			}
+
+			//Awking To Monitoring..
+			//Devs::MotionIf.UvwGetCmdPos(MASK_UVW, dPos);
+
+			Sleep(nSamplingTime);
+			//tick = GetTickCount() - ticktmp;
+			//LogMsg_Etc(_T("Tick : %d"), tick);
+			//if (pVisionAgentDlg->m_ImageView)
+			//	pVisionAgentDlg->m_ImageView.Invalidate();
+
+			//	if (pStateMan) pStateMan->SetEvent();
+
+			//Ssmin AjinRecovery
+			if (pVisionAgentDlg->m_bHomeChk == FALSE)
+			{
+				pVisionAgentDlg->m_bHomeChk = TRUE;
+				pVisionAgentDlg->AjinHomeRecovery();
+			}
+			else
+			{
+				pVisionAgentDlg->SaveAjinHomeParameter();
+			}
+
+			for (int i = 0; i < MAX_VISION_AXIS_SIZE; i++)
+			{
+				if (SharedInfo::VisionAxisServoOnStatus[i] == 0)
+				{
+					if (SharedInfo::VisionAxisHomeStatus[i] == 1)
+						AxmHomeSetResult(i, HOME_ERR_USER_BREAK);
+				}
+			}
+
+		}
+
+	}
+
+	pVisionAgentDlg->m_nIsRunningStatusThread = 0;
+	//	GetWindowRect
+	return 0;
+}
+
+
+void CVisionAgentDlg::AjinHomeRecovery()
+{
+	CString strTemp1 = _T("");
+	CString strTemp2 = _T("");
+
+	for (int i = 0; i < MAX_VISION_AXIS_SIZE; i++)
+	{
+		strTemp1.Format(_T("%.5f"), m_dAxisCmdFinishPos[i]);
+		strTemp2.Format(_T("%.5f"), SharedInfo::VisionAxisCmdPos[i]);
+
+		if ((BOOL)SharedInfo::VisionAxisServoOnStatus[i] && m_bAxisFinalHomeStatus[i])
+		{
+			//			if (_ttof(strTemp2) <= (_ttof(strTemp1) + 0.002) && _ttof(strTemp2) >= (_ttof(strTemp1) - 0.002))
+			if (fabs(_ttof(strTemp2) - _ttof(strTemp1)) < 0.002)
+			{
+				AxmHomeSetResult(i, HOME_SUCCESS);
+			}
+		}
+	}
+
+}
+
+int CVisionAgentDlg::SaveAjinHomeParameter()
+{
+	for (int i = 0; i < DIRECT_AXIS_AJIN_MAX; i++)
+	{
+		SharedInfo::DirectAixsHome.Info.dCmdPos[i] = m_dAxisCmdFinishPos[i];
+		SharedInfo::DirectAixsHome.Info.bHomeStatus[i] = m_bAxisFinalHomeStatus[i];
+	}
+
+	SharedInfo::DirectAixsHome.Save();
+	return 0;
+}
+
+
+int CVisionAgentDlg::LoadAjinHomeParameter()
+{
+	CStdioFile InFile;
+	CString strIndex = _T("");
+	CString strSrc = _T("");
+	CString strResult = _T("");
+	TCHAR tchPathName[256];
+	int nIndex = 0;
+	int nFind = -1;
+
+	SharedInfo::DirectAixsHome.Load();
+
+	wsprintf(tchPathName, _T("%s\\%s"), SharedInfo::VisionAgentPath, m_StrHomeFilePath);
+	if (InFile.Open((LPCTSTR)tchPathName, CFile::modeRead | CFile::typeText) == FALSE)
+		return 0;
+
+
+	for (int i = 0; i < DIRECT_AXIS_AJIN_MAX; i++)
+	{
+		m_dAxisCmdFinishPos[i] = SharedInfo::DirectAixsHome.Info.dCmdPos[i];
+		m_bAxisFinalHomeStatus[i] = SharedInfo::DirectAixsHome.Info.bHomeStatus[i];
+	}
+
+	return 0;
+
+}
+class CAboutDlg : public CDialogEx
+{
+public:
+	CAboutDlg();
+
+// ´ëÈ­ »óÀÚ µ¥ÀÌÅÍÀÔ´Ï´Ù.
+	enum { IDD = IDD_ABOUTBOX };
+
+	protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    
+	// DDX/DDV Áö¿øÀÔ´Ï´Ù.
+
+// ±¸ÇöÀÔ´Ï´Ù.
+protected:
+	DECLARE_MESSAGE_MAP()
+public:
+};
+//---------------------------------------------------------------------
+CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
+{
+
+}
+//---------------------------------------------------------------------
+void CAboutDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+}
+//---------------------------------------------------------------------
+BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)	
+
+END_MESSAGE_MAP()
+
+
+// CVisionAgentDlg ´ëÈ­ »óÀÚ
+//---------------------------------------------------------------------
+CVisionAgentDlg::CVisionAgentDlg(CWnd* pParent /*=NULL*/)
+	: CDialogEx(CVisionAgentDlg::IDD, pParent)
+{
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+
+	m_hWnd = NULL;
+	
+	//Awk MIL
+	Devs::MilSysSol0 = NULL;
+	Devs::MilSysSol1 = NULL;
+
+	Devs::MilDigReview10X = NULL;
+	Devs::MilDigReview20X = NULL;
+	Devs::MilDigPreAlign = NULL;
+	Devs::MilDigBoxAlignLeft = NULL;
+	Devs::MilDigBoxAlignRight = NULL;
+	
+	m_nAutoCnt = 0;
+	m_nCurrSubDlg = 0;
+}
+//---------------------------------------------------------------------
+CVisionAgentDlg::~CVisionAgentDlg()
+{
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_RDO_CAMERA_REVIEW_10X, m_radioReview10X);
+	DDX_Control(pDX, IDC_RDO_CAMERA_REVIEW_20X, m_radioReview20X);
+	DDX_Control(pDX, IDC_RDO_CAMERA_PRE_ALIGN, m_radioPreAlign);
+}
+//---------------------------------------------------------------------
+BEGIN_MESSAGE_MAP(CVisionAgentDlg, CDialogEx)
+	ON_WM_SYSCOMMAND()
+	ON_WM_PAINT()
+	ON_WM_QUERYDRAGICON()
+	ON_WM_TIMER()
+	ON_WM_SIZE()
+	ON_STN_CLICKED(IDC_STATIC_MODEL_BTN, &CVisionAgentDlg::OnStnClickedStaticModelBtn)
+	ON_STN_CLICKED(IDC_STATIC_MANUAL_BTN, &CVisionAgentDlg::OnStnClickedStaticManualBtn)
+	ON_STN_CLICKED(IDC_STATIC_COMMUNICATION_BTN, &CVisionAgentDlg::OnStnClickedStaticCommunicationBtn)
+	ON_STN_CLICKED(IDC_STATIC_SYSTEM_BTN, &CVisionAgentDlg::OnStnClickedStaticSystemBtn)
+	ON_STN_CLICKED(IDC_STATIC_HANSONG_TITLE, &CVisionAgentDlg::OnStnClickedStaticHansongTitle)
+	ON_STN_CLICKED(IDC_STATIC_STOP_BTN, &CVisionAgentDlg::OnStnClickedStaticStopBtn)
+//	ON_STN_CLICKED(IDC_STATIC_MAIN_TITLE, &CVisionAgentDlg::OnStnClickedStaticMainTitle)
+	ON_STN_CLICKED(IDC_STATIC_MEASUREMENT_BTN, &CVisionAgentDlg::OnStnClickedStaticMeasurementBtn)
+	ON_STN_CLICKED(IDC_STATIC_AUTO_RUN_BTN, &CVisionAgentDlg::OnStnClickedStaticAutoRunBtn)
+	ON_STN_DBLCLK(IDC_STATIC_WORK_MODE_STATE, &CVisionAgentDlg::OnStnDblclickStaticWorkModeState)
+	ON_STN_CLICKED(IDC_STATIC_AUTO_RUN_DISPLAY, &CVisionAgentDlg::OnStnClickedStaticAutoRunDisplay)
+	ON_STN_DBLCLK(IDC_STATIC_AUTO_RUN_DISPLAY, &CVisionAgentDlg::OnStnDblclickStaticAutoRunDisplay)
+	ON_STN_CLICKED(IDC_STATIC_ECS_BTN, &CVisionAgentDlg::OnStnClickedStaticEcsBtn)
+	ON_STN_CLICKED(IDC_STATIC_READY_BTN, &CVisionAgentDlg::OnStnClickedStaticReadyBtn)
+	ON_STN_CLICKED(IDC_LOG_ALL, &CVisionAgentDlg::OnStnClickedLogAll)
+	ON_STN_CLICKED(IDC_LOG_PROCESS, &CVisionAgentDlg::OnStnClickedLogProcess)
+	ON_STN_CLICKED(IDC_LOG_SYSTEM, &CVisionAgentDlg::OnStnClickedLogSystem)
+	ON_STN_CLICKED(IDC_LOG_VISION, &CVisionAgentDlg::OnStnClickedLogVision)
+	ON_STN_CLICKED(IDC_LOG_ETC, &CVisionAgentDlg::OnStnClickedLogEtc)
+	ON_STN_CLICKED(IDC_LOG_ALARM, &CVisionAgentDlg::OnStnClickedLogAlarm)
+	ON_BN_CLICKED(IDC_CHECK_SHOW_PROCESS_SUB, &CVisionAgentDlg::OnBnClickedCheckShowProcessSub)
+	ON_STN_CLICKED(IDC_STATIC_MACHINE_BTN, &CVisionAgentDlg::OnStnClickedStaticMachineBtn)
+	ON_BN_CLICKED(IDC_RDO_CAMERA_REVIEW_10X, &CVisionAgentDlg::OnBnClickedRdoCameraReview10x)
+	ON_BN_CLICKED(IDC_RDO_CAMERA_REVIEW_20X, &CVisionAgentDlg::OnBnClickedRdoCameraReview20x)
+	ON_BN_CLICKED(IDC_RDO_CAMERA_PRE_ALIGN, &CVisionAgentDlg::OnBnClickedRdoCameraPreAlign)
+	ON_STN_DBLCLK(IDC_STATIC_MAIN_TITLE, &CVisionAgentDlg::OnStnDblclickStaticMainTitle)
+	ON_STN_CLICKED(IDC_STATIC_MAIN_ALARM, &CVisionAgentDlg::OnStnClickedStaticMainAlarm)
+END_MESSAGE_MAP()
+//---------------------------------------------------------------------
+// CVisionAgentDlg ¸Þ½ÃÁö Ã³¸®±â
+
+BOOL CVisionAgentDlg::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	// ½Ã½ºÅÛ ¸Þ´º¿¡ "Á¤º¸..." ¸Þ´º Ç×¸ñÀ» Ãß°¡ÇÕ´Ï´Ù.
+
+	// IDM_ABOUTBOX´Â ½Ã½ºÅÛ ¸í·É ¹üÀ§¿¡ ÀÖ¾î¾ß ÇÕ´Ï´Ù.
+	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
+	ASSERT(IDM_ABOUTBOX < 0xF000);
+
+	CMenu* pSysMenu = GetSystemMenu(FALSE);
+	if (pSysMenu != NULL)
+	{
+		BOOL bNameValid;
+		CString strAboutMenu;
+		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
+		ASSERT(bNameValid);
+		if (!strAboutMenu.IsEmpty())
+		{
+			pSysMenu->AppendMenu(MF_SEPARATOR);
+			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
+		}
+	}
+
+	SetIcon(m_hIcon, TRUE);			// Å« ¾ÆÀÌÄÜÀ» ¼³Á¤ÇÕ´Ï´Ù.
+	SetIcon(m_hIcon, FALSE);		// ÀÛÀº ¾ÆÀÌÄÜÀ» ¼³Á¤ÇÕ´Ï´Ù.
+
+	m_bDisplay = TRUE;
+
+
+	CString szMsg;
+	CFile file;
+	TCHAR tchPathName[_MAX_PATH];
+#pragma region	// Log Setting----------------------------------------------------------------
+	int i, nSize;
+	CRect re;
+
+	GetModuleFileName(NULL, tchPathName, MAX_PATH);
+	nSize = (int)wcslen(tchPathName);
+	for (i = nSize; i >= 0; i--)
+	{
+		if (tchPathName[i] == '\\')
+		{
+			tchPathName[i] = NULL;
+			break;
+		}
+	}
+	SharedInfo::VisionAgentPath.Format(_T("%s"), tchPathName);
+
+	CLogDefine::Initialize();
+
+	if (CLogDefine::LoggerPtr)
+	{
+		CString strPath;
+		//sunghaklee(2018.12.26)
+		//strPath.Format(_T("%s\\LOG\\Vision"), SharedInfo::VisionAgentPath);
+
+		static TCHAR pBuf[256] = { 0, };
+		GetModuleFileName(NULL, pBuf, sizeof(pBuf));
+		PathRemoveFileSpec(pBuf);
+		//PathRemoveFileSpec(pBuf);
+		//PathRemoveFileSpec(pBuf);
+		strPath.Format(_T("%s\\Log"), pBuf);
+		if (IsSameDirectory(strPath) == FALSE)
+		{
+			CreateDirectory(strPath, NULL);
+		}
+
+		CLogDefine::LoggerPtr->SetLogPath(strPath);
+	}
+#pragma endregion
+
+#pragma region //Vision-----------------------------------------------------------------------------------
+	CString strDcfFilePreAlign =		GetHomeDir() + _T("Data\\DCF\\SOL0_DEV0_PreAlign.dcf");
+	CString strDcfFileReview10X =		GetHomeDir() + _T("Data\\DCF\\SOL1_DEV0_10X.dcf");
+	CString strDcfFileReview20X =		GetHomeDir() + _T("Data\\DCF\\SOL1_DEV1_20X.dcf");
+	CString strDcfFileBoxAlignLeft =	GetHomeDir() + _T("Data\\DCF\\SOL2_DEV0_BoxAlignLeft.dcf");
+	CString strDcfFileBoxAlignRight =	GetHomeDir() + _T("Data\\DCF\\SOL2_DEV1_BoxAlignRight.dcf");;
+	
+	if (MappAlloc(M_DEFAULT, &Devs::MilApplication) == M_NULL) {
+		AfxMessageBox(_T("[MIL APP ALLOC DEBUG] Mil Application Memory Alloc Error"));
+		//		return -1;
+	}
+	else
+	{
+		MappControl(M_ERROR, M_PRINT_DISABLE);
+		//MappControl(M_ERROR, M_PRINT_ENABLE);
+	}
+
+	if (MsysAlloc(M_SYSTEM_SOLIOS, M_DEV0, M_COMPLETE, &Devs::MilSysSol0) != M_NULL)
+	{
+		//PreAlign
+		if (!MdigAlloc(Devs::MilSysSol0, M_DEV0, strDcfFilePreAlign, M_DEFAULT, &Devs::MilDigPreAlign))
+			LogMsg_Vision(_T("PreAlign Camera Error"));
+		else
+		{
+			LogMsg_Vision(_T("PreAlign Camera Success"));
+			MdigControl(Devs::MilDigPreAlign, M_GRAB_DIRECTION_X, M_REVERSE);
+			MdigControl(Devs::MilDigPreAlign, M_GRAB_DIRECTION_Y, M_REVERSE);
+		}
+	}
+	else 
+	{
+		MsysAlloc(M_SYSTEM_HOST, M_DEV0, M_COMPLETE, &Devs::MilSysSol0);
+
+		//	AfxMessageBox("SOLIOS보드 check");
+		//		m_pMsgList.AddMessageSend(_T("SOLIOS보드 check"));
+	}
+
+	if (MsysAlloc(M_SYSTEM_SOLIOS, M_DEV1, M_COMPLETE, &Devs::MilSysSol1) != M_NULL)
+	{
+		//Review10X
+		if (!MdigAlloc(Devs::MilSysSol1, M_DEV0, strDcfFileReview10X, M_DEFAULT, &Devs::MilDigReview10X))
+			LogMsg_Vision(_T("Review10X Camera Error"));
+		else
+		{
+			LogMsg_Vision(_T("Review10X Camera Success"));
+			MdigControl(Devs::MilDigReview10X, M_GRAB_DIRECTION_X, M_REVERSE);
+			MdigControl(Devs::MilDigReview10X, M_GRAB_DIRECTION_Y, M_REVERSE);
+		}
+
+		//Review20X
+		if (!MdigAlloc(Devs::MilSysSol1, M_DEV1, strDcfFileReview20X, M_DEFAULT, &Devs::MilDigReview20X))
+			LogMsg_Vision(_T("Review20X Camera Error"));
+		else
+		{
+			LogMsg_Vision(_T("Review20X Camera Success"));
+		}
+	}
+	else
+	{
+		MsysAlloc(M_SYSTEM_HOST, M_DEV1, M_COMPLETE, &Devs::MilSysSol1);
+	}
+
+	if (MsysAlloc(M_SYSTEM_SOLIOS, M_DEV2, M_COMPLETE, &Devs::MilSysSol2) != M_NULL)
+	{
+		if (!MdigAlloc(Devs::MilSysSol2, M_DEV0, strDcfFileBoxAlignLeft, M_DEFAULT, &Devs::MilDigBoxAlignLeft))
+			LogMsg_Vision(_T("BoxAlignLeft Camera Error"));
+		else
+			LogMsg_Vision(_T("BoxAlignLeft Camera Success"));
+
+		if (!MdigAlloc(Devs::MilSysSol2, M_DEV1, strDcfFileBoxAlignRight, M_DEFAULT, &Devs::MilDigBoxAlignRight))
+			LogMsg_Vision(_T("BoxAlignRight Camera Error"));
+		else
+		{
+			MdigControl(Devs::MilDigBoxAlignRight, M_GRAB_DIRECTION_X, M_REVERSE);
+			MdigControl(Devs::MilDigBoxAlignRight, M_GRAB_DIRECTION_Y, M_REVERSE);
+			LogMsg_Vision(_T("BoxAlignRight Camera Success"));
+		}
+	}
+	else
+	{
+		MsysAlloc(M_SYSTEM_HOST, M_DEV1, M_COMPLETE, &Devs::MilSysSol2);
+	}
+#pragma endregion
+
+
+
+#ifndef SIM_MODE
+
+#pragma region
+	g_pReview10x = new CCamAreaModul(0, Devs::MilSysSol1, Devs::MilDigReview10X, DIRECT_AXIS_AJIN_CAMERA_Z1);
+	g_pReview10x->Create(NULL, NULL, WS_VISIBLE | WS_CHILD | WS_BORDER, CRect(0, 0, 0, 0), this, 25005);
+
+	g_pReview20x = new CCamAreaModul(2, Devs::MilSysSol2, Devs::MilDigReview20X, DIRECT_AXIS_AJIN_CAMERA_Z1);
+	g_pReview20x->Create(NULL, NULL, WS_VISIBLE | WS_CHILD | WS_BORDER, CRect(0, 0, 0, 0), this, 25007);
+
+	g_pPreAlign = new CCamAreaModul(4, Devs::MilSysSol1, Devs::MilDigPreAlign, DIRECT_AXIS_AJIN_CAMERA_Z1);
+	g_pPreAlign->Create(NULL, NULL, WS_VISIBLE | WS_CHILD | WS_BORDER, CRect(0, 0, 0, 0), this, 25009);
+#pragma endregion
+
+#pragma region  //Light
+	g_CommLight_8ch.Init(2, this->m_hWnd, 0);
+	g_CommLight_12ch.Init(3, this->m_hWnd, 0);
+	g_CommMLCLedLight.Init(1, this->m_hWnd, 0);
+#pragma endregion
+#endif
+
+	//AddListColumn();
+	SharedInfo::Initialize();
+	SharedInfo::ActiveInfoLoad();
+	SharedInfo::ResultInfoLoad();
+
+	SharedInfo::LoadRecipeTable();
+	szMsg = SharedInfo::FindRecipeName(SharedInfo::Active.nActiveRecipeNum);
+
+	SharedInfo::LoadModelData(szMsg);
+	SharedInfo::LoadSystemData();
+	SharedInfo::LoadManualData();
+	SharedInfo::LoadMaachineData();
+	
+	Devs::Initialize();
+
+	SharedInfo::FindModelNames();
+
+
+#if 0
+	SharedInfo::LoadDInputNameData();
+	SharedInfo::LoadDOutputNameData();
+	SharedInfo::LoadAInputNameData();
+	SharedInfo::LoadAOutputNameData();
+#else
+	LoadAxisLabelParameter();
+	LoadDInputLabelParameter();
+	LoadDOutputLabelParameter();
+	LoadAInputLabelParameter();
+	LoadAOutputLabelParameter();
+#endif
+
+	//Vision 1 Setting ----------------------------------------------------------------------------------
+	//Review10X
+	Devs::m_Camera10X = new CWkLibVision(0, Devs::MilApplication, Devs::MilSysSol1, Devs::MilDigReview10X);
+	Devs::m_Camera10X->SetCameraSize(CAM_BUF_SIZE_X_5M, CAM_BUF_SIZE_Y_5M);
+	Devs::m_Camera10X->SubclassDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_10X, this);
+	//Review20X
+	Devs::m_Camera20X = new CWkLibVision(1, Devs::MilApplication, Devs::MilSysSol1, Devs::MilDigReview20X);
+	Devs::m_Camera20X->SetCameraSize(CAM_BUF_SIZE_X_5M, CAM_BUF_SIZE_Y_5M);
+	Devs::m_Camera20X->SubclassDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_20X, this);
+	//PreAlign -------------------------------------------------------------------------------------------
+	Devs::m_CameraPreAlign = new CWkLibVision(2, Devs::MilApplication, Devs::MilSysSol0, Devs::MilDigPreAlign);
+	Devs::m_CameraPreAlign->SetCameraSize(CAM_BUF_SIZE_X_5M, CAM_BUF_SIZE_Y_5M);
+	Devs::m_CameraPreAlign->SubclassDlgItem(IDC_STATIC_CAMERA_DISPALY_PRE_ALIGN, this);
+	//BoxAlignLeft -------------------------------------------------------------------------------------------
+	Devs::m_CameraBoxAlignLeft = new CWkLibVision(3, Devs::MilApplication, Devs::MilSysSol2, Devs::MilDigBoxAlignLeft);
+	Devs::m_CameraBoxAlignLeft->SetCameraSize(CAM_BUF_SIZE_X_5M, CAM_BUF_SIZE_Y_5M);
+	Devs::m_CameraBoxAlignLeft->SubclassDlgItem(IDC_STATIC_CAMERA_DISPALY_BOX_ALIGN_LEFT, this);
+	//BoxAlignRight-------------------------------------------------------------------------------------------
+	Devs::m_CameraBoxAlignRight = new CWkLibVision(4, Devs::MilApplication, Devs::MilSysSol2, Devs::MilDigBoxAlignRight);
+	Devs::m_CameraBoxAlignRight->SetCameraSize(CAM_BUF_SIZE_X_5M, CAM_BUF_SIZE_Y_5M);
+	Devs::m_CameraBoxAlignRight->SubclassDlgItem(IDC_STATIC_CAMERA_DISPALY_BOX_ALIGN_RIGHT, this);
+
+#pragma region Simulation View
+	//CRect rect;
+	//GetDlgItem(IDC_STATIC_VISION_AGENT_SIMULATION_VIEW)->GetWindowRect(&rect);
+	m_VisionAgentSimulationViewDlg.Create(IDD_VISION_AGENT_SIMULATION_VIEW_DIALOG, this);
+	//m_VisionAgentSimulationViewDlg.SetWindowPos(NULL, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, NULL);
+	//m_VisionAgentSimulationViewDlg.MoveWindow(&rect);
+#pragma endregion
+
+	////
+	m_StrMotFilePath.Format(_T("%s\\Data\\Ajin\\AjinPara.mot"), SharedInfo::GetExeFilePath());
+
+	if (AxlOpenNoReset(7) != AXT_RT_SUCCESS)
+	{
+		LogMsg_Alarm(_T("Axl is not opened."));
+	}
+	else
+	{
+		m_nAXLOpen = 1;
+		GetBoardInfo();
+		GetMotionPara();
+		LoadAjinHomeParameter();
+
+		for (int i = 0; i < m_nVisionMaxAxisSize; i++)
+		{
+			AxmMotSetAbsRelMode(i, 0);//abs
+		}
+
+		LogMsg_Etc(_T("Axl is opened."));
+
+
+	}
+	////
+	
+	//LogMsg_Etc();
+	DialogInit();
+	NetworkInit();
+	InitSubDlg();
+	Init_Log_Dlg();
+	ShowWindow(SW_SHOWMAXIMIZED);	
+
+	//Network
+	m_nConnect = 0;
+	m_bConnectWorkNetwork = FALSE;
+	//	m_nSocketReceiveFlag = TRUE;
+	m_SocketWrite.SetParentDlg(this);
+	Devs::MotionIf.SetParentDlg(this);
+
+#ifndef SIM_MODE
+	ConnectWorkNetwork();	//#####
+	m_nRetryCnt = 0;
+	while (1)
+	{
+		if (m_nConnect == 1)
+			break;
+
+		if (m_nRetryCnt >= 50)
+		{
+			break;
+		}
+		m_nRetryCnt++;
+		Sleep(100);
+	}
+
+	if (m_nConnect)
+	{
+		//m_nStopSaftyThread = 0;
+		//m_pSaftyThread = AfxBeginThread(SaftyThreadProc, this, THREAD_PRIORITY_ABOVE_NORMAL, 0, CREATE_SUSPENDED);
+		//Sleep(100);
+		//m_pSaftyThread->ResumeThread();
+
+		m_nStopMonitoringThread = 0;
+		m_pMonitoringThread = AfxBeginThread(MonitoringThreadProc, this, THREAD_PRIORITY_ABOVE_NORMAL, 0, CREATE_SUSPENDED);
+		Sleep(100);
+		m_pMonitoringThread->ResumeThread();
+
+		m_nStopStatusThread = 0;
+		m_pStatusThread = AfxBeginThread(AjinStatusThreadProc, this, THREAD_PRIORITY_ABOVE_NORMAL, 0, CREATE_SUSPENDED);
+		Sleep(100);
+		m_pStatusThread->ResumeThread();
+	}
+#endif
+
+	//KJT 20200913 !!!
+	double dUvwPos[3] = { 0.0, };
+	Devs::MotionIf.UvwGetCmdPos(MASK_UVW, dUvwPos);
+	Sleep(20); //!!
+	Devs::MotionIf.UvwGetCmdPos(FRAME_UVW, dUvwPos);
+
+	SetDefaultOutput();
+
+	AOIServerOpen(); //KJT 20200823
+
+	LogMsg_System(_T("---------- VisionAgent Start ----------"));
+
+	SetTimer(1, 100, NULL);
+
+	return TRUE;  
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::NetworkInit()
+{
+
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnSysCommand(UINT nID, LPARAM lParam)
+{
+	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
+	{
+		CAboutDlg dlgAbout;
+		dlgAbout.DoModal();
+	}
+	else
+	{
+		CDialogEx::OnSysCommand(nID, lParam);
+	}
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnPaint()
+{
+	if (IsIconic())
+	{
+		CPaintDC dc(this); // ±×¸®±â¸¦ À§ÇÑ µð¹ÙÀÌ½º ÄÁÅØ½ºÆ®ÀÔ´Ï´Ù.
+
+		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
+
+		// Å¬¶óÀÌ¾ðÆ® »ç°¢Çü¿¡¼­ ¾ÆÀÌÄÜÀ» °¡¿îµ¥¿¡ ¸ÂÃä´Ï´Ù.
+		int cxIcon = GetSystemMetrics(SM_CXICON);
+		int cyIcon = GetSystemMetrics(SM_CYICON);
+		CRect rect;
+		GetClientRect(&rect);
+		int x = (rect.Width() - cxIcon + 1) / 2;
+		int y = (rect.Height() - cyIcon + 1) / 2;
+
+		// ¾ÆÀÌÄÜÀ» ±×¸³´Ï´Ù.
+		dc.DrawIcon(x, y, m_hIcon);
+	}
+	else
+	{
+		CDialogEx::OnPaint();
+	}
+}
+//---------------------------------------------------------------------
+HCURSOR CVisionAgentDlg::OnQueryDragIcon()
+{
+	return static_cast<HCURSOR>(m_hIcon);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::DialogInit()
+{
+	//메인 상태바
+	CRect rect;
+	LOGFONT LogoMainFont, LogoHansongFont, StateBarFont, MainMenuFont, AutoRunDisp,FlowFont,FlowProcessFont,QuickDataPos, NamingFont;
+	CString strTemp = _T("");
+	memset(&MainMenuFont, 0, sizeof(LOGFONT));
+	MainMenuFont.lfHeight = 20;
+	MainMenuFont.lfWeight = FW_NORMAL;
+	m_fontMainMenu.CreateFontIndirect(&MainMenuFont);
+
+	//메인 상태바
+	memset(&LogoMainFont, 0, sizeof(LOGFONT));
+	LogoMainFont.lfHeight = 30;
+	LogoMainFont.lfWeight = FW_HEAVY;
+	m_fontStcMainLogo.CreateFontIndirect(&LogoMainFont);
+
+	memset(&LogoHansongFont, 0, sizeof(LOGFONT));
+	LogoHansongFont.lfHeight = 30;
+	LogoHansongFont.lfWeight = FW_HEAVY;
+	m_fontStcHansongLogo.CreateFontIndirect(&LogoHansongFont);
+
+	memset(&StateBarFont, 0, sizeof(LOGFONT));
+	StateBarFont.lfHeight = 15;
+	StateBarFont.lfWeight = FW_NORMAL;
+	m_fontStateBar.CreateFontIndirect(&StateBarFont);
+
+	memset(&AutoRunDisp, 0, sizeof(LOGFONT));
+	AutoRunDisp.lfHeight = 40;
+	AutoRunDisp.lfWeight = FW_HEAVY;
+	m_fontAutoRunDisp.CreateFontIndirect(&AutoRunDisp);
+
+	memset(&NamingFont, 0, sizeof(LOGFONT));
+	NamingFont.lfHeight = 20;
+	NamingFont.lfWeight = FW_HEAVY;
+	m_fontNaming.CreateFontIndirect(&NamingFont);
+
+	memset(&FlowFont, 0, sizeof(LOGFONT));
+	FlowFont.lfHeight = 15;
+	FlowFont.lfWeight = 100;
+	m_fontFlow.CreateFontIndirect(&FlowFont);
+
+	memset(&FlowProcessFont, 0, sizeof(LOGFONT));
+	FlowProcessFont.lfHeight = 20;
+	FlowProcessFont.lfWeight = 400;
+	m_fontFlowPrcess.CreateFontIndirect(&FlowProcessFont);
+
+	memset(&QuickDataPos, 0, sizeof(LOGFONT));
+	QuickDataPos.lfHeight = 16;
+	QuickDataPos.lfWeight = 400;
+	m_fontQuickData.CreateFontIndirect(&QuickDataPos);
+
+	//Title----------------------------------------------------------------------------------------------------------------------------------
+	m_stcMainTitle.SubclassDlgItem(IDC_STATIC_MAIN_TITLE, this);
+	m_stcMainTitle.SetParaChangeColor(BK_GND);
+	m_stcMainTitle.SetParaOriginColor(STATEBAR_NAME_BK_RGB);
+	m_stcMainTitle.SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+	m_stcMainTitle.SetTextColor(RGB(4, 131, 206));
+	m_stcMainTitle.SetFont(&m_fontStcMainLogo, TRUE);
+	m_stcMainTitle.SetData(_T("BOE"));
+
+	//Hansong Title----------------------------------------------------------------------------------------------------------------------
+	m_stcHansongTitle.SubclassDlgItem(IDC_STATIC_HANSONG_TITLE, this);
+	m_stcHansongTitle.SetParaChangeColor(BK_GND);
+	m_stcHansongTitle.SetParaOriginColor(STATEBAR_NAME_BK_RGB);
+	m_stcHansongTitle.SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+	m_stcHansongTitle.SetTextColor(RGB(100, 100, 100));
+	m_stcHansongTitle.SetFont(&m_fontStcHansongLogo, TRUE);
+	m_stcHansongTitle.SetData(_T("HSNEOTECH"));
+
+	//Auto Run Display --------------------------------------------------------------------------------
+	m_stcAutoRunDisp.SubclassDlgItem(IDC_STATIC_AUTO_RUN_DISPLAY, this);
+	m_stcAutoRunDisp.SetParaOriginColor(RGB(45, 45, 45));
+	m_stcAutoRunDisp.SetParaChangeColor(RGB(150, 150, 150));
+	m_stcAutoRunDisp.SetBackgroundColor(RGB(45, 45, 45));
+	m_stcAutoRunDisp.SetTextColor(RGB(255, 255, 255));
+	m_stcAutoRunDisp.SetFont(&m_fontAutoRunDisp, TRUE);
+	m_stcAutoRunDisp.SetData(_T("Stop"));
+	m_stcAutoRunDisp.SetActButton(FALSE);
+	m_stcAutoRunDisp.SetForegroundWindow();
+
+
+	//Naming --------------------------------------------------------------------------------------------------------
+	//Naming Review10X Camera --------------------------------------------------------------------------------
+	m_stcReview10X_Cam_Naming.SubclassDlgItem(IDC_STATIC_NAMING_REVIEW_10X_CAMERA, this);
+	m_stcReview10X_Cam_Naming.SetParaOriginColor(RGB(45, 45, 45));
+	m_stcReview10X_Cam_Naming.SetParaChangeColor(RGB(45, 45, 45));
+	m_stcReview10X_Cam_Naming.SetBackgroundColor(RGB(45, 45, 45));
+	m_stcReview10X_Cam_Naming.SetTextColor(RGB(255, 255, 255));
+	m_stcReview10X_Cam_Naming.SetFont(&m_fontNaming, TRUE);
+	m_stcReview10X_Cam_Naming.SetData(_T("REVIEW 10X"));
+	m_stcReview10X_Cam_Naming.SetActButton(FALSE);
+	m_stcReview10X_Cam_Naming.SetForegroundWindow();
+
+	//Naming BoxAlignLeft Camera --------------------------------------------------------------------------------
+	m_stcBoxAlignLeft_Cam_Naming.SubclassDlgItem(IDC_STATIC_NAMING_BOX_ALIGN_LEFT_CAM, this);
+	m_stcBoxAlignLeft_Cam_Naming.SetParaOriginColor(RGB(45, 45, 45));
+	m_stcBoxAlignLeft_Cam_Naming.SetParaChangeColor(RGB(45, 45, 45));
+	m_stcBoxAlignLeft_Cam_Naming.SetBackgroundColor(RGB(45, 45, 45));
+	m_stcBoxAlignLeft_Cam_Naming.SetTextColor(RGB(255, 255, 255));
+	m_stcBoxAlignLeft_Cam_Naming.SetFont(&m_fontNaming, TRUE);
+	m_stcBoxAlignLeft_Cam_Naming.SetData(_T("BOX ALIGN LEFT"));
+	m_stcBoxAlignLeft_Cam_Naming.SetActButton(FALSE);
+	m_stcBoxAlignLeft_Cam_Naming.SetForegroundWindow();
+
+	//Naming BoxAlignRight Camera --------------------------------------------------------------------------------
+	m_stcBoxAlignRight_Cam_Naming.SubclassDlgItem(IDC_STATIC_NAMING_BOX_ALIGN_RIGHT_CAM, this);
+	m_stcBoxAlignRight_Cam_Naming.SetParaOriginColor(RGB(45, 45, 45));
+	m_stcBoxAlignRight_Cam_Naming.SetParaChangeColor(RGB(45, 45, 45));
+	m_stcBoxAlignRight_Cam_Naming.SetBackgroundColor(RGB(45, 45, 45));
+	m_stcBoxAlignRight_Cam_Naming.SetTextColor(RGB(255, 255, 255));
+	m_stcBoxAlignRight_Cam_Naming.SetFont(&m_fontNaming, TRUE);
+	m_stcBoxAlignRight_Cam_Naming.SetData(_T("BOX ALIGN RIGHT"));
+	m_stcBoxAlignRight_Cam_Naming.SetActButton(FALSE);
+	m_stcBoxAlignRight_Cam_Naming.SetForegroundWindow();
+	
+	//Naming Log --------------------------------------------------------------------------------
+	m_stcLogNaming.SubclassDlgItem(IDC_STATIC_NAMING_LOG, this);
+	m_stcLogNaming.SetParaOriginColor(RGB(45, 45, 45));
+	m_stcLogNaming.SetParaChangeColor(RGB(45, 45, 45));
+	m_stcLogNaming.SetBackgroundColor(RGB(45, 45, 45));
+	m_stcLogNaming.SetTextColor(RGB(255, 255, 255));
+	m_stcLogNaming.SetFont(&m_fontNaming, TRUE);
+	m_stcLogNaming.SetData(_T("LOG"));
+	m_stcLogNaming.SetActButton(FALSE);
+	m_stcLogNaming.SetForegroundWindow();
+		
+	//상태바-----------------------------------------------------------------------------------------------------------------------------
+	m_stcStateBar_Name[STATE_MENU_WORK_MODE].SubclassDlgItem(IDC_STATIC_WORK_MODE, this);
+	m_stcStateBar_Name[STATE_MENU_WORK_MODE].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+	m_stcStateBar_Name[STATE_MENU_WORK_MODE].SetTextColor(STATEBAR_NAME_RGB);
+	m_stcStateBar_Name[STATE_MENU_WORK_MODE].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Name[STATE_MENU_WORK_MODE].SetData(_T("PC Mode"));
+
+	
+	m_stcStateBar_Value[STATE_MENU_WORK_MODE].SubclassDlgItem(IDC_STATIC_WORK_MODE_STATE, this);
+	m_stcStateBar_Value[STATE_MENU_WORK_MODE].SetBackgroundColor(STATEBAR_VALUE_BK_RGB);
+	m_stcStateBar_Value[STATE_MENU_WORK_MODE].SetTextColor(STATEBAR_VALUE_RGB);
+	m_stcStateBar_Value[STATE_MENU_WORK_MODE].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Value[STATE_MENU_WORK_MODE].SetData(_T("NORMAL"));
+	//--------------------------------------------------------------------------------------------------------
+	
+	m_stcStateBar_Name[STATE_MENU_USER_MODE].SubclassDlgItem(IDC_STATIC_USER_MODE, this);
+	m_stcStateBar_Name[STATE_MENU_USER_MODE].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+	m_stcStateBar_Name[STATE_MENU_USER_MODE].SetTextColor(STATEBAR_NAME_RGB);
+	m_stcStateBar_Name[STATE_MENU_USER_MODE].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Name[STATE_MENU_USER_MODE].SetData(_T("User Mode"));
+
+	
+	m_stcStateBar_Value[STATE_MENU_USER_MODE].SubclassDlgItem(IDC_STATIC_USER_MODE_STATE, this);
+	m_stcStateBar_Value[STATE_MENU_USER_MODE].SetBackgroundColor(STATEBAR_VALUE_BK_RGB);
+	m_stcStateBar_Value[STATE_MENU_USER_MODE].SetTextColor(STATEBAR_VALUE_RGB);
+	m_stcStateBar_Value[STATE_MENU_USER_MODE].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Value[STATE_MENU_USER_MODE].SetData(_T("Ctrl"));
+	//--------------------------------------------------------------------------------------------------------
+	m_stcStateBar_Name[STATE_MENU_USER_NAME].SubclassDlgItem(IDC_STATIC_USER_NAME, this);
+	m_stcStateBar_Name[STATE_MENU_USER_NAME].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+
+	m_stcStateBar_Name[STATE_MENU_USER_NAME].SetTextColor(STATEBAR_NAME_RGB);
+	m_stcStateBar_Name[STATE_MENU_USER_NAME].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Name[STATE_MENU_USER_NAME].SetData(_T("User Name"));
+
+	m_stcStateBar_Value[STATE_MENU_USER_NAME].SubclassDlgItem(IDC_STATIC_USER_NAME_STATE, this);
+	m_stcStateBar_Value[STATE_MENU_USER_NAME].SetBackgroundColor(STATEBAR_VALUE_BK_RGB);
+
+	m_stcStateBar_Value[STATE_MENU_USER_NAME].SetTextColor(STATEBAR_VALUE_RGB);
+	m_stcStateBar_Value[STATE_MENU_USER_NAME].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Value[STATE_MENU_USER_NAME].SetData(_T("User Num"));
+
+	//--------------------------------------------------------------------------------------------------------
+	m_stcStateBar_Name[STATE_MENU_NETWORK_PLC].SubclassDlgItem(IDC_STATIC_NETWORK_PLC, this);
+	m_stcStateBar_Name[STATE_MENU_NETWORK_PLC].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+
+	m_stcStateBar_Name[STATE_MENU_NETWORK_PLC].SetTextColor(STATEBAR_NAME_RGB);
+	m_stcStateBar_Name[STATE_MENU_NETWORK_PLC].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Name[STATE_MENU_NETWORK_PLC].SetData(_T("PLC Network"));
+
+	m_stcStateBar_Value[STATE_MENU_NETWORK_PLC].SubclassDlgItem(IDC_STATIC_NETWORK_PLC_STATE, this);
+	m_stcStateBar_Value[STATE_MENU_NETWORK_PLC].SetBackgroundColor(STATEBAR_VALUE_BK_RGB);
+
+	m_stcStateBar_Value[STATE_MENU_NETWORK_PLC].SetTextColor(STATEBAR_VALUE_RGB);
+	m_stcStateBar_Value[STATE_MENU_NETWORK_PLC].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Value[STATE_MENU_NETWORK_PLC].SetData(_T("No Connect"));
+
+	//--------------------------------------------------------------------------------------------------------
+	m_stcStateBar_Name[STATE_MENU_FILM_NUM].SubclassDlgItem(IDC_STATIC_CURRENT_FILM_NUM, this);
+	m_stcStateBar_Name[STATE_MENU_FILM_NUM].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+
+	m_stcStateBar_Name[STATE_MENU_FILM_NUM].SetTextColor(STATEBAR_NAME_RGB);
+	m_stcStateBar_Name[STATE_MENU_FILM_NUM].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Name[STATE_MENU_FILM_NUM].SetData(_T("Film Num"));
+	m_stcStateBar_Value[STATE_MENU_FILM_NUM].SubclassDlgItem(IDC_STATIC_IDC_STATIC_CURRENT_FILM_NUM_STATE, this);
+	m_stcStateBar_Value[STATE_MENU_FILM_NUM].SetBackgroundColor(STATEBAR_VALUE_BK_RGB);
+	m_stcStateBar_Value[STATE_MENU_FILM_NUM].SetTextColor(STATEBAR_VALUE_RGB);
+	m_stcStateBar_Value[STATE_MENU_FILM_NUM].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Value[STATE_MENU_FILM_NUM].SetData(_T("Film Num"));
+
+	//--------------------------------------------------------------------------------------------------------
+	m_stcStateBar_Name[STATE_MENU_NETWORK_LIGHT].SubclassDlgItem(IDC_STATIC_NETWORK_LIGHT, this);
+	m_stcStateBar_Name[STATE_MENU_NETWORK_LIGHT].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+
+	m_stcStateBar_Name[STATE_MENU_NETWORK_LIGHT].SetTextColor(STATEBAR_NAME_RGB);
+	m_stcStateBar_Name[STATE_MENU_NETWORK_LIGHT].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Name[STATE_MENU_NETWORK_LIGHT].SetData(_T("Light Network"));
+
+	m_stcStateBar_Value[STATE_MENU_NETWORK_LIGHT].SubclassDlgItem(IDC_STATIC_NETWORK_LIGHT_STATE, this);
+	m_stcStateBar_Value[STATE_MENU_NETWORK_LIGHT].SetBackgroundColor(STATEBAR_VALUE_BK_RGB);
+
+	m_stcStateBar_Value[STATE_MENU_NETWORK_LIGHT].SetTextColor(STATEBAR_VALUE_RGB);
+	m_stcStateBar_Value[STATE_MENU_NETWORK_LIGHT].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Value[STATE_MENU_NETWORK_LIGHT].SetData(_T("Light Network"));
+
+	//--------------------------------------------------------------------------------------------------------
+	m_stcStateBar_Name[STATE_MENU_VISION_READY].SubclassDlgItem(IDC_STATIC_READY_VISION, this);
+	m_stcStateBar_Name[STATE_MENU_VISION_READY].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+
+	m_stcStateBar_Name[STATE_MENU_VISION_READY].SetTextColor(STATEBAR_NAME_RGB);
+	m_stcStateBar_Name[STATE_MENU_VISION_READY].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Name[STATE_MENU_VISION_READY].SetData(_T("Camera"));
+
+	m_stcStateBar_Value[STATE_MENU_VISION_READY].SubclassDlgItem(IDC_STATIC_READY_VISION_STATE, this);
+	m_stcStateBar_Value[STATE_MENU_VISION_READY].SetBackgroundColor(STATEBAR_VALUE_BK_RGB);
+
+	m_stcStateBar_Value[STATE_MENU_VISION_READY].SetTextColor(STATEBAR_VALUE_RGB);
+	m_stcStateBar_Value[STATE_MENU_VISION_READY].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Value[STATE_MENU_VISION_READY].SetData(_T("No Connect"));
+
+	//--------------------------------------------------------------------------------------------------------
+	m_stcStateBar_Name[STATE_MENU_PLC_READY].SubclassDlgItem(IDC_STATIC_READY_PLC, this);
+	m_stcStateBar_Name[STATE_MENU_PLC_READY].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+
+	m_stcStateBar_Name[STATE_MENU_PLC_READY].SetTextColor(STATEBAR_NAME_RGB);
+	m_stcStateBar_Name[STATE_MENU_PLC_READY].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Name[STATE_MENU_PLC_READY].SetData(_T("Door"));
+
+	m_stcStateBar_Value[STATE_MENU_PLC_READY].SubclassDlgItem(IDC_STATIC_READY_PLC_STATE, this);
+	m_stcStateBar_Value[STATE_MENU_PLC_READY].SetBackgroundColor(STATEBAR_VALUE_BK_RGB);
+
+	m_stcStateBar_Value[STATE_MENU_PLC_READY].SetTextColor(STATEBAR_VALUE_RGB);
+	m_stcStateBar_Value[STATE_MENU_PLC_READY].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Value[STATE_MENU_PLC_READY].SetData(_T("Open"));
+
+	//--------------------------------------------------------------------------------------------------------
+	m_stcStateBar_Name[STATE_MENU_MODEL_NAME].SubclassDlgItem(IDC_STATIC_MODEL_NAME, this);
+	m_stcStateBar_Name[STATE_MENU_MODEL_NAME].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+
+	m_stcStateBar_Name[STATE_MENU_MODEL_NAME].SetTextColor(STATEBAR_NAME_RGB);
+	m_stcStateBar_Name[STATE_MENU_MODEL_NAME].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Name[STATE_MENU_MODEL_NAME].SetData(_T("Model Name"));
+
+	m_stcStateBar_Value[STATE_MENU_MODEL_NAME].SubclassDlgItem(IDC_STATIC_MODEL_NAME_STATE, this);
+	m_stcStateBar_Value[STATE_MENU_MODEL_NAME].SetBackgroundColor(STATEBAR_VALUE_BK_RGB);
+
+	m_stcStateBar_Value[STATE_MENU_MODEL_NAME].SetTextColor(STATEBAR_VALUE_RGB);
+	m_stcStateBar_Value[STATE_MENU_MODEL_NAME].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Value[STATE_MENU_MODEL_NAME].SetData(_T("Model Name"));
+
+	//--------------------------------------------------------------------------------------------------------
+	m_stcStateBar_Name[STATE_MENU_MODEL_NUMBER].SubclassDlgItem(IDC_STATIC_MODEL_NUM, this);
+	m_stcStateBar_Name[STATE_MENU_MODEL_NUMBER].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+
+	m_stcStateBar_Name[STATE_MENU_MODEL_NUMBER].SetTextColor(STATEBAR_NAME_RGB);
+	m_stcStateBar_Name[STATE_MENU_MODEL_NUMBER].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Name[STATE_MENU_MODEL_NUMBER].SetData(_T("EMS"));
+
+	m_stcStateBar_Value[STATE_MENU_MODEL_NUMBER].SubclassDlgItem(IDC_STATIC_MODEL_NUM_STATE, this);
+	m_stcStateBar_Value[STATE_MENU_MODEL_NUMBER].SetBackgroundColor(STATEBAR_VALUE_BK_RGB);
+
+	m_stcStateBar_Value[STATE_MENU_MODEL_NUMBER].SetTextColor(STATEBAR_VALUE_RGB);
+	m_stcStateBar_Value[STATE_MENU_MODEL_NUMBER].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Value[STATE_MENU_MODEL_NUMBER].SetData(_T("OFF"));
+
+	//--------------------------------------------------------------------------------------------------------
+	m_stcStateBar_Name[STATE_MENU_WORK_TIME].SubclassDlgItem(IDC_STATIC_PLC_MODE, this);
+	m_stcStateBar_Name[STATE_MENU_WORK_TIME].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+
+	m_stcStateBar_Name[STATE_MENU_WORK_TIME].SetTextColor(STATEBAR_NAME_RGB);
+	m_stcStateBar_Name[STATE_MENU_WORK_TIME].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Name[STATE_MENU_WORK_TIME].SetData(_T("PLC Mode"));
+
+	m_stcStateBar_Value[STATE_MENU_WORK_TIME].SubclassDlgItem(IDC_STATIC_PLC_MODE_STATE, this);
+	m_stcStateBar_Value[STATE_MENU_WORK_TIME].SetBackgroundColor(STATEBAR_VALUE_BK_RGB);
+
+	m_stcStateBar_Value[STATE_MENU_WORK_TIME].SetTextColor(STATEBAR_VALUE_RGB);
+	m_stcStateBar_Value[STATE_MENU_WORK_TIME].SetFont(&m_fontStateBar, TRUE);
+	m_stcStateBar_Value[STATE_MENU_WORK_TIME].SetData(_T("PLC Mode"));
+
+	//메인버튼
+	//--------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------
+	m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].SubclassDlgItem(IDC_STATIC_MODEL_BTN, this);
+	m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].SetParaOriginColor(RGB(120, 120, 120));
+	m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].SetParaChangeColor(RGB(150, 150, 150));
+	m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].SetBackgroundColor(RGB(120, 120, 120));
+	m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].SetData(_T("Model"));
+	m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].SetForegroundWindow();
+	//--------------------------------------------------------------------------------------------------------
+	//Xuhuan
+	m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].SubclassDlgItem(IDC_STATIC_MANUAL_BTN, this);
+	m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].SetParaOriginColor(RGB(120, 120, 120));
+	m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].SetParaChangeColor(RGB(150, 150, 150));
+	m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].SetBackgroundColor(RGB(120, 120, 120));
+	m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].SetData(_T("Manual"));
+	m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].SetForegroundWindow();
+	//--------------------------------------------------------------------------------------------------------
+
+	m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].SubclassDlgItem(IDC_STATIC_MACHINE_BTN, this);
+	m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].SetBackgroundColor(RGB(120, 120, 120));
+	m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].SetParaChangeColor(RGB(150, 150, 150));
+	m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].SetData(_T("Machine"));
+	m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].SetForegroundWindow();
+	//--------------------------------------------------------------------------------------------------------
+
+	m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].SubclassDlgItem(IDC_STATIC_COMMUNICATION_BTN, this);
+	m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].SetBackgroundColor(RGB(120, 120, 120));
+	m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].SetParaChangeColor(RGB(150, 150, 150));
+	m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].SetData(_T("Communication"));
+	m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].SetForegroundWindow();
+
+	//--------------------------------------------------------------------------------------------------------
+
+	m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].SubclassDlgItem(IDC_STATIC_MEASUREMENT_BTN, this);
+	m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].SetBackgroundColor(RGB(120, 120, 120));
+	m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].SetParaChangeColor(RGB(150, 150, 150));
+	m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].SetData(_T("Measurement"));
+	m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].SetForegroundWindow();
+
+	m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].SubclassDlgItem(IDC_STATIC_SYSTEM_BTN, this);
+	m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].SetBackgroundColor(RGB(120, 120, 120));
+	m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].SetParaChangeColor(RGB(150, 150, 150));
+	m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].SetForegroundWindow();
+	m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].SetData(_T("System"));
+	m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].SetForegroundWindow();
+	//--------------------------------------------------------------------------------------------------------
+
+	m_stc_btnMainMenu[MAIN_MENU_READY_BTN].SubclassDlgItem(IDC_STATIC_READY_BTN, this);
+	m_stc_btnMainMenu[MAIN_MENU_READY_BTN].SetParaOriginColor(RGB(0, 70, 0));
+	m_stc_btnMainMenu[MAIN_MENU_READY_BTN].SetParaChangeColor(RGB(0, 100, 0));
+	m_stc_btnMainMenu[MAIN_MENU_READY_BTN].SetBackgroundColor(RGB(0, 70, 0));
+	m_stc_btnMainMenu[MAIN_MENU_READY_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_READY_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_READY_BTN].SetData(_T("Ready"));
+	m_stc_btnMainMenu[MAIN_MENU_READY_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_READY_BTN].SetForegroundWindow();
+
+	//--------------------------------------------------------------------------------------------------------
+
+	m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].SubclassDlgItem(IDC_STATIC_AUTO_RUN_BTN, this);
+	m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].SetParaOriginColor(RGB(0, 0, 70));
+	m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].SetParaChangeColor(RGB(0, 0, 140));
+	m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].SetForegroundWindow();
+	m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].SetData(_T("Auto Run")); 
+	m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].SetBackgroundColor(RGB(0, 0, 70));
+
+	//--------------------------------------------------------------------------------------------------------
+
+	m_stc_btnMainMenu[MAIN_MENU_STOP_BTN].SubclassDlgItem(IDC_STATIC_STOP_BTN, this);
+	m_stc_btnMainMenu[MAIN_MENU_STOP_BTN].SetParaOriginColor(RGB(230, 0, 0));
+	m_stc_btnMainMenu[MAIN_MENU_STOP_BTN].SetParaChangeColor(RGB(250, 0, 0));
+	m_stc_btnMainMenu[MAIN_MENU_STOP_BTN].SetBackgroundColor(RGB(230, 0, 0));
+	m_stc_btnMainMenu[MAIN_MENU_STOP_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_STOP_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_STOP_BTN].SetData(_T("Stop"));
+	m_stc_btnMainMenu[MAIN_MENU_STOP_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_STOP_BTN].SetForegroundWindow();
+
+	//--------------------------------------------------------------------------------------------------------
+
+	m_stc_btnMainMenu[MAIN_MENU_ECS_BTN].SubclassDlgItem(IDC_STATIC_ECS_BTN, this);
+	m_stc_btnMainMenu[MAIN_MENU_ECS_BTN].SetBackgroundColor(RGB(120, 120, 120));
+	m_stc_btnMainMenu[MAIN_MENU_ECS_BTN].SetParaChangeColor(RGB(150, 150, 150));
+	m_stc_btnMainMenu[MAIN_MENU_ECS_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_ECS_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_ECS_BTN].SetData(_T("ECS"));
+	m_stc_btnMainMenu[MAIN_MENU_ECS_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_ECS_BTN].SetForegroundWindow();
+	//--------------------------------------------------------------------------------------------------------
+
+	m_stc_btnMainMenu[MAIN_MENU_SCREEN_SAVER_BTN].SubclassDlgItem(IDC_STATIC_SCREEN_SAVER_BTN, this);
+	m_stc_btnMainMenu[MAIN_MENU_SCREEN_SAVER_BTN].SetParaOriginColor(RGB(128, 128, 0));
+	m_stc_btnMainMenu[MAIN_MENU_SCREEN_SAVER_BTN].SetParaChangeColor(RGB(158, 158, 0));
+	m_stc_btnMainMenu[MAIN_MENU_SCREEN_SAVER_BTN].SetBackgroundColor(RGB(128, 128, 0));
+	m_stc_btnMainMenu[MAIN_MENU_SCREEN_SAVER_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_SCREEN_SAVER_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_SCREEN_SAVER_BTN].SetData(_T("Screen Saver"));
+	m_stc_btnMainMenu[MAIN_MENU_SCREEN_SAVER_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_SCREEN_SAVER_BTN].SetForegroundWindow();
+
+	//20.09.17 SJC Alaram btn add
+	m_stc_btnMainMenu[MAIN_MENU_ALARAM_BTN].SubclassDlgItem(IDC_STATIC_MAIN_ALARM, this);
+	m_stc_btnMainMenu[MAIN_MENU_ALARAM_BTN].SetBackgroundColor(RGB(120, 120, 120));
+	m_stc_btnMainMenu[MAIN_MENU_ALARAM_BTN].SetParaChangeColor(RGB(150, 150, 150));
+	m_stc_btnMainMenu[MAIN_MENU_ALARAM_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_ALARAM_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_ALARAM_BTN].SetData(_T("Alaram"));
+	m_stc_btnMainMenu[MAIN_MENU_ALARAM_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_ALARAM_BTN].SetForegroundWindow();
+
+	//20.09.17 SJC reset btn add
+	m_stc_btnMainMenu[MAIN_MENU_RESET_BTN].SubclassDlgItem(IDC_STATIC_MAIN_RESET, this);
+	m_stc_btnMainMenu[MAIN_MENU_RESET_BTN].SetBackgroundColor(RGB(120, 120, 120));
+	m_stc_btnMainMenu[MAIN_MENU_RESET_BTN].SetParaChangeColor(RGB(150, 150, 150));
+	m_stc_btnMainMenu[MAIN_MENU_RESET_BTN].SetTextColor(RGB(200, 200, 200));
+	m_stc_btnMainMenu[MAIN_MENU_RESET_BTN].SetFont(&m_fontMainMenu, TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_RESET_BTN].SetData(_T("Reset"));
+	m_stc_btnMainMenu[MAIN_MENU_RESET_BTN].SetActButton(TRUE);
+	m_stc_btnMainMenu[MAIN_MENU_RESET_BTN].SetForegroundWindow();
+	//--------------------------------------------------------------------------------------------------------
+	m_radioReview10X.SetCheck(TRUE);
+	ChangeCamera(0);
+}
+//---------------------------------------------------------------------
+BOOL CVisionAgentDlg::PreTranslateMessage(MSG* pMsg)
+{
+
+	switch (pMsg->wParam)
+	{
+	case VK_RETURN:
+			return TRUE;
+				
+	case VK_ESCAPE:
+		return TRUE;
+	}
+		
+	return CDialogEx::PreTranslateMessage(pMsg);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::AuthorityDisplay()
+{
+	if (SharedInfo::MachineState.bPcModeState)
+	{
+		m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].EnableWindow(FALSE);
+		m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].EnableWindow(FALSE);
+		m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].EnableWindow(FALSE);
+		m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].EnableWindow(FALSE);
+		m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].EnableWindow(FALSE);
+		m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].EnableWindow(FALSE);
+		m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].EnableWindow(FALSE);
+		m_stc_btnMainMenu[MAIN_MENU_READY_BTN].EnableWindow(FALSE);
+		//20.09.17 sjc
+		m_stc_btnMainMenu[MAIN_MENU_ALARAM_BTN].EnableWindow(FALSE);
+		m_stc_btnMainMenu[MAIN_MENU_RESET_BTN].EnableWindow(FALSE);
+	}
+	else
+	{
+#if 0
+		switch (Devs::m_Pua310->GetAuthority())
+		{
+		case eAUTHORITY_OPERATOR:
+		{
+			m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_READY_BTN].EnableWindow(TRUE);
+			break;
+		}
+		case eAUTHORITY_ENGINEER:
+		{
+			m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_READY_BTN].EnableWindow(TRUE);
+			break;
+		}
+		case eAUTHORITY_SETUP:
+		{
+			m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_READY_BTN].EnableWindow(TRUE);
+			break;
+		}
+		case eAUTHORITY_ADMIN:
+		{
+			m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].EnableWindow(TRUE);
+			m_stc_btnMainMenu[MAIN_MENU_READY_BTN].EnableWindow(TRUE);
+			break;
+		}
+		default:
+		{
+			m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_MANUAL_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_MACHINE_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_COMMUNICATION_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_MEASUREMENT_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_SYSTME_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_AUTO_RUN_BTN].EnableWindow(FALSE);
+			m_stc_btnMainMenu[MAIN_MENU_READY_BTN].EnableWindow(FALSE);
+			break;
+		}
+		}
+#endif
+	}
+
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::StateDisplay()
+{
+	CString strTemp = _T("");
+	INT nTemp = 0;
+	//Work mode
+	//if (SharedInfo::MachineState.bAutoRunFlag)
+	if (SharedInfo::MachineState.bPcModeState)
+	{
+		m_stcStateBar_Value[STATE_MENU_WORK_MODE].SetData(_T("Auto"));
+	}
+	else
+	{
+		m_stcStateBar_Value[STATE_MENU_WORK_MODE].SetData(_T(" Manual"));
+	}
+
+#if 0
+	//User mode
+	if (Devs::m_Pua310->GetAuthority() == eAUTHORITY_OPERATOR)
+	{
+		m_stcStateBar_Value[STATE_MENU_USER_MODE].SetData(_T("Operator"));
+	}
+	else if (Devs::m_Pua310->GetAuthority() == eAUTHORITY_ENGINEER)
+	{
+		m_stcStateBar_Value[STATE_MENU_USER_MODE].SetData(_T(" Engineer"));
+	}
+	else if (Devs::m_Pua310->GetAuthority() == eAUTHORITY_SETUP)
+	{
+		m_stcStateBar_Value[STATE_MENU_USER_MODE].SetData(_T(" Set UP"));
+	}
+	else if (Devs::m_Pua310->GetAuthority() == eAUTHORITY_ADMIN)
+	{
+		m_stcStateBar_Value[STATE_MENU_USER_MODE].SetData(_T(" Admin"));
+	}
+
+	//User name
+	m_stcStateBar_Value[STATE_MENU_USER_NAME].SetData(Devs::m_Pua310->GetUserId());
+
+	//Light NetWork
+	if (Devs::m_LightController->m_bIsOpenned)
+	{
+		m_stcStateBar_Value[STATE_MENU_NETWORK_LIGHT].SetBackgroundColor(STATEBAR_VALUE_GREEN);
+		m_stcStateBar_Value[STATE_MENU_NETWORK_LIGHT].SetData(_T("Connect"));
+	}
+	else
+	{
+		m_stcStateBar_Value[STATE_MENU_NETWORK_LIGHT].SetBackgroundColor(STATEBAR_VALUE_RED);
+		m_stcStateBar_Value[STATE_MENU_NETWORK_LIGHT].SetData(_T("No Connect"));
+	}
+#endif
+
+	//PLC state
+	if (SharedInfo::MachineState.bPlcModeState == TRUE)
+	{
+		m_stcStateBar_Value[STATE_MENU_WORK_TIME].SetData(_T("Auto"));
+	}
+	else
+	{
+		m_stcStateBar_Value[STATE_MENU_WORK_TIME].SetData(_T("Manual"));
+	}
+
+	//
+
+	//Camera NetWork
+	
+	//Film Num
+	strTemp.Format(_T("%d"), nTemp);
+	m_stcStateBar_Value[STATE_MENU_FILM_NUM].SetData(strTemp);
+	   	  
+	//Door state
+	if (SharedInfo::MachineState.bDoorState)
+	{
+		m_stcStateBar_Value[STATE_MENU_PLC_READY].SetData(_T("Open"));
+
+	}
+	else
+	{
+		m_stcStateBar_Value[STATE_MENU_PLC_READY].SetData(_T("Close"));
+
+	}
+	//Model name
+	m_stcStateBar_Value[STATE_MENU_MODEL_NAME].SetData(CSystemData::m_Option.Info.m_strActiveModelName);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::AlarmDisplay()
+{
+	if (SharedInfo::GetAlarm())
+	{
+		m_stcAutoRunDisp.SetBackgroundColor(RGB(200, 0, 0));
+		m_stcAutoRunDisp.SetData(_T("ALARM"));
+	}
+	else if ((SharedInfo::MachineState.bAutoRunFlag || SharedInfo::MachineState.bSemiAutoRunFlag) && m_nAutoCnt <= 10)
+	{
+		m_stcAutoRunDisp.SetBackgroundColor(RGB(0, 150, 0));
+		m_stcAutoRunDisp.SetData(_T("RUN"));
+		m_nAutoCnt++;
+	}
+	else if ((SharedInfo::MachineState.bAutoRunFlag || SharedInfo::MachineState.bSemiAutoRunFlag) && m_nAutoCnt <= 20)
+	{
+		m_stcAutoRunDisp.SetBackgroundColor(RGB(0, 150, 0));
+		m_stcAutoRunDisp.SetData(_T("RUN."));
+		m_nAutoCnt++;
+	}
+	else if ((SharedInfo::MachineState.bAutoRunFlag || SharedInfo::MachineState.bSemiAutoRunFlag) && m_nAutoCnt <= 30)
+	{
+		m_stcAutoRunDisp.SetBackgroundColor(RGB(0, 150, 0));
+		m_stcAutoRunDisp.SetData(_T("RUN.."));
+		m_nAutoCnt++;
+	}
+	else if ((SharedInfo::MachineState.bAutoRunFlag || SharedInfo::MachineState.bSemiAutoRunFlag) && m_nAutoCnt <= 40)
+	{
+		m_stcAutoRunDisp.SetBackgroundColor(RGB(0, 150, 0));
+		m_stcAutoRunDisp.SetData(_T("RUN..."));
+		m_nAutoCnt++;
+	}
+	else if ((SharedInfo::MachineState.bAutoRunFlag || SharedInfo::MachineState.bSemiAutoRunFlag) && m_nAutoCnt > 40)
+	{
+		m_stcAutoRunDisp.SetBackgroundColor(RGB(0, 150, 0));
+		m_stcAutoRunDisp.SetData(_T("RUN"));
+		m_nAutoCnt = 0;
+	}
+	else
+	{
+		m_stcAutoRunDisp.SetBackgroundColor(RGB(45, 45, 45));
+		m_stcAutoRunDisp.SetData(_T("STOP"));
+	}
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	
+#ifndef SIM_MODE
+#if 0
+	AuthorityDisplay();
+#endif
+#endif // !SIM_MODE
+	
+	CString strTemp = _T("");
+	
+	if (!m_bEntry)
+	{
+		m_bEntry = TRUE;
+		Devs::m_bEntry = TRUE;
+	}
+	//Work Mode
+	if (nIDEvent == 1)
+	{
+		//-----------------------------------------------------------------------------------------------
+		//Alarm State
+		Devs::MachineStateCheck();
+		AlarmDisplay();
+		StateDisplay();
+		LogInUserID();
+	}
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+
+	if (GetSafeHwnd() == NULL)
+		return;
+
+	if (GetDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_10X)->GetSafeHwnd() == NULL) return;
+	if (GetDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_20X)->GetSafeHwnd() == NULL) return;
+	if (GetDlgItem(IDC_STATIC_CAMERA_DISPALY_PRE_ALIGN)->GetSafeHwnd() == NULL) return;
+	if (GetDlgItem(IDC_STATIC_CAMERA_DISPALY_BOX_ALIGN_LEFT)->GetSafeHwnd() == NULL) return;
+	if (GetDlgItem(IDC_STATIC_CAMERA_DISPALY_BOX_ALIGN_RIGHT)->GetSafeHwnd() == NULL) return;
+	if (GetDlgItem(IDC_RDO_CAMERA_REVIEW_10X)->GetSafeHwnd() == NULL) return;
+	if (GetDlgItem(IDC_RDO_CAMERA_REVIEW_20X)->GetSafeHwnd() == NULL) return;
+	if (GetDlgItem(IDC_RDO_CAMERA_PRE_ALIGN)->GetSafeHwnd() == NULL) return;
+	//if (m_VisionAgentSimulationViewDlg.GetSafeHwnd() == NULL) return;
+
+	if (GetDlgItem(IDC_STATIC_MEASUREMENT_BTN)->GetSafeHwnd() == NULL) return;
+	if (GetDlgItem(IDC_STATIC_LOG_SUB)->GetSafeHwnd() == NULL) return;
+	//------------------------------------------------------------------------------------------------------
+	//Dialog Size 지정.
+	
+	CRect MonitorRect;
+	CRect CustomerTitleRect;
+	CRect HansongTitleRect;
+	CRect StateBarNameRect;
+	CRect StateBarValueRect;
+	CRect MainBtnRect;
+	CRect SubWndChkBtnRect;
+	CRect Rect[2], CemeraRect[6], LogRect, MachineRect;
+	CRect AutoRunDisplayRect;
+	CRect QuickDataListRect;
+
+	CRect Log_NamingRect;
+	//CRect FlowStateRect[6];
+
+	GetClientRect(&MonitorRect);
+
+	//Main State Display Rect -------------------------------------------------------------
+	CustomerTitleRect.top = 0;
+	CustomerTitleRect.bottom = MonitorRect.Height() / 20;
+	CustomerTitleRect.left = 1;
+	CustomerTitleRect.right = MonitorRect.Width() / 14;
+	
+	HansongTitleRect.top = 0;
+	HansongTitleRect.bottom = MonitorRect.Height() / 20;
+	HansongTitleRect.right = MonitorRect.right - 1;
+	HansongTitleRect.left = MonitorRect.Width() * 10 / 11;
+
+
+	m_stcMainTitle.MoveWindow(CustomerTitleRect);
+	m_stcHansongTitle.MoveWindow(HansongTitleRect);
+	
+	LONG lSizeX = ((HansongTitleRect.left - CustomerTitleRect.right) - ((MAX_STATE_MENU_STC) * RESOURCE_SPACE)) / MAX_STATE_MENU_STC;
+	LONG lSizeY = CustomerTitleRect.Height() / 2;
+
+
+	//Auto Run Display -----------------------------------------------------------------------------
+	AutoRunDisplayRect.top = HansongTitleRect.bottom + 1;
+	AutoRunDisplayRect.bottom = AutoRunDisplayRect.top + lSizeY * 2;
+	AutoRunDisplayRect.right = HansongTitleRect.right;
+	AutoRunDisplayRect.left = HansongTitleRect.left;
+
+	m_stcAutoRunDisp.MoveWindow(AutoRunDisplayRect);
+
+	StateBarNameRect.top = 0;
+	StateBarNameRect.bottom = lSizeY;
+	StateBarNameRect.left = CustomerTitleRect.right + RESOURCE_SPACE;
+	StateBarNameRect.right = StateBarNameRect.left + lSizeX;
+
+	StateBarValueRect.top = StateBarNameRect.bottom;
+	StateBarValueRect.bottom = StateBarValueRect.top + lSizeY;
+	StateBarValueRect.left = CustomerTitleRect.right + RESOURCE_SPACE;
+	StateBarValueRect.right = StateBarValueRect.left + lSizeX;
+
+	m_stcStateBar_Name[STATE_MENU_WORK_MODE].MoveWindow(StateBarNameRect);
+	m_stcStateBar_Value[STATE_MENU_WORK_MODE].MoveWindow(StateBarValueRect);
+
+	for (int i = STATE_MENU_USER_MODE; i < MAX_STATE_MENU_STC; i++)
+	{
+		if (i == STATE_MENU_WORK_TIME)
+		{
+			StateBarNameRect.left += lSizeX + RESOURCE_SPACE;
+			StateBarNameRect.right = HansongTitleRect.left - RESOURCE_SPACE;
+
+			StateBarValueRect.left += lSizeX + RESOURCE_SPACE;
+			StateBarValueRect.right = HansongTitleRect.left - RESOURCE_SPACE;
+		}
+		else
+		{
+			StateBarNameRect.left += lSizeX + RESOURCE_SPACE;
+			StateBarNameRect.right += lSizeX + RESOURCE_SPACE;
+
+			StateBarValueRect.left += lSizeX + RESOURCE_SPACE;
+			StateBarValueRect.right += lSizeX + RESOURCE_SPACE;
+		}
+		
+		m_stcStateBar_Name[i].MoveWindow(StateBarNameRect);
+		m_stcStateBar_Value[i].MoveWindow(StateBarValueRect);
+	}
+	/*
+	int WholeSizeY = (MonitorRect.bottom - CustomerTitleRect.bottom - RESOURCE_SPACE * 77) / 2;
+	int WholeSizeX = WholeSizeY * 1600 / 1200;
+	*/
+	CRect Review10X_NamingRect, Review10X_CamRect, Review20X_CamRect, PreAlign_CamRect;
+	CRect radioSelectReivew10X, radioSelectReivew20X, radioSelectPreAlign;
+	CRect BoxAlignLeft_NamingRect, BoxAlignLeft_CamRect;
+	CRect BoxAlignRight_NamingRect, BoxAlignRight_CamRect;
+	CRect SimulationViewRect;
+	int	nReviewCamDisp_Size_X, nReviewCamDisp_Size_Y;
+	int	nBoxCamDisp_Size_X, nBoxCamDisp_Size_Y;
+	int	nNaming_Strt_X, nNaming_Strt_Y;
+	int	nNaming_Size_Y = 30;
+	int nRidioCamSelectSizeX, nRidioCamSelectSizeY;
+	nRidioCamSelectSizeX = 100;
+	nRidioCamSelectSizeY = nNaming_Size_Y;
+	
+	nReviewCamDisp_Size_X = (HansongTitleRect.left - MonitorRect.left) - (RESOURCE_SPACE * 3);
+	nReviewCamDisp_Size_X = nReviewCamDisp_Size_X * 0.5;
+	nReviewCamDisp_Size_Y = (MonitorRect.bottom - HansongTitleRect.bottom - (nNaming_Size_Y * 2)) * 0.6 - 10;
+	nBoxCamDisp_Size_X = nReviewCamDisp_Size_X * 0.5;
+	nBoxCamDisp_Size_Y = (MonitorRect.bottom - HansongTitleRect.bottom - (nNaming_Size_Y * 2)) * 0.4 - 10;
+	nNaming_Strt_X = MonitorRect.left + RESOURCE_SPACE;
+	nNaming_Strt_Y = HansongTitleRect.bottom + RESOURCE_SPACE;
+
+	//Review10X Nameing & Camera
+	Review10X_NamingRect.left = nNaming_Strt_X + RESOURCE_SPACE;
+	Review10X_NamingRect.right = Review10X_NamingRect.left + (nReviewCamDisp_Size_X) + RESOURCE_SPACE - 100;
+	Review10X_NamingRect.top = nNaming_Strt_Y;// +RESOURCE_SPACE;
+	Review10X_NamingRect.bottom = Review10X_NamingRect.top + nNaming_Size_Y;
+	m_stcReview10X_Cam_Naming.MoveWindow(Review10X_NamingRect);
+
+	Review10X_CamRect.left = Review10X_NamingRect.left;
+	Review10X_CamRect.right = Review10X_NamingRect.right;
+	Review10X_CamRect.top = Review10X_NamingRect.bottom + RESOURCE_SPACE;
+	Review10X_CamRect.bottom = Review10X_CamRect.top + (nReviewCamDisp_Size_Y);
+	GetDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_10X)->MoveWindow(Review10X_CamRect);
+
+	//Review20X Naming & Camera
+	Review20X_CamRect.left = Review10X_CamRect.left;
+	Review20X_CamRect.right = Review10X_CamRect.right;
+	Review20X_CamRect.top = Review10X_CamRect.top;
+	Review20X_CamRect.bottom = Review10X_CamRect.bottom;
+	GetDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_20X)->MoveWindow(Review20X_CamRect);
+
+	//PreAlign Naming & Camera
+	PreAlign_CamRect.left	= Review10X_CamRect.left;
+	PreAlign_CamRect.right = Review10X_CamRect.right;
+	PreAlign_CamRect.top = Review10X_CamRect.top;
+	PreAlign_CamRect.bottom = Review10X_CamRect.bottom;
+	GetDlgItem(IDC_STATIC_CAMERA_DISPALY_PRE_ALIGN)->MoveWindow(PreAlign_CamRect);
+
+	//Radio Select Review10X Camera
+	radioSelectReivew10X.left = Review10X_CamRect.left;
+	radioSelectReivew10X.right = Review10X_CamRect.left + nRidioCamSelectSizeX;
+	radioSelectReivew10X.top = Review10X_CamRect.bottom + RESOURCE_SPACE;
+	radioSelectReivew10X.bottom = radioSelectReivew10X.top + nRidioCamSelectSizeY - 10;
+	GetDlgItem(IDC_RDO_CAMERA_REVIEW_10X)->MoveWindow(radioSelectReivew10X);
+
+	//Radio Select Review20X Camera
+	radioSelectReivew20X.left = radioSelectReivew10X.right + (RESOURCE_SPACE * 2);
+	radioSelectReivew20X.right = radioSelectReivew20X.left + nRidioCamSelectSizeX;
+	radioSelectReivew20X.top = radioSelectReivew10X.top;
+	radioSelectReivew20X.bottom = radioSelectReivew10X.bottom;
+	GetDlgItem(IDC_RDO_CAMERA_REVIEW_20X)->MoveWindow(radioSelectReivew20X);
+
+	//Radio Select PreAlign Camera
+	radioSelectPreAlign.left = radioSelectReivew20X.right + (RESOURCE_SPACE * 2);
+	radioSelectPreAlign.right = radioSelectPreAlign.left + nRidioCamSelectSizeX;
+	radioSelectPreAlign.top = radioSelectReivew10X.top;
+	radioSelectPreAlign.bottom = radioSelectReivew10X.bottom;
+	GetDlgItem(IDC_RDO_CAMERA_PRE_ALIGN)->MoveWindow(radioSelectPreAlign);
+	
+	//BoxAlignLeft Naming & Camera
+	BoxAlignLeft_NamingRect.left = Review10X_CamRect.left;
+	BoxAlignLeft_NamingRect.right = Review10X_CamRect.left + nBoxCamDisp_Size_X - RESOURCE_SPACE;
+	BoxAlignLeft_NamingRect.top = radioSelectReivew10X.bottom + (RESOURCE_SPACE);
+	BoxAlignLeft_NamingRect.bottom = BoxAlignLeft_NamingRect.top + nNaming_Size_Y;
+	m_stcBoxAlignLeft_Cam_Naming.MoveWindow(BoxAlignLeft_NamingRect);
+
+	BoxAlignLeft_CamRect.left = BoxAlignLeft_NamingRect.left;
+	BoxAlignLeft_CamRect.right = BoxAlignLeft_NamingRect.right;
+	BoxAlignLeft_CamRect.top = BoxAlignLeft_NamingRect.bottom + RESOURCE_SPACE;
+	BoxAlignLeft_CamRect.bottom = BoxAlignLeft_CamRect.top + nBoxCamDisp_Size_Y;
+	GetDlgItem(IDC_STATIC_CAMERA_DISPALY_BOX_ALIGN_LEFT)->MoveWindow(BoxAlignLeft_CamRect);
+
+	//BoxAlignRight Naming & Camera
+	BoxAlignRight_NamingRect.left = BoxAlignLeft_NamingRect.right + RESOURCE_SPACE;
+	BoxAlignRight_NamingRect.right = BoxAlignRight_NamingRect.left + nBoxCamDisp_Size_X;
+	BoxAlignRight_NamingRect.top = BoxAlignLeft_NamingRect.top;
+	BoxAlignRight_NamingRect.bottom = BoxAlignLeft_NamingRect.bottom;
+	m_stcBoxAlignRight_Cam_Naming.MoveWindow(BoxAlignRight_NamingRect);
+
+	BoxAlignRight_CamRect.left = BoxAlignRight_NamingRect.left;
+	BoxAlignRight_CamRect.right = BoxAlignRight_NamingRect.right;
+	BoxAlignRight_CamRect.top = BoxAlignLeft_CamRect.top;
+	BoxAlignRight_CamRect.bottom = BoxAlignLeft_CamRect.bottom;
+	GetDlgItem(IDC_STATIC_CAMERA_DISPALY_BOX_ALIGN_RIGHT)->MoveWindow(BoxAlignRight_CamRect);
+
+	//Simulation View
+	SimulationViewRect.left = Review10X_CamRect.right + RESOURCE_SPACE;
+	SimulationViewRect.right = HansongTitleRect.left - RESOURCE_SPACE; // SimulationViewRect.left + Review10X_NamingRect.Width();
+	SimulationViewRect.top = Review10X_NamingRect.top + 25; //Review10X_CamRect.top;//Review10X_NamingRect.top;
+	SimulationViewRect.bottom = BoxAlignRight_CamRect.top - 10;// Review10X_CamRect.bottom;
+	m_VisionAgentSimulationViewDlg.MoveWindow(SimulationViewRect);
+	m_VisionAgentSimulationViewDlg.SetWindowPos(NULL, SimulationViewRect.left, SimulationViewRect.top, SimulationViewRect.right - SimulationViewRect.left, SimulationViewRect.bottom - SimulationViewRect.top, NULL);
+	m_VisionAgentSimulationViewDlg.ShowWindow(SW_SHOW);
+
+	//Sub Window Check Button -------------------------------------------------------------------------
+	SubWndChkBtnRect.top = AutoRunDisplayRect.bottom;
+	SubWndChkBtnRect.bottom = SubWndChkBtnRect.top + (lSizeY * 2);
+	SubWndChkBtnRect.left = HansongTitleRect.left;
+	SubWndChkBtnRect.right = HansongTitleRect.right;
+
+	GetDlgItem(IDC_CHECK_SHOW_PROCESS_SUB)->MoveWindow(SubWndChkBtnRect);
+
+	//Awking
+	MainBtnRect.top = SubWndChkBtnRect.bottom + (lSizeY * 2);
+	MainBtnRect.bottom = MainBtnRect.top + (lSizeY * 2);
+	MainBtnRect.left = HansongTitleRect.left;
+	MainBtnRect.right = HansongTitleRect.right;
+
+	m_stc_btnMainMenu[MAIN_MENU_MODEL_BTN].MoveWindow(MainBtnRect);
+
+	for (int i = MAIN_MENU_MANUAL_BTN; i < MAIN_MENU_READY_BTN; i++)
+	{
+		MainBtnRect.top += (lSizeY * 2 + RESOURCE_SPACE);
+		MainBtnRect.bottom += (lSizeY * 2 + RESOURCE_SPACE);
+		m_stc_btnMainMenu[i].MoveWindow(MainBtnRect);
+	}
+
+	MainBtnRect.top += (lSizeY * 2 + 30);
+	MainBtnRect.bottom += (lSizeY * 2 + 30);
+
+	for (int i = MAIN_MENU_READY_BTN; i < MAX_MAIN_MENU_BTN; i++)
+	{
+		MainBtnRect.top += (lSizeY * 2 + RESOURCE_SPACE);
+		MainBtnRect.bottom += (lSizeY * 2 + RESOURCE_SPACE);
+		m_stc_btnMainMenu[i].MoveWindow(MainBtnRect);
+
+		if (i == MAIN_MENU_STOP_BTN)
+		{
+			MainBtnRect.bottom = MonitorRect.bottom - RESOURCE_SPACE;
+			MainBtnRect.top = MainBtnRect.bottom - lSizeY * 2;
+
+			m_stc_btnMainMenu[i].MoveWindow(MainBtnRect);
+		}
+	}
+
+	//--------------------------------------------------------------------------------------------
+	//Naming_Log
+	//20.09.17 sjc change 
+	Log_NamingRect.left		= BoxAlignRight_NamingRect.right;//SimulationViewRect.left;
+	Log_NamingRect.right	= SimulationViewRect.right;
+	Log_NamingRect.top		= BoxAlignRight_NamingRect.top;//20.09.17 sjc SimulationViewRect.bottom + RESOURCE_SPACE;
+	Log_NamingRect.bottom	= Log_NamingRect.top + nNaming_Size_Y;
+	m_stcLogNaming.MoveWindow(Log_NamingRect);
+
+	LogRect.left	= Log_NamingRect.left;
+	LogRect.right	= Log_NamingRect.right;
+	LogRect.top		= Log_NamingRect.bottom + RESOURCE_SPACE;
+	LogRect.bottom	= MonitorRect.bottom - nNaming_Size_Y - (RESOURCE_SPACE * 2);
+	GetDlgItem(IDC_STATIC_LOG_SUB)->MoveWindow(LogRect);
+	m_LogSize = LogRect;
+
+	CRect	RectLogBtn;
+	double	dLogBtn_Size_X = (LogRect.right - LogRect.left - (RESOURCE_SPACE * 6)) / MAX_LOG_LIST;//20.09.17 sjc 7->MAX_LOG_LIST
+	RectLogBtn.left = LogRect.left;
+	RectLogBtn.top = LogRect.bottom + RESOURCE_SPACE;
+	RectLogBtn.right = RectLogBtn.left + dLogBtn_Size_X;
+	RectLogBtn.bottom = MonitorRect.bottom - RESOURCE_SPACE;
+	for (int k = 0; k < MAX_LOG_LIST; k++)
+	{
+		RectLogBtn.left = LogRect.left + (int)(dLogBtn_Size_X * k);
+		RectLogBtn.right = RectLogBtn.left + dLogBtn_Size_X;
+		m_btnLogSelect[k].MoveWindow(RectLogBtn);
+	}
+	RectLogBtn.right	= LogRect.right - RESOURCE_SPACE;
+	RectLogBtn.left		= RectLogBtn.right - (int)(dLogBtn_Size_X);
+	
+	//m_btnLogViewer.MoveWindow(RectLogBtn);
+
+
+	ShowLogDlg(0);
+	Invalidate(false);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::InitSubDlg()
+{
+	m_pModelDlg = new CModelDlg(this);
+	m_pModelDlg->ShowWindow(SW_HIDE);
+	m_bShowModelModeless = FALSE;
+
+	m_pManualDlg = new CManualDlg(this);
+	m_pManualDlg->ShowWindow(SW_HIDE);
+	m_bShowManualModeless = FALSE;
+
+	m_pCommunicationDlg = new CCommunicationDlg(this);
+	m_pCommunicationDlg->ShowWindow(SW_HIDE);
+	m_bShowCommunicationModeless = FALSE;
+
+	m_pSystemDlg = new CSystemDlg(this);
+	m_pSystemDlg->ShowWindow(SW_HIDE);
+	m_bShowSystemModeless = FALSE;
+
+	m_pMeasurementDlg = new CMeasurementDlg(this);
+	m_pMeasurementDlg->ShowWindow(SW_HIDE);
+	m_bShowMeasurementModeless = FALSE;
+
+	m_pMahcineDlg = new CMachineDlg(this);
+	m_pMahcineDlg->ShowWindow(SW_HIDE);
+	m_bShowMachineModeless = FALSE;
+
+	m_pAlarmDlg = new CVisionAgentAlarmDlg(this);
+	m_pAlarmDlg->ShowWindow(SW_HIDE);
+	m_bShowAlarmModeless = FALSE;
+	
+	m_pProcessDlg = new CVisionAgentProcessDlg(this);
+	m_pProcessDlg->ShowWindow(SW_HIDE);
+	m_bShowProcessDlg = FALSE;
+}
+//-------------------------------------------------------------------
+void	CVisionAgentDlg::Init_Log_Dlg()
+{
+	m_VisionAgentLogAllDlg = new CVisionAgentLogDlg(this, LOG_ALL);
+
+	m_VisionAgentLogProcessDlg = new CVisionAgentLogDlg(this, LOG_PROCESS);
+
+	m_VisionAgentLogVisionDlg = new CVisionAgentLogDlg(this, LOG_VISION);
+
+	m_VisionAgentLogSystemDlg = new CVisionAgentLogDlg(this, LOG_SYSTEM);
+
+	m_VisionAgentLogEtcDlg = new CVisionAgentLogDlg(this, LOG_ETC);
+
+	m_VisionAgentLogAlarmDlg = new CVisionAgentLogDlg(this, LOG_ALARM);
+
+	m_btnLogSelect[0].SubclassDlgItem(IDC_LOG_ALL, this);
+	m_btnLogSelect[1].SubclassDlgItem(IDC_LOG_PROCESS, this);
+	m_btnLogSelect[2].SubclassDlgItem(IDC_LOG_SYSTEM, this);
+	m_btnLogSelect[3].SubclassDlgItem(IDC_LOG_VISION, this);
+	m_btnLogSelect[4].SubclassDlgItem(IDC_LOG_ETC, this);
+	m_btnLogSelect[5].SubclassDlgItem(IDC_LOG_ALARM, this);
+	for (int k = 0; k < 6; k++)
+	{
+		m_btnLogSelect[k].SetBackgroundColor(RGB(170, 170, 170));
+		m_btnLogSelect[k].SetTextColor(RGB(255, 255, 255));
+		m_btnLogSelect[k].SetFont(&m_fontMainMenu, TRUE);
+	}	
+	
+}
+//-------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticModelBtn()
+{
+	m_bShowModelModeless = !m_bShowModelModeless;
+	m_pModelDlg->RecalcLayout();
+	m_pModelDlg->ShowWindow(m_bShowModelModeless);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticCommunicationBtn()
+{
+	m_bShowCommunicationModeless = !m_bShowCommunicationModeless;
+//	m_pCommunicationDlg->RecalcLayout();
+	m_pCommunicationDlg->ShowWindow(m_bShowCommunicationModeless);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticManualBtn()
+{
+	m_bShowManualModeless = !m_bShowManualModeless;
+	m_pManualDlg->RecalcLayout();
+	m_pManualDlg->ShowWindow(m_bShowManualModeless);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticSystemBtn()
+{
+	m_bShowSystemModeless = !m_bShowSystemModeless;
+	m_pSystemDlg->RecalcLayout();
+	m_pSystemDlg->ShowWindow(m_bShowSystemModeless);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticMachineBtn()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	m_bShowMachineModeless = !m_bShowMachineModeless;
+	m_pMahcineDlg->RecalcLayout();
+	m_pMahcineDlg->ShowWindow(m_bShowMachineModeless);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticHansongTitle()
+{
+	AfxMessageBox(_T("Test"));
+}
+//---------------------------------------------------------------------
+//void CVisionAgentDlg::OnStnClickedStaticMainTitle()
+//{ 
+//#if 0
+//	Devs::m_Pua310->OpenControlWindow();
+//#endif
+//}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticMeasurementBtn()
+{
+	m_bShowMeasurementModeless = !m_bShowMeasurementModeless;
+	m_pMeasurementDlg->RecalcLayout();
+	m_pMeasurementDlg->ShowWindow(m_bShowMeasurementModeless);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnDblclickStaticWorkModeState()
+{
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticAutoRunDisplay()
+{
+	//SharedInfo::ResetAlarm();
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnDblclickStaticAutoRunDisplay()
+{
+	if (SharedInfo::GetAlarm())
+	{
+		SharedInfo::ResetAlarm();
+	}
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::LogInUserID()
+{
+#if 0
+	CString  strTemp = _T("");
+	strTemp = Devs::m_Pua310->GetUserId();
+
+	//Awking Log
+	if (m_strOldTemp!= strTemp)
+	{
+		if (strTemp==_T(""))
+		{
+			m_strOldTemp = strTemp;
+		}
+		else
+		{
+			m_strOldTemp = strTemp;		
+		}
+	}
+#endif
+}
+//---------------------------------------------------------------------
+
+//---------------------------------------------------------------------
+
+//---------------------------------------------------------------------
+BOOL CVisionAgentDlg::DestroyWindow()
+{
+	if (m_pModelDlg != NULL)
+	{
+		m_pModelDlg->DestroyWindow();
+		delete m_pModelDlg;
+	}
+
+	if (m_pManualDlg != NULL)
+	{
+		m_pManualDlg->DestroyWindow();
+		delete m_pManualDlg;
+	}
+
+	if (m_pSystemDlg != NULL)
+	{
+		m_pSystemDlg->DestroyWindow();
+		delete m_pSystemDlg;
+	}
+
+	if (m_pMeasurementDlg != NULL)
+	{
+		m_pMeasurementDlg->DestroyWindow();
+		delete m_pMeasurementDlg;
+	}
+
+	if (m_pCommunicationDlg != NULL)
+	{
+		m_pCommunicationDlg->DestroyWindow();
+		delete m_pCommunicationDlg;
+	}
+
+	if (m_pMahcineDlg != NULL)
+	{
+		m_pMahcineDlg->DestroyWindow();
+		delete m_pMahcineDlg;
+	}
+
+	if (m_pAlarmDlg)
+	{
+		m_pAlarmDlg->DestroyWindow();
+		delete m_pAlarmDlg;
+	}
+
+	if (m_pProcessDlg)
+	{
+		m_pProcessDlg->DestroyWindow();
+		delete m_pProcessDlg;
+	}
+
+	if (m_VisionAgentLogAllDlg)
+	{
+		m_VisionAgentLogAllDlg->DestroyWindow();
+		delete m_VisionAgentLogAllDlg;
+	}
+
+	if (m_VisionAgentLogProcessDlg)
+	{
+		m_VisionAgentLogProcessDlg->DestroyWindow();
+		delete m_VisionAgentLogProcessDlg;
+	}
+
+	if (m_VisionAgentLogVisionDlg)
+	{
+		m_VisionAgentLogVisionDlg->DestroyWindow();
+		delete m_VisionAgentLogVisionDlg;
+	}
+
+	if (m_VisionAgentLogSystemDlg)
+	{
+		m_VisionAgentLogSystemDlg->DestroyWindow();
+		delete m_VisionAgentLogSystemDlg;
+	}
+
+	if (m_VisionAgentLogEtcDlg)
+	{
+		m_VisionAgentLogEtcDlg->DestroyWindow();
+		delete m_VisionAgentLogEtcDlg;
+	}
+
+	if (m_VisionAgentLogAlarmDlg)
+	{
+		m_VisionAgentLogAlarmDlg->DestroyWindow();
+		delete m_VisionAgentLogAlarmDlg;
+	}
+	//Devs::Finalize();
+	SharedInfo::Finalize();
+
+#ifdef _MIL_INCLUDE_
+	if (Devs::m_Camera10X != NULL)		delete Devs::m_Camera10X;
+	if (Devs::m_Camera20X != NULL)		delete Devs::m_Camera20X;
+	if (Devs::m_CameraPreAlign != NULL)		delete Devs::m_CameraPreAlign;
+	if (Devs::m_CameraBoxAlignLeft != NULL)		delete Devs::m_CameraBoxAlignLeft;
+	if (Devs::m_CameraBoxAlignRight != NULL)		delete Devs::m_CameraBoxAlignRight;
+
+	//
+	m_VisionAgentSimulationViewDlg.DestroyWindow();
+
+	MdispFree(Devs::MilDigReview10X);
+	MdispFree(Devs::MilDigReview20X);
+	MdispFree(Devs::MilDigPreAlign);
+	MdispFree(Devs::MilDigBoxAlignLeft);
+	MdispFree(Devs::MilDigBoxAlignRight);
+
+	MsysFree(Devs::MilSysSol0);
+	MsysFree(Devs::MilSysSol1);
+	MsysFree(Devs::MilSysSol2);
+
+	MappFree(Devs::MilApplication);
+#endif
+
+	AOIServerClose();
+
+	CLogDefine::Finalize();
+
+	return CDialogEx::DestroyWindow();
+}
+//---------------------------------------------------------------------
+//동작 버튼------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticReadyBtn()
+{
+	if (IDYES == AfxMessageBox(_T("Ready Flow Start ?"), MB_YESNO))
+	{
+		Devs::m_ReadyFlow.Start();
+	}
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticAutoRunBtn()
+{
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticStopBtn()
+{
+	Devs::m_JogMotion.StopAll();
+
+	LogMsg_Total(_T("[MAIN] Stop Button Click"));
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticFrameLoadBtn()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedStaticEcsBtn()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedLogAll()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	ShowLogDlg(LOG_ALL);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedLogProcess()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	ShowLogDlg(LOG_PROCESS);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedLogSystem()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	ShowLogDlg(LOG_SYSTEM);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedLogVision()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	ShowLogDlg(LOG_VISION);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedLogEtc()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	ShowLogDlg(LOG_ETC);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedLogAlarm()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.	
+	ShowLogDlg(LOG_ALARM);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnStnClickedLogViewer()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+}
+//---------------------------------------------------------------------
+void	CVisionAgentDlg::ShowLogDlg(int nDlgNo)
+{
+	int i;
+
+	m_VisionAgentLogAllDlg->ShowWindow(SW_HIDE);
+	m_VisionAgentLogProcessDlg->ShowWindow(SW_HIDE);
+	m_VisionAgentLogVisionDlg->ShowWindow(SW_HIDE);
+	m_VisionAgentLogSystemDlg->ShowWindow(SW_HIDE);
+	m_VisionAgentLogEtcDlg->ShowWindow(SW_HIDE);
+	m_VisionAgentLogAlarmDlg->ShowWindow(SW_HIDE);
+
+	for (int i = 0; i < MAX_LOG_LIST; i++)
+	{
+		m_btnLogSelect[i].SetBackgroundColor(RGB(170, 170, 170));
+	}
+
+	m_nCurrSubDlg = nDlgNo;
+
+	switch (m_nCurrSubDlg)
+	{
+	case LOG_ALL:
+	{
+		m_pCurrSubDlg = m_VisionAgentLogAllDlg;
+
+		m_btnLogSelect[LOG_ALL].SetBackgroundColor(RGB(0xff, 0x66, 0));
+		break;
+	}
+	case LOG_PROCESS:
+	{
+		m_pCurrSubDlg = m_VisionAgentLogProcessDlg;
+
+		m_btnLogSelect[LOG_PROCESS].SetBackgroundColor(RGB(0xff, 0x66, 0));
+		break;
+	}
+	case LOG_VISION:
+	{
+		m_pCurrSubDlg = m_VisionAgentLogVisionDlg;
+
+		m_btnLogSelect[LOG_VISION].SetBackgroundColor(RGB(0xff, 0x66, 0));
+		break;
+	}
+	case LOG_SYSTEM:
+	{
+		m_pCurrSubDlg = m_VisionAgentLogSystemDlg;
+
+		m_btnLogSelect[LOG_SYSTEM].SetBackgroundColor(RGB(0xff, 0x66, 0));
+		break;
+	}
+	case LOG_ETC:
+	{
+		m_pCurrSubDlg = m_VisionAgentLogEtcDlg;
+
+		m_btnLogSelect[LOG_ETC].SetBackgroundColor(RGB(0xff, 0x66, 0));
+		break;
+	}
+	case LOG_ALARM:
+	{
+		m_pCurrSubDlg = m_VisionAgentLogAlarmDlg;
+		m_btnLogSelect[LOG_ALARM].SetBackgroundColor(RGB(0xff, 0x66, 0));
+
+		break;
+	}
+	}
+	m_pCurrSubDlg->MoveWindow(&m_LogSize);
+	m_pCurrSubDlg->ShowWindow(SW_SHOW);
+}
+//---------------------------------------------------------------------
+void	CVisionAgentDlg::HideLogDlg()
+{
+	m_VisionAgentLogAllDlg->ShowWindow(SW_HIDE);
+	m_VisionAgentLogProcessDlg->ShowWindow(SW_HIDE);
+	m_VisionAgentLogVisionDlg->ShowWindow(SW_HIDE);
+	m_VisionAgentLogSystemDlg->ShowWindow(SW_HIDE);
+	m_VisionAgentLogEtcDlg->ShowWindow(SW_HIDE);
+	m_VisionAgentLogAlarmDlg->ShowWindow(SW_HIDE);
+}
+//---------------------------------------------------------------------
+void CVisionAgentDlg::OnBnClickedCheckShowProcessSub()
+{
+	m_bShowProcessDlg = !m_bShowProcessDlg;
+
+	if (m_bShowProcessDlg)
+	{	
+		m_pProcessDlg->ShowWindow(SW_SHOW);
+	}
+	else
+	{
+		m_pProcessDlg->ShowWindow(SW_HIDE);
+	}	
+}
+//---------------------------------------------------------------------
+UINT Status_Ajin_Thread_Proc(LPVOID lpParam)
+{
+	CVisionAgentDlg *pVisionAgentDlg;
+	pVisionAgentDlg = (CVisionAgentDlg*)lpParam;
+	while (1)
+	{
+		Sleep(1);
+	}
+	return 0;
+}
+//---------------------------------------------------------------------
+UINT Safety_Thread_Proc(LPVOID lpParam)
+{
+	CVisionAgentDlg *pVisionAgentDlg;
+	pVisionAgentDlg = (CVisionAgentDlg*)lpParam;
+	while (1)
+	{
+		Sleep(1);
+	}
+	return 0;
+}
+//---------------------------------------------------------------------
+UINT Data_Thread_Proc(LPVOID lpParam)
+{
+	CVisionAgentDlg *pVisionAgentDlg;
+	pVisionAgentDlg = (CVisionAgentDlg*)lpParam;
+	while (1)
+	{
+		Sleep(1);
+	}
+	return 0;
+}
+//---------------------------------------------------------------------
+
+void CVisionAgentDlg::OnBnClickedRdoCameraReview10x()
+{
+	ChangeCamera(0);
+}
+
+
+void CVisionAgentDlg::OnBnClickedRdoCameraReview20x()
+{
+	ChangeCamera(1);
+}
+
+
+void CVisionAgentDlg::OnBnClickedRdoCameraPreAlign()
+{
+	ChangeCamera(2);
+}
+
+void CVisionAgentDlg::ChangeCamera(int nCamNo)
+{
+	switch (nCamNo)
+	{
+	case 0:
+		GetDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_20X)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_STATIC_CAMERA_DISPALY_PRE_ALIGN)->ShowWindow(SW_HIDE);
+
+		GetDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_10X)->ShowWindow(SW_SHOW);
+		m_stcReview10X_Cam_Naming.SetData(_T("REVIEW 10X"));
+		break;
+	case 1:
+		GetDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_10X)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_STATIC_CAMERA_DISPALY_PRE_ALIGN)->ShowWindow(SW_HIDE);
+
+		GetDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_20X)->ShowWindow(SW_SHOW);
+		m_stcReview10X_Cam_Naming.SetData(_T("REVIEW 20X"));
+		break;
+	case 2:
+		GetDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_10X)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_STATIC_CAMERA_DISPALY_REVIEW_20X)->ShowWindow(SW_HIDE);
+
+		GetDlgItem(IDC_STATIC_CAMERA_DISPALY_PRE_ALIGN)->ShowWindow(SW_SHOW);
+		m_stcReview10X_Cam_Naming.SetData(_T("PRE ALIGN"));
+		break;
+	}
+}
+
+int CVisionAgentDlg::GetBoardInfo()
+{
+	long lAxisCount;
+	int nDInputIndex = 0;
+	int nDOutputIndex = 0;
+	int nAInputIndex = 0;
+	int nAOutputIndex = 0;
+	CString Str;
+
+	m_nVisionMaxAxisSize = 0;
+
+	//Motion
+	AxmInfoGetAxisCount(&lAxisCount);
+	m_nVisionMaxAxisSize = lAxisCount;
+
+	Str.Format(_T("Motion Axis Size = %d"), m_nVisionMaxAxisSize);
+	LogMsg_Etc(Str);
+
+	return 1;
+}
+
+
+int CVisionAgentDlg::GetMotionPara()
+{
+	DWORD dwRet;
+	CString file;
+
+	file.Format(_T("%s\\Data\\Ajin\\%s"), SharedInfo::GetExeFilePath(), _T("AjinPara.mot"));
+
+	USES_CONVERSION;
+	char * szfile = T2A(file);
+
+	//dwRet = AxmMotLoadParaAll((char *)_ToMbc(file));	
+	dwRet = AxmMotLoadParaAll(szfile);
+
+	if (dwRet == 0)
+	{
+		LogMsg_Etc(_T("Loading Motion Para Success"));
+	}
+	else
+	{
+		LogMsg_Etc(_T("Loading Motion Para Fail"));
+	}
+
+	return dwRet;
+}
+BOOL CVisionAgentDlg::ConnectWorkNetwork()
+{
+	CString strServerIP, strServerPort, str, strStatePort, strVisionReceivePort, strVisionWritePort, strBarCodeIP, strBarCodePort;
+	strServerPort.Format(_T("2000"));
+	strStatePort.Format(_T("2001"));
+	strVisionWritePort.Format(_T("2002"));
+	strVisionReceivePort.Format(_T("2003"));
+
+	strServerIP.Format(_T("192.168.1.101"));
+
+	//strServerIP.Format(_T("127.0.0.1"));
+
+	//Awking 14_Test.
+	//strServerIP.Format(_T("192.168.0.159"));
+
+	WSADATA WSAData = { 0 };
+	if (0 != WSAStartup(WSA_VERSION, &WSAData)) {
+		if (LOBYTE(WSAData.wVersion) != LOBYTE(WSA_VERSION) || HIBYTE(WSAData.wVersion) != HIBYTE(WSA_VERSION)) {
+			AfxMessageBox(_T("Incorrect version of WS2_32.dll found"));
+		}
+		WSACleanup();
+	}
+	m_SocketWrite.SetServerState(FALSE);
+	m_SocketWrite.SetSmartAddressing(FALSE);
+
+	m_nPrevConnect = 0;
+	m_nConnect = 0;
+	m_nConnect = m_SocketWrite.ConnectTo(strServerIP, strServerPort, AF_INET, SOCK_STREAM);
+	if (m_nConnect && m_SocketWrite.WatchComm()) {
+		m_SocketWrite.GetPeerName(m_SockPeer);
+
+		//SetProcessMsg(_T("Network(127.0.0.1) connected"));
+		LogMsg_Etc(_T("Network(192.168.1.101) connected"));
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetBackgroundColor(DKGREEN);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetTextColor(WHITE);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetWindowText(_T("On"));
+
+	}
+	else
+	{
+		//SetProcessMsg(_T("Network(127.0.0.1) connection fail"));
+		LogMsg_Etc(_T("Network(192.168.1.101) connection fail"));
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetBackgroundColor(DKRED);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetTextColor(YELLOW);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetWindowText(_T("OFF"));
+
+
+		m_bConnectWorkNetwork = FALSE;
+		//CStateManager* pStateMan = CStateManager::GetInstance();
+		//pStateMan->SetEvent();
+
+	}
+
+	//Control Receive
+	m_nStateConnect = 0;
+	m_nStateConnect = m_SocketReceive.ConnectTo(strServerIP, strStatePort, AF_INET, SOCK_STREAM);
+	if (m_nStateConnect && m_SocketReceive.WatchComm()) {
+		m_SocketReceive.GetPeerName(m_SockPeer);
+
+		//SetProcessMsg(_T("Network(127.0.0.1) connected"));
+		LogMsg_Etc(_T("State Network(192.168.1.101) connected"));
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetBackgroundColor(DKGREEN);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetTextColor(WHITE);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetWindowText(_T("On"));
+
+	}
+	else
+	{
+		//SetProcessMsg(_T("Network(127.0.0.1) connection fail"));
+		LogMsg_Etc(_T("State Network(192.168.1.101) connection fail"));
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetBackgroundColor(DKRED);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetTextColor(YELLOW);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetWindowText(_T("OFF"));
+
+
+		m_bStateConnectWorkNetwork = FALSE;
+		//CStateManager* pStateMan = CStateManager::GetInstance();
+		//pStateMan->SetEvent();
+
+	}
+
+#ifndef SIM_MODE
+	//Vision Receive
+#if 0
+	m_nVisionConnect = 0;
+	m_nVisionConnect = m_SocketVisionReceive.ConnectTo(strServerIP, strVisionReceivePort, AF_INET, SOCK_STREAM);
+	if (m_nVisionConnect && m_SocketVisionReceive.WatchComm()) {
+		m_SocketVisionReceive.GetPeerName(m_SockPeer);
+
+		//m_nVisionConnect = 1;
+
+		//SetProcessMsg(_T("Network(127.0.0.1) connected"));
+		LogMsg_Etc(_T("Vision Network(192.168.1.101) connected"));
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetBackgroundColor(GREEN);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetTextColor(WHITE);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetWindowText(_T("On"));
+
+	}
+	else
+	{
+		//SetProcessMsg(_T("Network(127.0.0.1) connection fail"));
+		LogMsg_Etc(_T("Vision Network(192.168.1.101) connection fail"));
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetBackgroundColor(RED);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetTextColor(YELLOW);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetWindowText(_T("OFF"));
+
+
+		m_bStateConnectWorkNetwork = FALSE;
+		//CStateManager* pStateMan = CStateManager::GetInstance();
+		//pStateMan->SetEvent();
+
+	}
+
+
+	//Vision Write = 0;
+	m_nVisionConnect = 0;
+	m_nVisionConnect = m_SocketVisionWrite.ConnectTo(strServerIP, strVisionWritePort, AF_INET, SOCK_STREAM);
+	if (m_nVisionConnect && m_SocketVisionWrite.WatchComm()) {
+		m_SocketVisionWrite.GetPeerName(m_SockPeer);
+
+		//SetProcessMsg(_T("Network(127.0.0.1) connected"));
+		LogMsg_Etc(_T("Vision Network(192.168.1.101) connected"));
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetBackgroundColor(GREEN);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetTextColor(WHITE);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetWindowText(_T("On"));
+
+	}
+	else
+	{
+		//SetProcessMsg(_T("Network(127.0.0.1) connection fail"));
+		LogMsg_Etc(_T("Vision Network(192.168.1.101) connection fail"));
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetBackgroundColor(RED);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetTextColor(YELLOW);
+		//m_stcStateBar_Value[VISION_AGENT_STATE_MENU_NETWORK_STC].SetWindowText(_T("OFF"));
+
+
+		m_bStateConnectWorkNetwork = FALSE;
+		//CStateManager* pStateMan = CStateManager::GetInstance();
+		//pStateMan->SetEvent();
+
+	}
+
+
+	Devs::m_SocketCassetteBarCode.SetServerState(FALSE);
+	Devs::m_SocketCassetteBarCode.SetSmartAddressing(FALSE);
+
+	Devs::m_SocketCassetteBarCode.SetServerState(FALSE);
+	Devs::m_SocketCassetteBarCode.SetSmartAddressing(FALSE);
+	strBarCodePort.Format(_T("9004"));
+
+	strBarCodeIP.Format(_T("192.168.2.201"));
+	m_nCassetteBarcodeConnect = 0;
+	m_nCassetteBarcodeConnect = Devs::m_SocketCassetteBarCode.ConnectTo(strBarCodeIP, strBarCodePort, AF_INET, SOCK_STREAM);
+	if (m_nCassetteBarcodeConnect && Devs::m_SocketCassetteBarCode.WatchComm()) {
+		Devs::m_SocketCassetteBarCode.GetPeerName(m_SockPeer);
+
+		m_nCassetteBarcodeConnect = 1;
+		//Devs::m_SocketCassetteBarCode.bBarCodeFlag = true;
+		//SetProcessMsg(_T("Network(127.0.0.1) connected"));
+		LogMsg_Etc(_T("Cassette Barcode Network(192.168.2.201) connected"));
+
+
+	}
+	else
+	{
+		//SetProcessMsg(_T("Network(127.0.0.1) connection fail"));
+		LogMsg_Etc(_T("Cassette Barcode Network(192.168.2.201) connection fail"));
+
+
+
+		//CStateManager* pStateMan = CStateManager::GetInstance();
+		//pStateMan->SetEvent();
+
+	}
+
+
+	strBarCodeIP.Format(_T("192.168.2.202"));
+	m_nFrameBarcodeConnect = 0;
+	m_nFrameBarcodeConnect = Devs::m_SocketFrameBarCode.ConnectTo(strBarCodeIP, strBarCodePort, AF_INET, SOCK_STREAM);
+	if (m_nFrameBarcodeConnect && Devs::m_SocketFrameBarCode.WatchComm()) {
+		Devs::m_SocketFrameBarCode.GetPeerName(m_SockPeer);
+		//Devs::m_SocketFrameBarCode.bBarCodeFlag = true;
+		m_nFrameBarcodeConnect = 1;
+
+		//SetProcessMsg(_T("Network(127.0.0.1) connected"));
+		LogMsg_Etc(_T("Frame Barcode Network(192.168.2.202) connected"));
+
+
+	}
+	else
+	{
+		//SetProcessMsg(_T("Network(127.0.0.1) connection fail"));
+		LogMsg_Etc(_T("Frame Barcode Network(192.168.2.202) connection fail"));
+
+
+
+		//CStateManager* pStateMan = CStateManager::GetInstance();
+		//pStateMan->SetEvent();
+
+	}
+
+
+	strBarCodeIP.Format(_T("192.168.2.203"));
+	m_nMaskBarcodeConnect = 0;
+#if 0
+	m_nMaskBarcodeConnect = Devs::m_SocketMaskBarCode.ConnectTo(strBarCodeIP, strBarCodePort, AF_INET, SOCK_STREAM);
+	if (m_nMaskBarcodeConnect && Devs::m_SocketMaskBarCode.WatchComm()) {
+		Devs::m_SocketMaskBarCode.GetPeerName(m_SockPeer);
+		Devs::m_SocketMaskBarCode.bBarCodeFlag = true;
+		m_nMaskBarcodeConnect = 1;
+
+		//SetProcessMsg(_T("Network(127.0.0.1) connected"));
+		LogMsg_Etc(_T("Mask Barcode Network(192.168.2.203) connected"));
+
+
+	}
+	else
+	{
+		//SetProcessMsg(_T("Network(127.0.0.1) connection fail"));
+		LogMsg_Etc(_T("Mask Barcode Network(192.168.2.203) connection fail"));
+
+
+
+		//CStateManager* pStateMan = CStateManager::GetInstance();
+		//pStateMan->SetEvent();
+
+	}
+#endif
+#endif
+#endif
+
+	m_bConnectWorkNetwork = TRUE;
+	m_bStateConnectWorkNetwork = TRUE;
+	m_bVisionConnectWorkNetwork = TRUE;
+
+	//StretchSetStepValue();
+	//StretchSetPara();
+	//ClampSetPara();
+
+	//CStateManager* pStateMan = CStateManager::GetInstance();
+	//pStateMan->SetEvent();
+
+
+	return TRUE;
+}
+void CVisionAgentDlg::GetNetworkStatus()
+{
+
+}
+
+#pragma region //AOI Server. KJT 20200823
+BOOL CVisionAgentDlg::AOIServerOpen()
+{
+	BOOL bRtn = m_SocketServer_AOI.InitServer(AOI_SERVER_PORT, AOI_SERVER_IP);
+
+	return bRtn;
+}
+BOOL CVisionAgentDlg::AOIServerClose()
+{
+	m_SocketServer_AOI.CLOSE();
+	return TRUE;
+}
+#pragma endregion
+
+BOOL CVisionAgentDlg::SetDefaultOutput()
+{
+	//MC
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_MC20_UCP_GANTRY_Y2M_X1R_CAMERA_Z1_Z2_POWER, TRUE);
+	Sleep(20);
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_MC21_CAMERA_Z3_IN_TRNS_Z_BACK_LIGHT_X_POWER, TRUE);
+	Sleep(20);
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_MC22_GRIPPER_CLAMP_STRETCH_L_R_POWER, TRUE);
+	Sleep(20);
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_MC23_GRIPPER_PITCH_L_R_POWER, TRUE);
+	Sleep(20);
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_MC24_GRIPPER_Z_R1_L1_CAMERA_Y1_Y2_POWER, TRUE);
+	Sleep(20);
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_MC25_3D_CAMERA_Z1_Z2_OUT_TRNS_Z_Y1_Y2_POWER, TRUE);
+	Sleep(20);
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_MC26_MAGAZINE_LIFT_Z_POWER, TRUE);
+	Sleep(20);
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_MC27_INK_JET_LD_UVW_Mask_Box_Align, TRUE);
+	Sleep(20);
+
+	//Gantry Relay
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_RELAY_GANTRY_YL, TRUE);
+	Sleep(20);
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_RELAY_GANTRY_YR, TRUE);
+	Sleep(20);
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_RELAY_GANTRY_X, TRUE);
+	Sleep(20);
+	
+	//Box Laser Relay
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_BOX_LASER_RELAY, TRUE);
+	Sleep(20);
+
+	//Laser Focus Power
+	Devs::m_BaseMotion.SetDOutputBitValue(_DOUT_LASER_DISPLACEMENT_POWER, TRUE);
+
+	return TRUE;
+}
+
+void CVisionAgentDlg::OnStnDblclickStaticMainTitle()
+{
+	OnCancel();
+}
+
+void CVisionAgentDlg::OnCancel()
+{
+	int nValue = MessageBox(_T("<<<<< 프로그램 종료 >>>>>\r\n\r\n프로그램을 종료하시겠습니까?"), NULL, MB_YESNO | MB_DEFBUTTON2 | MB_ICONINFORMATION);
+	if (nValue == IDYES)
+	{
+		//if (CanExit())
+		{
+			LogMsg_Process(_T("<<---------------------------------------------------------------------------------"));
+			LogMsg_Vision(_T("<<---------------------------------------------------------------------------------"));
+			LogMsg_System(_T("<<---------------------------------------------------------------------------------"));
+			LogMsg_Etc(_T("<<---------------------------------------------------------------------------------"));
+			LogMsg_Alarm(_T("<<---------------------------------------------------------------------------------"));
+			//LogMsg_Cim(_T("<<---------------------------------------------------------------------------------"));
+			LogMsg_Total(_T("<< End Program MotionAgent"));
+
+			CDialogEx::OnCancel();
+		}
+	}
+}
+
+
+
+void CVisionAgentDlg::OnStnClickedStaticMainAlarm()
+{
+	LogMsg_Total(_T("[MAIN] Alarm Button Click"));
+
+	m_bShowAlarmModeless = !m_pAlarmDlg->IsWindowVisible();
+	//m_pAlarmDlg->RecalcLayout();
+	m_pAlarmDlg->ShowWindow(m_bShowAlarmModeless);
+}
+
+void CVisionAgentDlg::ResetModel()
+{
+	CFileFind finder;
+	CString strPathFind;
+	CString strDirName;
+	int Size;
+
+	SharedInfo::m_strModelNames.RemoveAll();
+	strPathFind.Format(_T("%s\\*.*"), SharedInfo::GetModelDataFolder());
+	BOOL bWorking = finder.FindFile(strPathFind);
+
+	while (bWorking)
+	{
+		bWorking = finder.FindNextFile();
+		if (finder.IsDirectory())
+		{
+			strDirName = finder.GetFileName();
+			if (strDirName == _T(".") || strDirName == _T("..")) continue;
+			SharedInfo::m_strModelNames.Add(strDirName);
+			Size = SharedInfo::m_strModelNames.GetSize();
+		}
+	}
+
+}
+
+#pragma region //Label
+int CVisionAgentDlg::SaveAxisLabelParameter()
+{
+	CStdioFile OutFile;
+	CString StrData;
+	TCHAR tchPathName[256];
+	int i;
+
+	wsprintf(tchPathName, _T("%s\\%s"), SharedInfo::GetExeFilePath(), SharedInfo::STR_DATA_LABEL_AXIS);
+
+	if (OutFile.Open((LPCTSTR)tchPathName, CFile::modeWrite | CFile::modeCreate | CFile::typeText) == FALSE) return 0;
+
+	StrData.Format(_T("#BEGIN\n"));
+	OutFile.WriteString(StrData);
+
+	for (i = 0; i < MAX_AXIS_SIZE; i++)
+	{
+		StrData.Format(_T("[AXIS%d]\t%s\n"), i, m_AxisLabel[i].m_StrLabel);
+		OutFile.WriteString(StrData);
+	}
+
+	StrData.Format(_T("#END"));
+	OutFile.WriteString(StrData);
+
+	OutFile.Close();
+
+	return 0;
+}
+
+int CVisionAgentDlg::LoadAxisLabelParameter()
+{
+	CStdioFile InFile;
+	CString strIndex = _T("");
+	CString strSrc = _T("");
+	CString strResult = _T("");
+	TCHAR tchPathName[256];
+	int nIndex = 0;
+
+	wsprintf(tchPathName, _T("%s\\%s"), SharedInfo::GetExeFilePath(), SharedInfo::STR_DATA_LABEL_AXIS);
+	if (InFile.Open((LPCTSTR)tchPathName, CFile::modeRead | CFile::typeText) == FALSE)
+		return 0;
+
+	while (InFile.ReadString(strSrc) != FALSE) {
+		strSrc.TrimLeft();
+		strSrc.TrimRight();
+
+		if (!strSrc.Compare(_T("#BEGIN")) || strSrc.GetLength() < 1) continue;
+		if (!strSrc.Compare(_T("#END")) || strSrc == EOF) break;
+
+		strIndex.Format(_T("[AXIS%d]"), nIndex);
+
+		strResult = LoadFileData(&InFile, strSrc, strIndex);
+
+		m_AxisLabel[nIndex].m_StrLabel = strResult;
+
+		nIndex++;
+	}
+
+	InFile.Close();
+
+	return 0;
+
+}
+
+int CVisionAgentDlg::SaveDInputLabelParameter()
+{
+	CStdioFile OutFile;
+	CString StrData;
+	TCHAR tchPathName[256];
+	int i;
+
+	wsprintf(tchPathName, _T("%s\\%s"), SharedInfo::GetExeFilePath(), SharedInfo::STR_DATA_LABEL_DINPUT);
+
+	if (OutFile.Open((LPCTSTR)tchPathName, CFile::modeWrite | CFile::modeCreate | CFile::typeText) == FALSE) return 0;
+
+	StrData.Format(_T("#BEGIN\n"));
+	OutFile.WriteString(StrData);
+
+	for (i = 0; i < MAX_DINPUT_SIZE; i++)
+	{
+		StrData.Format(_T("[INPUT%d]\t%s\n"), i, m_DInputLabel[i].m_StrLabel);
+		OutFile.WriteString(StrData);
+	}
+
+	StrData.Format(_T("#END"));
+	OutFile.WriteString(StrData);
+
+	OutFile.Close();
+
+	return 0;
+}
+
+int CVisionAgentDlg::LoadDInputLabelParameter()
+{
+	CStdioFile InFile;
+	CString strIndex = _T("");
+	CString strSrc = _T("");
+	CString strResult = _T("");
+	TCHAR tchPathName[256];
+	int nIndex = 0;
+
+	wsprintf(tchPathName, _T("%s\\%s"), SharedInfo::GetExeFilePath(), SharedInfo::STR_DATA_LABEL_DINPUT);
+	if (InFile.Open((LPCTSTR)tchPathName, CFile::modeRead | CFile::typeText) == FALSE)
+		return 0;
+
+	while (InFile.ReadString(strSrc) != FALSE) {
+		strSrc.TrimLeft();
+		strSrc.TrimRight();
+
+		if (!strSrc.Compare(_T("#BEGIN")) || strSrc.GetLength() < 1) continue;
+		if (!strSrc.Compare(_T("#END")) || strSrc == EOF) break;
+
+		strIndex.Format(_T("[INPUT%d]"), nIndex);
+
+		strResult = LoadFileData(&InFile, strSrc, strIndex);
+
+		m_DInputLabel[nIndex].m_StrLabel = strResult;
+
+		nIndex++;
+	}
+
+	InFile.Close();
+
+	return 0;
+}
+
+
+int CVisionAgentDlg::SaveDOutputLabelParameter()
+{
+	CStdioFile OutFile;
+	CString StrData;
+	TCHAR tchPathName[256];
+	int i;
+
+	wsprintf(tchPathName, _T("%s\\%s"), SharedInfo::SharedInfo::GetExeFilePath(), SharedInfo::STR_DATA_LABEL_DOUTPUT);
+
+	if (OutFile.Open((LPCTSTR)tchPathName, CFile::modeWrite | CFile::modeCreate | CFile::typeText) == FALSE) return 0;
+
+	StrData.Format(_T("#BEGIN\n"));
+	OutFile.WriteString(StrData);
+
+	for (i = 0; i < MAX_DOUTPUT_SIZE; i++)
+	{
+		StrData.Format(_T("[OUTPUT%d]\t%s\n"), i, m_DOutputLabel[i].m_StrLabel);
+		OutFile.WriteString(StrData);
+	}
+
+	StrData.Format(_T("#END"));
+	OutFile.WriteString(StrData);
+
+	OutFile.Close();
+
+	return 0;
+}
+
+
+int CVisionAgentDlg::LoadDOutputLabelParameter()
+{
+	CStdioFile InFile;
+	CString strIndex = _T("");
+	CString strSrc = _T("");
+	CString strResult = _T("");
+	TCHAR tchPathName[256];
+	int nIndex = 0;
+
+	wsprintf(tchPathName, _T("%s\\%s"), SharedInfo::GetExeFilePath(), SharedInfo::STR_DATA_LABEL_DOUTPUT);
+	if (InFile.Open((LPCTSTR)tchPathName, CFile::modeRead | CFile::typeText) == FALSE)
+		return 0;
+
+	while (InFile.ReadString(strSrc) != FALSE) {
+		strSrc.TrimLeft();
+		strSrc.TrimRight();
+
+		if (!strSrc.Compare(_T("#BEGIN")) || strSrc.GetLength() < 1) continue;
+		if (!strSrc.Compare(_T("#END")) || strSrc == EOF) break;
+
+		strIndex.Format(_T("[OUTPUT%d]"), nIndex);
+
+		strResult = LoadFileData(&InFile, strSrc, strIndex);
+
+		m_DOutputLabel[nIndex].m_StrLabel = strResult;
+
+		nIndex++;
+	}
+
+	InFile.Close();
+
+	return 0;
+}
+
+int CVisionAgentDlg::SaveAInputLabelParameter()
+{
+	CStdioFile OutFile;
+	CString StrData;
+	TCHAR tchPathName[256];
+	int i;
+
+	wsprintf(tchPathName, _T("%s\\%s"), SharedInfo::GetExeFilePath(), SharedInfo::STR_DATA_LABEL_AINPUT);
+
+	if (OutFile.Open((LPCTSTR)tchPathName, CFile::modeWrite | CFile::modeCreate | CFile::typeText) == FALSE) return 0;
+
+	StrData.Format(_T("#BEGIN\n"));
+	OutFile.WriteString(StrData);
+
+	for (i = 0; i < MAX_AINPUT_SIZE; i++)
+	{
+		StrData.Format(_T("[INPUT%d]\t%s\n"), i, m_AInputLabel[i].m_StrLabel);
+		OutFile.WriteString(StrData);
+	}
+
+	StrData.Format(_T("#END"));
+	OutFile.WriteString(StrData);
+
+	OutFile.Close();
+
+	return 0;
+}
+
+int CVisionAgentDlg::LoadAInputLabelParameter()
+{
+	CStdioFile InFile;
+	CString strIndex = _T("");
+	CString strSrc = _T("");
+	CString strResult = _T("");
+	TCHAR tchPathName[256];
+	int nIndex = 0;
+
+	wsprintf(tchPathName, _T("%s\\%s"), SharedInfo::GetExeFilePath(), SharedInfo::STR_DATA_LABEL_AINPUT);
+	if (InFile.Open((LPCTSTR)tchPathName, CFile::modeRead | CFile::typeText) == FALSE)
+		return 0;
+
+	while (InFile.ReadString(strSrc) != FALSE) {
+		strSrc.TrimLeft();
+		strSrc.TrimRight();
+
+		if (!strSrc.Compare(_T("#BEGIN")) || strSrc.GetLength() < 1) continue;
+		if (!strSrc.Compare(_T("#END")) || strSrc == EOF) break;
+
+		strIndex.Format(_T("[INPUT%d]"), nIndex);
+
+		strResult = LoadFileData(&InFile, strSrc, strIndex);
+
+		m_AInputLabel[nIndex].m_StrLabel = strResult;
+
+		nIndex++;
+	}
+
+	InFile.Close();
+
+	return 0;
+}
+
+int CVisionAgentDlg::SaveAOutputLabelParameter()
+{
+	CStdioFile OutFile;
+	CString StrData;
+	TCHAR tchPathName[256];
+	int i;
+
+	wsprintf(tchPathName, _T("%s\\%s"), SharedInfo::GetExeFilePath(), SharedInfo::STR_DATA_LABEL_AOUTPUT);
+
+	if (OutFile.Open((LPCTSTR)tchPathName, CFile::modeWrite | CFile::modeCreate | CFile::typeText) == FALSE) return 0;
+
+	StrData.Format(_T("#BEGIN\n"));
+	OutFile.WriteString(StrData);
+
+	for (i = 0; i < MAX_AOUTPUT_SIZE; i++)
+	{
+		StrData.Format(_T("[OUTPUT%d]\t%s\n"), i, m_AOutputLabel[i].m_StrLabel);
+		OutFile.WriteString(StrData);
+	}
+
+	StrData.Format(_T("#END"));
+	OutFile.WriteString(StrData);
+
+	OutFile.Close();
+
+	return 0;
+}
+
+int CVisionAgentDlg::LoadAOutputLabelParameter()
+{
+	CStdioFile InFile;
+	CString strIndex = _T("");
+	CString strSrc = _T("");
+	CString strResult = _T("");
+	TCHAR tchPathName[256];
+	int nIndex = 0;
+
+	wsprintf(tchPathName, _T("%s\\%s"), SharedInfo::GetExeFilePath(), SharedInfo::STR_DATA_LABEL_AOUTPUT);
+	if (InFile.Open((LPCTSTR)tchPathName, CFile::modeRead | CFile::typeText) == FALSE)
+		return 0;
+
+	while (InFile.ReadString(strSrc) != FALSE) {
+		strSrc.TrimLeft();
+		strSrc.TrimRight();
+
+		if (!strSrc.Compare(_T("#BEGIN")) || strSrc.GetLength() < 1) continue;
+		if (!strSrc.Compare(_T("#END")) || strSrc == EOF) break;
+
+		strIndex.Format(_T("[OUTPUT%d]"), nIndex);
+
+		strResult = LoadFileData(&InFile, strSrc, strIndex);
+
+		m_AOutputLabel[nIndex].m_StrLabel = strResult;
+
+		nIndex++;
+	}
+
+	InFile.Close();
+
+	return 0;
+}
+
+CString CVisionAgentDlg::LoadFileData(CStdioFile* csfInFile, CString strSrcData, CString strCompData)
+{
+	int nPos = -1;
+	int nDataLenth = 0;
+	CString strResult = _T("");
+
+	nPos = strSrcData.Find(strCompData);
+	strResult = _T("-1");
+	if (nPos != -1)
+	{
+		nPos = strSrcData.Find(_T("\t")) + 1;
+		if (nPos != -1)
+		{
+			//TRACE(_T("DOutputLabel = %s \n"), strSrcData);
+			nDataLenth = strSrcData.GetLength() - strCompData.GetLength();
+			strResult = strSrcData.Mid(nPos, nDataLenth);
+			strResult.TrimLeft();
+			strResult.TrimRight();
+		}
+	}
+	return strResult;
+}
+#pragma endregion

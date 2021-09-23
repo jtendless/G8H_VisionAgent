@@ -1,0 +1,127 @@
+#pragma once
+#include "../Vision/Safety.h"
+#include "../Dll/Ajin/include/AXM.h"
+typedef struct {
+	int			nSimual_Mode;
+	enum_Axis eAxis;
+	int nAxisType;
+
+	double dTargetPos;
+	double dVel;
+	double dAcc;
+	double dDec;
+
+	int nJogDir;
+	int m_bAxisMotionDone;
+}SimulMotion;
+
+class CBaseMotion
+{
+public:
+	CBaseMotion();
+	~CBaseMotion();
+
+public:
+	BOOL IsMovingCheck(double dPos1, double dPos2);
+	BOOL IsSamePosition(double dPos1, double dPos2);
+	BOOL IsUmacMotionDone(int nAxisNo);
+	BOOL IsAjinMotionDone(int nAxisNo);
+	BOOL IsVisionMotionDone(int nAxisNo);
+	BOOL IsMotionDone(enum_Axis eAxis);
+	BOOL IsAxisMoveDone(enum_Axis eAxis, double dTargetPos); //KJT 20200728 Add
+
+	BOOL ZUpMove();
+	BOOL IsZUpMove();
+	BOOL YMove(double dPosY);
+	BOOL IsYMove(double dPosY);
+
+	BOOL XLMove(double dPosX);
+	BOOL IsXLMove(double dPosX);
+
+	BOOL XMMoveDirectionCheck(double dPosX);
+
+
+	BOOL XMMove(double dPosX);
+	BOOL IsXMMove(double dPosX);
+
+	BOOL XRMove(double dPosX);
+	BOOL IsXRMove(double dPosX);
+
+	BOOL XYMove(double dPosX[3], double dPosY, BOOL UpMoveFlag);
+	BOOL IsXYMove(double dPosX[3], double dPosY);
+
+
+	BOOL YWaitPosMove();
+	BOOL IsYWaitPos();
+
+
+	BOOL XYWaitPosMove();
+	BOOL IsXYWaitPos();
+
+
+	BOOL GetAxisJogParam(enum_Axis pAxis, double* pJogSpeed, double* pAccel, double* pDecel, int nSelJogSpeed);
+	BOOL GetAxisWorkParam(enum_Axis pAxis, double* pSpeed, double* pAccel, double* pDecel);
+	//Get Axis Data
+	BOOL	GetActualAxisNoByEnumAxis(enum_Axis eAxis, int* pAxisType, int* nRemoteAxis);
+
+	BOOL StopAll();
+
+	BOOL UMacAxisMove(int nAxis, double dPosition, double dVel, double dAccel, double dDecel, MOTION_MODE Mode);
+	BOOL IsUMacAxisMove(int nAxis, double dPosition);
+	BOOL UMacAxisStop(int nAxis);
+
+	BOOL AjinAxisMove(int nAxis, double dPosition, double dVel, double dAcc, double dDec, MOTION_MODE Mode);
+	BOOL IsAjinAxisMove(int nAxis, double dPosition);
+	BOOL AjinAxisStop(int nAxis);
+
+	BOOL VisionAxisMove(int nAxis, double dPosition, double dVel, double dAcc, double dDec, MOTION_MODE Mode);
+	BOOL IsVisionAxisMove(int nAxis, double dPosition);
+	BOOL VisionAxisStop(int nAxis);
+
+	void	JogMove(enum_Axis eAxis, double dVel, double dAcc, double dDec);
+	void	JogStop(enum_Axis eAxis);
+
+
+	void	AbsMove(enum_Axis eAxis, double dPos, double dVel, double dAcc, double dDec);
+	void	RelMove(enum_Axis eAxis, double dDelta, double dVel, double dAcc, double dDec);
+public :
+	BOOL *m_pMachineStopFlag;
+
+	//Alarm Reset
+	BOOL AlarmReset(enum_Axis eAxis);
+
+	//Origin.
+	BOOL OriginStart(enum_Axis nAxis);
+
+	//Servo On.
+	BOOL ServoOnOff(enum_Axis eAxis, BOOL nOnOff);
+
+	//DO
+	BOOL SetDOutputBitValue(enum_Do eBit, int nValue);
+	BOOL GetDInputValue(enum_Di eBit);
+	//AO
+	BOOL SetAOutputValue(enum_Ao eChannel, double dValue);
+	BOOL GetAinputValue(enum_Ai eChannel);
+
+	//Simulation
+	SimulMotion SimulMotion;
+	int m_bStopSimulThread;
+	int m_bJogStop;
+
+
+
+
+
+	BOOL SimulAxisAbsMove(enum_Axis eAxisNo, double dPos, double dVel, double dAcc, double dDec);
+	BOOL SimulAxisJogMove(enum_Axis eAxisNo, double dPos, double dVel, double dAcc, double dDec);
+	BOOL SimulAxisJogStop(enum_Axis eAxisNo);
+
+	BOOL m_bStopSimul;
+	BOOL AllSimulStop();
+
+
+	BOOL IsSimulAixsDone();
+	
+};
+
+UINT SimulThreadProc(LPVOID lpParam);

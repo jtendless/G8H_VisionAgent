@@ -1,0 +1,219 @@
+#pragma once
+
+#pragma region //System Safety
+typedef struct _CSystemDataSafetyInfo
+{
+	double m_dSafetyPos_Min_Review10X_X;
+	double m_dSafetyPos_Max_Review10X_X;
+	double m_dSafetyPos_Min_Review10X_Y;
+	double m_dSafetyPos_Max_Review10X_Y;
+	double m_dSafetyPos_Min_Review10X_Z_In_Inspection_Stage;
+	double m_dSafetyPos_Min_Review10X_Z_In_Paper_Stage;
+	double m_dSafetyPos_Min_Review10X_Z_In_Box_Stage;
+
+	double m_dSafetyPos_Min_AOI_X;
+	double m_dSafetyPos_Max_AOI_X;
+	double m_dSafetyPos_Min_AOI_Y;
+	double m_dSafetyPos_Max_AOI_Y;
+	double m_dSafetyPos_Min_AOI_Z;
+
+	double m_dSafetyPos_Min_3D_X;
+	double m_dSafetyPos_Max_3D_X;
+	double m_dSafetyPos_Min_3D_Y;
+	double m_dSafetyPos_Max_3D_Y;
+	double m_dSafetyPos_Min_3D_Z;
+
+	double m_dMinDist_GantryY_To_UnloaderY;
+
+}CSystemDataSafetyInfo, *PCSystemDataSafetyInfo;
+class CSystemDataSafety : public C_FileIni
+{
+public:
+	CSystemDataSafetyInfo Info;
+
+
+	BOOL		Save();
+	BOOL		Load();
+};
+#pragma endregion
+
+#pragma region //System Option
+typedef struct _CSystemDataOptionInfo
+{
+	TCHAR m_strActiveModelName[255];
+
+	BOOL m_bImageAutoSave;		// 이미지 자동 저장 기능 사용 여부 확인
+	BOOL m_bImageAutoDel;		// 이미지 자동 삭제 기능 사용 여부 확인
+
+	INT	 m_nUserMode;			// ?
+	INT	 m_nWorkMode;			// ?
+
+	INT	 nImageDelPeriod;		// 이미지 보관 기간? 이미지 삭제 주기? 얼마나 보관할지?
+
+	double m_dAutoFocusSpeed;
+	double m_dAutoFocusUpRange;
+	double m_dAutoFocusDownRange;
+
+	int m_nAutoFocusMode;
+
+	int m_nSmart_InMotionCheckMode;
+	int m_nSmart_DelayTime;
+	int m_nSmart_MaxTurnCount;
+	int m_nSmart_RefTurnCount;
+	double m_dSmart_LimitFocusValue;
+	double m_dSmart_MinFocusValue;
+	double m_dSmart_FocusTolerance;
+	int m_nSmart_ScanMode;
+	double m_dSmart_MinStepValue;
+	double m_dSmart_MaxStepValue;
+	double m_dSmart_DownDistRange;
+	double m_dSmart_UpDistRange;
+
+	BOOL m_bAOIAlgorithmSkip;
+	BOOL m_bAOIMappingGlassMode;
+	double m_dAOI_Z_MappingGlassPos;
+
+	BOOL m_bGlassMode;
+	BOOL m_bAOIAgingMode;
+}CSystemDataOptionInfo, *PCSystemDataOptionInfo;
+class CSystemDataOption : public C_FileIni
+{
+public:
+	CSystemDataOptionInfo Info;
+
+
+	BOOL		Save();
+	BOOL		Load();
+};
+#pragma endregion
+
+#pragma region //System Coordinate
+typedef struct _CSystemDataCoordinateInfo
+{
+	//Camera Offset
+	double dOffsetReview10xTo20x_X;
+	double dOffsetReview10xTo20x_Y;
+	double dOffsetReview10xTo20x_Z;
+	double dOffsetReview10xToPreAlign_X;
+	double dOffsetReview10xToPreAlign_Y;
+	double dOffsetReview10xToPreAlign_Z;
+	double dOffsetReview10xToAoi_X;
+	double dOffsetReview10xToAoi_Y;
+	double dOffsetReview10xToAoi_Z;
+	double dOffsetReview10xTo3dCam_X;
+	double dOffsetReview10xTo3dCam_Y;
+	double dOffsetReview10xTo3dCam_Z;
+
+	double dOffsetCameraZ[DIRECT_AXIS_AJIN_MAX];
+
+	double dOffsetCamera3DMainZ;
+	double d3DCam_Resolution_X;
+	double d3DCam_Resolution_Y;
+
+	double dLaserFocusOffsetGlass;
+	double dLaserFocusOffsetStick;
+
+	int nBackLightXFwdStartDelay[4];
+	double dBackLightXFwdAccDecScale[4];
+	int nBackLightXBwdStartDelay[4];
+	double dBackLightXBwdAccDecScale[4];
+}CSystemDataCoordinateInfo, *PCSystemDataCoordinateInfo;
+class CSystemDataCoordinate : public C_FileIni
+{
+public:
+
+	CSystemDataCoordinate()
+	{
+	}
+
+	CSystemDataCoordinateInfo Info;
+
+	BOOL		Save();
+	BOOL		Load();
+};
+#pragma endregion
+
+#pragma region //Machine Stage Info
+typedef struct _CSystemDataStageInfo
+{
+	double m_dParameterSizeX;
+	double m_dParameterSizeY;
+	double m_dParameterZ;
+	double m_dParameterStartX;
+	double m_dParameterStartY;
+	double m_dParameterPitchX;
+	double m_dParameterPitchY;
+	int m_nParameterCountX;
+	int m_nParameterCountY;
+	int m_nParameterPitchFile;
+
+	int m_nPointNoX;
+	int m_nPointNoY;
+
+	int m_nCalibDelay;
+	int m_nCalibRepeat;
+	double m_dCalib3SigmaX;
+	double m_dCalib3SigmaY;
+	int m_nCaliApplyCalib;
+
+	int m_nVerifyRepeat;
+	double m_dVerifyWorldX1;
+	double m_dVerifyWorldY1;
+	double m_dVerifyWorldX2;
+	double m_dVerifyWorldY2;
+	double m_dVerifyRealX1;
+	double m_dVerifyRealY1;
+	double m_dVerifyRealX2;
+	double m_dVerifyRealY2;
+
+	int m_nAlignPoint2_4;
+	double m_dAlignLTX;
+	double m_dAlignLTY;
+	double m_dAlignRTX;
+	double m_dAlignRTY;
+	double m_dAlignLBX;
+	double m_dAlignLBY;
+	double m_dAlignRBX;
+	double m_dAlignRBY;
+	int m_nAlignTargetCount;
+	double m_dAlignTargetX;
+	double m_dAlignTargetY;
+	double m_dAlignTargetT;
+	int m_nAlignRealignCount;
+
+	int m_nCalibVerify;
+
+}CSystemDataStageInfo, *PCSystemDataStageInfo;
+class CSystemDataStage : public C_FileIni
+{
+
+public:
+	CSystemDataStageInfo Info;
+
+public:
+
+	BOOL		Save();
+	BOOL		Load();
+};
+#pragma endregion
+
+class CSystemData
+{
+public:
+	CSystemData();
+	~CSystemData();
+
+	static class CSystemDataSafety					m_Safety;
+	static class CSystemDataOption					m_Option;
+	static class CSystemDataCoordinate				m_Coordinate;
+	static class CSystemDataStage						m_Stage;
+
+public:
+	static void Initialize(void);
+	static void Finalize(void);
+	static BOOL Save();
+	static BOOL Load();
+};
+
+
+

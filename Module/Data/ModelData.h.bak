@@ -1,0 +1,304 @@
+#pragma once
+#define	MAX_DATA_ARRAY_CNT		50
+#define	MAX_WELDING_LINE_CNT	10
+
+#define FRAME_ALIGN_HOLE_CNT	4
+//----------------------------------------------------------------------------------
+typedef struct _MODEL_DATA_INFO_T
+{
+	int		nModelCode;
+	TCHAR	strModelName[255];
+}MODEL_DATA_INFO, *pModelDataInfo;
+
+class CModelDataInfo
+{
+public:
+	CModelDataInfo() {}
+	~CModelDataInfo() {}
+public:
+	MODEL_DATA_INFO	Info;
+	void	Init();
+	BOOL	Save();
+	BOOL	Load();
+};
+#pragma region //MaterialPara
+typedef struct _MODEL_DATA_MATERIAL_PARA
+{
+	//Sitck Info
+	double dStickSizeX;
+	double dStickSizeY;
+	double dStickLeftTopX;
+	double dStickLeftTopY;
+	double dAlignLeftHoleX;
+	double dAlignLeftHoleY;
+	double dAlignRightHoleX;
+	double dAlignRightHoleY;
+	int nHoleShape;
+	int nHoleArrange;
+	double dAlignHoleYUpPitch;
+	double dAlignHoleYDownPitch;
+	double dStickThickness;
+	double dPaperThickness;
+	//Cell Info
+	int nCellCountX;
+	int nCellCountY;
+	double dFirstCellLeftTopX;
+	double dFirstCellLeftTopY;
+	double dCellPitchX;
+	double dCellPitchY;
+
+	//Sub Cell Info
+	double dCellLeftTopX[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dCellLeftTopY[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dCellSizeX[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dCellSizeY[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	int nInspectionSlotCount[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	//Slot Info
+	double dSlotCenterShiftX[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotCenterShiftY[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotWidth[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotHeight[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotAngle[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotPitchX[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotPitchY[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotTotalPitchX[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotTotalPitchY[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+}CMaterialParaInfo, *pCMaterialParaInfo;
+class CMaterialPara
+{
+public:
+	CMaterialPara() {}
+	~CMaterialPara() {}
+public:
+	CMaterialParaInfo	dataInfo;
+	void	Init();
+	BOOL	Save();
+	BOOL	Load();
+};
+#pragma endregion
+
+#pragma region //AtMaterialPara
+typedef struct _MODEL_DATA_AT_MATERIAL_PARA
+{
+	//Sitck Info
+	double dStickSizeX;
+	double dStickSizeY;
+	double dStickLeftTopX;
+	double dStickLeftTopY;
+	double dAlignLeftHoleX;
+	double dAlignLeftHoleY;
+	double dAlignRightHoleX;
+	double dAlignRightHoleY;
+	int nHoleShape;
+	int nHoleArrange;
+	double dAlignHoleYUpPitch;
+	double dAlignHoleYDownPitch;
+	double dStickThickness;
+	double dPaperThickness;
+	//Cell Info
+	int nCellCountX;
+	int nCellCountY;
+	double dFirstCellLeftTopX;
+	double dFirstCellLeftTopY;
+	double dCellPitchX;
+	double dCellPitchY;
+
+	//Sub Cell Info
+	double dCellLeftTopX[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dCellLeftTopY[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dCellSizeX[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dCellSizeY[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	int nInspectionSlotCount[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	//Slot Info
+	double dSlotCenterShiftX[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotCenterShiftY[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotWidth[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotHeight[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotAngle[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotPitchX[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotPitchY[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotTotalPitchX[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+	double dSlotTotalPitchY[CELL_X_COUNT_MAX][CELL_Y_COUNT_MAX];
+}CAtMaterialParaInfo, *pCAtMaterialParaInfo;
+class CAtMaterialPara
+{
+public:
+	CAtMaterialPara() {}
+	~CAtMaterialPara() {}
+public:
+	CAtMaterialParaInfo	dataInfo;
+	void	Init();
+	BOOL	Save();
+	BOOL	Load();
+};
+#pragma endregion
+
+#pragma region //InspectionPara
+typedef struct _MODEL_DATA_INSPECTION_PARA
+{
+	int nDivCountXY;
+	BOOL bBoxAlignUse;
+	BOOL bPreAlignUse;
+	BOOL bGripStretchUse;
+	BOOL bPPAUse;
+	BOOL bAOIUse;
+	BOOL bAOIReviewUse;
+	int nPPAAlignMethod;
+	int nEdgeAlignMethod;
+	int nDarkThreshold;
+	int nBrightThreshold;
+	double dDefectSizeMin;
+	int nPPAFocusType; //PPA 검사시 Focusing 옵션 선택 (Image, Laser)
+	int nPPATrackingType; //Image 검사 사용 여부 (None, Motion, Image)
+	BOOL bInspectionStageVacuumOn; //검사시 Inspection Stage Vacuum On/Off 설정
+	BOOL bAppendixSensorUse; //흡착 확인 센서 사용 여부
+}CInspectionParaInfo, *pCInspectionParaInfo;
+class CInspectionPara
+{
+public:
+	CInspectionPara() {}
+	~CInspectionPara() {}
+public:
+	CInspectionParaInfo	dataInfo;
+	void	Init();
+	BOOL	Save();
+	BOOL	Load();
+};
+#pragma endregion
+
+#pragma region //StretchPara
+typedef struct _MODEL_DATA_STRETCH_PARA
+{
+	BOOL bStretchUse[GRIPPER_ROW];
+	double dStretchNewton[STRETCH_STEP_MAX][GRIPPER_ROW];
+	int nStretchStepCount;
+	double dSpeedMax;
+	double dSpeedMin;
+	double dOkRange;
+	double dDecelRange;
+	double dReleaseForce;
+	double dMaxForce;
+}CStretchParaInfo, *pCStretchParaInfo;
+class CStretchPara
+{
+public:
+	CStretchPara() {}
+	~CStretchPara() {}
+public:
+	CStretchParaInfo 	dataInfo;
+	void	Init();
+	BOOL	Save();
+	BOOL	Load();
+};
+#pragma endregion
+
+//모델 옵션 정보
+typedef struct _MODEL_DATA_OPTION_T
+{
+	//Frame----------------
+	bool	m_bUse_Frame_Align;					//	Frame Align 사용 유무	
+	bool	m_bUse_Frame_Align_Calculate;		//	Frame 각도 계산으로 Frame Align 대체
+	//Mask-----------------
+	bool	m_bUse_Review_Cam_Cover_Align;		//	Cover Align검사시 Review Camera 사용 유무(Cover Model Info or ModelInfo로 이동 ? )
+	bool	m_bUse_Review_Cam_Howling_Align;	//	Howling Align검사시 Review Camera 사용 유무(Howling Model Info or ModelInfo로 이동 ? )
+	bool	m_bUse_All_Cover_Inspection;		//(유추)전체 Cover 검사 사용 유무 - 기존 프로그램에서 사용 안하고 있음(Cover Model Info or ModelInfo로 이동 ? )
+	bool	m_bUse_All_Howling_Inspection;		//(유추)전체 Howling 검사 사용 유무 - 기존 프로그램에서 사용 안하고 있음(Howling Model Info or ModelInfo로 이동 ? )
+	bool	m_bUse_Cover_Mask_Create;			//	CIM으로 데이터 전송시 Mode를 5(RUN)으로 설정.(정확한 용도는 알수 없음) - Cover Model Info or ModelInfo로 이동 ?
+	bool	m_bUse_Howling_Mask_Create;			//	CIM으로 데이터 전송시 Mode를 5(RUN)으로 설정.(정확한 용도는 알수 없음) - Howling Model Info or ModelInfo로 이동 ?
+	bool	m_bUse_Measure_Howling_Align;		//	Howling Align 사용 유무(Howling Model Info or ModelInfo로 이동 ? )
+	//Welding--------------
+	bool	m_bUse_Welding_Before_Meas;			//	용접전 검사 사용 유무
+	bool	m_bUse_Welding_After_Meas;			//	용접후 검사 사용 유무
+	bool	m_bUse_Welding_Check_Mode;			//	용접 확인 모드 사용 유무
+	bool	m_bUse_Welding_Check_Msg;			//	용접 확인 메시지 출력 사용 유무
+	bool	m_bUse_Welding_Pass;				//	레이저 용접 Pass 사용 유무(true일 경우 레이저 용접을 하지 않음)	
+	//Other----------------	
+	bool	m_bUse_Measure_All_Teg_Hole;		//  (유추)전체 Teg 홀 검사 사용 유무	
+	bool	m_bUse_Teg_Hole_Meas_Cam_Mode_Align_or_Review;		//	Teg 홀 측정시 Align or Review Camera 사용 유무 선택	
+	bool	m_bUse_Groove_Check;				//	Cover & Howling Mask와 Groove 사이 간격측정 기능 사용 유무
+	bool	m_bUse_Dry_Run_Mode;				//	Dry Run Mode 사용유무(Dry Run : 텐션이 맞다고 판단하고 작업하는 모드 ? )
+	bool	m_bUse_Target_Glass;				//	Target Class 측정 사용 유무	
+}CModelDataOptionInfo, pModel_Data_OptionInfo;
+
+class CModelDataOption
+{
+public:
+	CModelDataOption() {}
+	~CModelDataOption() {}
+public:
+	CModelDataOptionInfo	Option;
+	void	Init();
+	BOOL	Save();
+	BOOL	Load();
+};
+//----------------------------------------------------------------------------------
+//Frame 검사 모델 정보
+typedef struct _MODEL_DATA_FRAME_T
+{
+	//Frame Infomation----------------------
+	TCHAR	m_strFrame_ID[255];						//	Frame ID
+	double	m_dProduct_Size_X;					//	Frame 너비
+	double	m_dProduct_Size_Y;					//	Frame 높이
+	double	m_dProduct_Size_Height;				//	Frame 두께
+	double	m_dStage_Offset;					//	용도 파악이 안됨.기존 모델 정보에 등록되어 있는 항목
+	double	m_dFrame_Groove_Cover;				//	용도 파악이 안됨.기존 모델 정보에 등록되어 있는 항목
+	double	m_dFrame_Groove_Howling;			//	용도 파악이 안됨.기존 모델 정보에 등록되어 있는 항목
+	//Frame Align Information-------------------------------------------------------------------------------------------------------------
+	bool	m_nUse_Align_Point_4_or_2_Point;	//	Align Point를 2점을 이용할 것인지 4점을 이용할 것인지 선택(true일 경우 4점 false일 경우 2점)
+	double	m_dFrame_Center_X;					//	Frame의 Center X 좌표
+	double	m_dFrame_Center_Y;					//	Frame의 Center Y 좌표
+	double	m_dAlign_Target_X_Pos;			//	Align 후 제품의 X좌표 목표값
+	double	m_dAlign_Target_Y_Pos;			//	Align 후 제품의 Y좌표 목표값
+	double	m_dAlign_Target_Theta;				//	Align 후 제품의 목표각도
+	double	m_dFrame_Mark_Size_X;				//	Frame을 Align하기위한 마크(Mark)의 너비
+	double	m_dFrame_Mark_Size_Y;				//	Frame을 Align하기위한 마크(Mark)의 높이	
+	double	m_dFrame_Align_Hole_X_Pos[FRAME_ALIGN_HOLE_CNT];		//	Frame을 Align하기위한 Hole의 X좌표
+	double	m_dFrame_Align_Hole_Y_Pos[FRAME_ALIGN_HOLE_CNT];		//	Frame을 Align하기위한 Hole의 Y좌표
+	//CountForce--------------------------------------------------------------	-----------------------------------------------------------
+	double	m_dCount_Force_X_Target_Load_Min;	//	Count Force X축 목표 하중 최소값
+	double	m_dCount_Force_X_Target_Load_Max;	//	Count Force X축 목표 하중 최대값
+	double	m_dCount_Force_Y_Target_Load_Min;	//	Count Force Y축 목표 하중 최소값
+	double	m_dCount_Force_Y_Target_Load_Max;	//	Count Force Y축 목표 하중 최대값
+	//Flatness------------------------------------------------------------------------------------------------------------------------
+	double	m_dFrame_Flatness_Min;					// Frame 평탄도 검사 Spec Min
+	double	m_dFrame_Flatness_Max;					// Frame 평탄도 검사 Spec Max
+	int		m_nFrame_Flatness_Meas_Point_Count;		// Frame 평탄도 검사 포인트 개수
+	int		m_nFrame_Flatness_Meas_Point_Order[MAX_DATA_ARRAY_CNT];	// Frame 평탄도 검사 X축 좌표
+	double	m_dFrame_Flatness_Meas_Point_X[MAX_DATA_ARRAY_CNT];	// Frame 평탄도 검사 X축 좌표
+	double	m_dFrame_Flatness_Meas_Point_Y[MAX_DATA_ARRAY_CNT];	// Frame 평탄도 검사 Y축 좌표
+}CModelDataFrameInfo, *pModel_Data_FrameInfo;
+class CModelDataFrame
+{
+public:
+	CModelDataFrame() {}
+	~CModelDataFrame() {}
+public:
+	CModelDataFrameInfo	Frame;
+	void	Init();
+	BOOL	Save();
+	BOOL	Load();
+};
+
+class CModelData
+{
+public:
+	CModelData();
+	~CModelData();
+
+	static CModelDataInfo		m_Mdl_Data_Info;
+	static CMaterialPara			m_MaterialPara;
+	static CAtMaterialPara		m_AtMaterialPara;
+	static CInspectionPara		m_InspectionPara;
+	static CStretchPara			m_StretchPara;
+
+	static CModelDataOption		m_Mdl_Data_Option;
+	static CModelDataFrame		m_Mdl_Data_Frame;
+
+public:
+	static void Initialize(void);
+	static void Finalize(void);
+
+	static void Save();
+	static void Load();
+};
+//--------------------------------------------------------------------------------

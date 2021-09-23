@@ -1,0 +1,40 @@
+﻿// VisionAgentModelDlg.cpp: 구현 파일
+//
+
+#include "stdafx.h"
+#include "VisionAgent.h"
+#include "VisionAgentMachineStageDlg.h"
+#include "afxdialogex.h"
+
+
+// CVisionAgentMachineStageDlg 대화 상자
+
+IMPLEMENT_DYNAMIC(CVisionAgentMachineStageDlg, CDialogEx)
+
+CVisionAgentMachineStageDlg::CVisionAgentMachineStageDlg(CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_VISION_AGENT_MACHINE_STAGE_DIALOG, pParent)
+{
+	Create(IDD_VISION_AGENT_MACHINE_STAGE_DIALOG, pParent);
+}
+
+CVisionAgentMachineStageDlg::~CVisionAgentMachineStageDlg()
+{
+}
+
+void CVisionAgentMachineStageDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+}
+
+
+BEGIN_MESSAGE_MAP(CVisionAgentMachineStageDlg, CDialogEx)
+END_MESSAGE_MAP()
+
+
+// CVisionAgentMachineStageDlg 메시지 처리기
+BOOL CVisionAgentMachineStageDlg::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	return TRUE;
+}

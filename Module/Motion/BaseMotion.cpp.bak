@@ -1,0 +1,996 @@
+#include "stdafx.h"
+#include "BaseMotion.h"
+#include "../Vision/SharedInfo.h"
+
+//----------------------------------------------------------
+CBaseMotion::CBaseMotion()
+{
+}
+//----------------------------------------------------------
+CBaseMotion::~CBaseMotion()
+{
+
+}
+
+BOOL CBaseMotion::IsMovingCheck(double dPos1, double dPos2)
+{
+	if (fabs(dPos1 - dPos2) <= 1)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+BOOL CBaseMotion::IsSamePosition(double dPos1, double dPos2)
+{
+	if (fabs(dPos1 - dPos2) <= 0.002)
+		return TRUE;
+	else
+		return FALSE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::IsMotionDone(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	BOOL bRet = FALSE;
+	enum_Axis eTemp = eAxis;
+	
+	SharedInfo::GetActualAxisNoByEnumAxis(eTemp, &nAxisType, &nAxisNo);
+	
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN:
+		bRet = IsVisionMotionDone(nAxisNo);
+		break;
+	case AXIS_TYPE_REMOTE_UMAC:
+		bRet = IsUmacMotionDone(nAxisNo);
+		break;
+	case AXIS_TYPE_REMOTE_AJIN:
+		bRet = IsAjinMotionDone(nAxisNo);
+		break;
+	}
+
+	return bRet;
+}
+BOOL CBaseMotion::IsAxisMoveDone(enum_Axis eAxis, double dTargetPos)
+{
+	if (eAxis == AXIS_VIRTUAL_GANTRY_Y)
+		eAxis = AXIS_GANTRY_YL;
+
+	double dCmdPos = SharedInfo::GetCmdPos(eAxis);
+	return (IsSamePosition(dCmdPos, dTargetPos) && IsMotionDone(eAxis));
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::IsUmacMotionDone(int nAxisNo)
+{
+	return (!SharedInfo::UmacInMotionStatus[nAxisNo]);
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::IsAjinMotionDone(int nAxisNo)
+{
+	return (!SharedInfo::AxisInMotionStatus[nAxisNo]);
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::IsVisionMotionDone(int nAxisNo)
+{
+	return (!SharedInfo::VisionAxisInMotionStatus[nAxisNo]);
+}
+//----------------------------------------------------------
+//Jog 부분 이식.
+BOOL CBaseMotion::UMacAxisMove(int nAxis, double dPosition, double dVel, double dAccel, double dDecel, MOTION_MODE Mode)
+{
+	switch (Mode)
+	{
+	case eMOTION_ABS:
+	case eMOTION_REL:
+		Devs::MotionIf.UmacPosMove(nAxis, dPosition, dVel, dAccel, dDecel, Mode);
+		break;
+	case eMOTION_VEL:
+		Devs::MotionIf.UmacVelMove(nAxis, dVel, dAccel, dDecel);
+		break;
+	}
+
+	return TRUE;
+
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::IsUMacAxisMove(int nAxis, double dPosition)
+{
+	double dVel = 0., dAccel = 0., dDecel = 0.;	
+	double dCmdPos = SharedInfo::Umac_Axis_Cmd_Pos[nAxis];
+	return (IsSamePosition(dCmdPos, dPosition) && IsUmacMotionDone(nAxis));
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::UMacAxisStop(int nAxis)
+{
+	double dVel = 0., dAccel = 0., dDecel = 0.;
+
+	Devs::MotionIf.UmacMoveStop(nAxis, dDecel);
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::AjinAxisMove(int nAxis, double dPosition, double dVel, double dAccel, double dDecel, MOTION_MODE Mode)
+{
+	double dCmdPos = SharedInfo::AxisCmdPos[nAxis];
+
+	switch (Mode)
+	{
+	case eMOTION_ABS:
+		Devs::MotionIf.AxisPosMove(nAxis, dPosition, dVel, dAccel, dDecel, Mode);
+	case eMOTION_REL:
+		Devs::MotionIf.AxisPosMove(nAxis, dPosition + dCmdPos, dVel, dAccel, dDecel, Mode);
+		break;
+	case eMOTION_VEL:
+		Devs::MotionIf.AxisVelMove(nAxis, dVel, dAccel, dDecel);
+		break;
+	}
+
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::IsAjinAxisMove(int nAxis, double dPosition)
+{
+	double dVel = 0., dAccel = 0., dDecel = 0.;
+	double dCmdPos = SharedInfo::AxisCmdPos[nAxis];
+	return (IsSamePosition(dCmdPos, dPosition) && IsAjinMotionDone(nAxis));
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::AjinAxisStop(int nAxis)
+{
+	double dVel = 0., dAccel = 0., dDecel = 0.;
+
+	Devs::MotionIf.AxisMoveStop(nAxis, dDecel);
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::VisionAxisMove(int nAxis, double dPosition, double dVel, double dAccel, double dDecel, MOTION_MODE Mode)
+{
+	double dPos = dPosition - CSystemData::m_Coordinate.Info.dOffsetCameraZ[nAxis];
+
+	double dCmdPos = SharedInfo::VisionAxisCmdPos[nAxis];
+	switch (Mode)
+	{
+	case eMOTION_ABS:
+		AxmMoveStartPos(nAxis, dPos, dVel, dAccel, dDecel);
+		break;
+	case eMOTION_REL:
+		AxmMoveStartPos(nAxis, dPos + dCmdPos, dVel, dAccel, dDecel);
+		break;
+	case eMOTION_VEL:
+		AxmMoveVel(nAxis, dVel, dAccel, dDecel);
+		break;
+	}
+
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::IsVisionAxisMove(int nAxis, double dPosition)
+{
+	double dVel = 0., dAccel = 0., dDecel = 0.;
+	double dCmdPos = SharedInfo::VisionAxisCmdPos[nAxis];
+	return (IsSamePosition(dCmdPos, dPosition) && IsVisionMotionDone(nAxis));
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::VisionAxisStop(int nAxis)
+{
+	double dDecel = CMachineData::m_MachineDataMotor.Info.dAutoDecel[nAxis];
+	AxmMoveStop(nAxis, dDecel);
+	return TRUE;
+}
+//----------------------------------------------------------
+void CBaseMotion::JogMove(enum_Axis eAxis, double dVel, double dAcc, double dDec)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	double dPos = 0;
+
+	if (dVel < 0)
+	{
+		SharedInfo::m_nJogDir = eDIR_MINUS;
+	}
+	else
+	{
+		SharedInfo::m_nJogDir = eDIR_PLUS;
+	}
+
+	if (SharedInfo::GetAlarm())
+	{
+		SharedInfo::SetAlarm(1);
+		return;
+	}
+	
+	dPos = SharedInfo::GetCmdPos(eAxis);
+
+
+	//if (!m_Safety.AxisAllMotionSafetyCheck(eAxis, dPos))
+	//{
+	//	JogStop(eAxis);
+	//	return;
+	//}
+
+	if (SharedInfo::m_eAxisJogInterlock == SharedInfo::m_eAxisJog)
+	{
+		if (SharedInfo::m_nJogInterlockDir == SharedInfo::m_nJogDir)
+		{
+#if 0 //KJT 임시 막고
+			if (!m_Safety.AxisAllMotionSafetyCheck(SharedInfo::m_eAxisJog, dPos))
+			{
+				SharedInfo::m_eAxisJogInterlock = SharedInfo::m_eAxisJog;
+				SharedInfo::m_nJogInterlockDir = SharedInfo::m_nJogDir;
+
+				//Jog Stop
+				Devs::JogMotion.JogStop(SharedInfo::m_eAxisJog);
+				//SharedInfo::m_eAxisJog = AXIS_NONE;
+			}
+#endif
+		}
+		else
+		{
+
+		}
+	}
+	else
+	{
+#if 0 //KJT 임시 막고
+		if (!m_Safety.AxisAllMotionSafetyCheck(SharedInfo::m_eAxisJog, dPos))
+		{
+			SharedInfo::m_eAxisJogInterlock = SharedInfo::m_eAxisJog;
+			SharedInfo::m_nJogInterlockDir = SharedInfo::m_nJogDir;
+
+			//Jog Stop
+			Devs::JogMotion.JogStop(SharedInfo::m_eAxisJog);
+			//SharedInfo::m_eAxisJog = AXIS_NONE;
+		}
+#endif
+	}
+
+
+#ifndef SIM_MODE
+	SharedInfo::GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+	//JOG 인트락 추가.
+
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN:	VisionAxisMove(nAxisNo, 0, dVel, dAcc, dDec, eMOTION_VEL); break;
+	case AXIS_TYPE_REMOTE_UMAC: UMacAxisMove(nAxisNo, 0, dVel, dAcc, dDec, eMOTION_VEL); break;
+	case AXIS_TYPE_REMOTE_AJIN: AjinAxisMove(nAxisNo, 0, dVel, dAcc, dDec, eMOTION_VEL); break;
+	}
+#else
+	if (!SharedInfo::GetAlarm())
+	{
+		SimulAxisJogMove(eAxis, dPos, dVel, dAcc, dDec);
+	}
+
+#endif
+}
+//----------------------------------------------------------
+void CBaseMotion::JogStop(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+
+	/*Choi
+	SharedInfo::m_eAxisJog = AXIS_NONE;
+	*/
+
+#ifndef SIM_MODE
+	SharedInfo::GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN: VisionAxisStop(nAxisNo); break;
+	case AXIS_TYPE_REMOTE_UMAC: UMacAxisStop(nAxisNo); break;
+	case AXIS_TYPE_REMOTE_AJIN: AjinAxisStop(nAxisNo); break;
+	}
+#else
+	SimulAxisJogStop(eAxis);
+#endif
+
+}
+//----------------------------------------------------------
+void CBaseMotion::AbsMove(enum_Axis eAxis, double dPos, double dVel, double dAcc, double dDec)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+
+	if (SharedInfo::GetAlarm())
+	{
+		SharedInfo::SetAlarm(1);
+		return;
+	}
+	
+	//움직여도 되는지 확인하는 부분
+	/*
+	if (!m_Safety.AxisAllMotionSafetyCheck(eAxis, dPos))	return;
+	*/
+#ifndef SIM_MODE
+	//실제 납품시 구동됨.
+	SharedInfo::GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN: VisionAxisMove(nAxisNo, dPos, dVel, dAcc, dDec, eMOTION_ABS); break;
+	case AXIS_TYPE_REMOTE_UMAC: UMacAxisMove(nAxisNo, dPos, dVel, dAcc, dDec, eMOTION_ABS); break;
+//	case AXIS_TYPE_REMOTE_AJIN: AjinAxisMove(nAxisNo, dPos, dVel, dAcc, dDec, eMOTION_ABS); break;
+	}
+#else
+	SimulAxisAbsMove(eAxis, dPos, dVel, dAcc, dDec);
+#endif
+
+	
+}
+//----------------------------------------------------------
+void CBaseMotion::RelMove(enum_Axis eAxis, double dDelta, double dVel, double dAcc, double dDec)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	double dPos = 0.;
+
+	if (SharedInfo::GetAlarm())
+	{
+		SharedInfo::SetAlarm(1);
+		return;
+
+	}
+
+	/*Choi
+	if (!m_Safety.AxisAllMotionSafetyCheck(eAxis, dPos))
+		return;
+	*/
+
+#ifndef SIM_MODE
+	SharedInfo::GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+
+
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN: VisionAxisMove(nAxisNo, dDelta, dVel, dAcc, dDec, eMOTION_REL); break;
+	case AXIS_TYPE_REMOTE_UMAC: UMacAxisMove(nAxisNo, dDelta, dVel, dAcc, dDec, eMOTION_REL); break;
+	case AXIS_TYPE_REMOTE_AJIN: AjinAxisMove(nAxisNo, dDelta, dVel, dAcc, dDec, eMOTION_REL); break;
+	}
+#else
+	dPos = SharedInfo::GetCmdPos(eAxis) + dDelta;
+	SimulAxisAbsMove(eAxis, dPos, dVel, dAcc, dDec);
+#endif
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::StopAll()
+{
+	// 박차장 요청!!!!
+	//m_ClientInterface.AxisMoveStop(REMOTE_AXIS_AJIN_ALIGN_PUSHER_XB2, dDecel);
+	/*Choi
+	VisionAxisStop(DIRECT_AXIS_AJIN_GANTRY_Z_MF);
+	VisionAxisStop(DIRECT_AXIS_AJIN_GANTRY_Z_RF);
+	VisionAxisStop(DIRECT_AXIS_AJIN_GANTRY_Z_MB);
+	VisionAxisStop(DIRECT_AXIS_AJIN_GANTRY_Z_RB);
+	Devs::MotionIf.SystemMoveStop(0);
+	*/
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::OriginStart(enum_Axis eAxis)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	double dPos = 0;
+
+	if (SharedInfo::GetAlarm())
+	{
+		SharedInfo::SetAlarm(1);
+		return FALSE;
+	}
+
+	if (SharedInfo::GetServoOnStatus(eAxis) == FALSE)
+	{
+		SharedInfo::SetAlarm(2);
+		return FALSE;
+	}
+
+	SharedInfo::GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+
+#ifndef SIM_MODE
+	//if (!m_Safety.AxisAllMotionSafetyCheck(eAxis, dPos))
+	//	return FALSE;
+
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN:
+		//Devs::m_Gantry_Unit_Motion.ZHomeStart(nAxisNo, FALSE);
+		break;
+
+	case AXIS_TYPE_REMOTE_UMAC:
+		Devs::MotionIf.UmacHomeStart(nAxisNo);
+		break;
+
+	case AXIS_TYPE_REMOTE_AJIN:
+		//if (nAxisNo == REMOTE_AXIS_AJIN_GANTRY_Z_LF || nAxisNo == REMOTE_AXIS_AJIN_GANTRY_Z_LB)
+		//	Devs::GantryTopMotion.ZHomeStart(nAxisNo, TRUE);
+		if (nAxisNo == REMOTE_AXIS_AJIN_LOADING_STAGE_X1 || nAxisNo == REMOTE_AXIS_AJIN_LOADING_STAGE_X2 || nAxisNo == REMOTE_AXIS_AJIN_LOADING_STAGE_Y)
+		{
+			//Devs::MaskLoaderMotion.MaskLoaderHomeStart();
+		}
+		else if (nAxisNo >= REMOTE_AXIS_AJIN_GRIPPER_PITCH_L1 && nAxisNo <= REMOTE_AXIS_AJIN_GRIPPER_PITCH_R8)
+		{
+			//Devs::GripperTopMotion.PitchHomeStart(nAxisNo);
+		}
+		else
+		{
+			Devs::MotionIf.AxisHomeStart(nAxisNo);
+			break;
+		}
+	}
+#endif // !SIM_MODE
+
+
+#ifdef SIM_MODE
+	/*Choi
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN:
+		if (SharedInfo::VisionAxisHomeStatus[nAxisNo] == TRUE)
+		{
+			SharedInfo::VisionAxisHomeStatus[nAxisNo] = FALSE;
+		}
+		else
+		{
+			SharedInfo::VisionAxisHomeStatus[nAxisNo] = TRUE;
+		}
+		break;
+	case AXIS_TYPE_REMOTE_UMAC:
+		if (nAxisNo == REMOTE_AXIS_UMAC_GANTRY_X_LF || nAxisNo == REMOTE_AXIS_UMAC_GANTRY_X_MF || nAxisNo == REMOTE_AXIS_UMAC_GANTRY_X_RF)
+		{
+			if (SharedInfo::Umac_Axis_Home_Status[nAxisNo] == TRUE)
+			{
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_LF] = FALSE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_MF] = FALSE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_RF] = FALSE;
+			}
+			else
+			{
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_LF] = TRUE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_MF] = TRUE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_RF] = TRUE;
+			}
+		}
+		else if (nAxisNo == REMOTE_AXIS_UMAC_GANTRY_X_LB || nAxisNo == REMOTE_AXIS_UMAC_GANTRY_X_MB || nAxisNo == REMOTE_AXIS_UMAC_GANTRY_X_RB)
+		{
+			if (SharedInfo::Umac_Axis_Home_Status[nAxisNo] == TRUE)
+			{
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_LB] = FALSE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_MB] = FALSE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_RB] = FALSE;
+			}
+			else
+			{
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_LB] = TRUE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_MB] = TRUE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GANTRY_X_RB] = TRUE;
+			}
+		}
+		else if (nAxisNo == REMOTE_AXIS_UMAC_VIRTUAL_GRIPPER_F || nAxisNo == REMOTE_AXIS_UMAC_GRIPPER_Y_LF || nAxisNo == REMOTE_AXIS_UMAC_GRIPPER_Y_RF)
+		{
+			if (SharedInfo::Umac_Axis_Home_Status[nAxisNo] == TRUE)
+			{
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_VIRTUAL_GRIPPER_F] = FALSE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GRIPPER_Y_LF] = FALSE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GRIPPER_Y_RF] = FALSE;
+			}
+			else
+			{
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_VIRTUAL_GRIPPER_F] = TRUE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GRIPPER_Y_LF] = TRUE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GRIPPER_Y_RF] = TRUE;
+			}
+		}
+		else if (nAxisNo == REMOTE_AXIS_UMAC_VIRTUAL_GRIPPER_B || nAxisNo == REMOTE_AXIS_UMAC_GRIPPER_Y_LB || nAxisNo == REMOTE_AXIS_UMAC_GRIPPER_Y_RB)
+		{
+			if (SharedInfo::Umac_Axis_Home_Status[nAxisNo] == TRUE)
+			{
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_VIRTUAL_GRIPPER_B] = FALSE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GRIPPER_Y_LB] = FALSE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GRIPPER_Y_RB] = FALSE;
+			}
+			else
+			{
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_VIRTUAL_GRIPPER_B] = TRUE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GRIPPER_Y_LB] = TRUE;
+				SharedInfo::Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_GRIPPER_Y_RB] = TRUE;
+			}
+		}
+		else
+		{
+			if (SharedInfo::Umac_Axis_Home_Status[nAxisNo] == TRUE)
+			{
+				SharedInfo::Umac_Axis_Home_Status[nAxisNo] = FALSE;
+			}
+			else
+			{
+				SharedInfo::Umac_Axis_Home_Status[nAxisNo] = TRUE;
+			}
+		}
+		break;
+	case AXIS_TYPE_REMOTE_AJIN:
+		if (nAxisNo == REMOTE_AXIS_AJIN_MASK_STAGE_UVW_Y1 || nAxisNo == REMOTE_AXIS_AJIN_MASK_STAGE_UVW_Y2 || nAxisNo == REMOTE_AXIS_AJIN_MASK_STAGE_UVW_X)
+		{
+			if (SharedInfo::AxisHomeStatus[nAxisNo] == TRUE)
+			{
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_MASK_STAGE_UVW_Y1] = FALSE;
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_MASK_STAGE_UVW_Y2] = FALSE;
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_MASK_STAGE_UVW_X] = FALSE;
+			}
+			else
+			{
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_MASK_STAGE_UVW_Y1] = TRUE;
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_MASK_STAGE_UVW_Y2] = TRUE;
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_MASK_STAGE_UVW_X] = TRUE;
+			}
+		}
+		else if (nAxisNo == REMOTE_AXIS_AJIN_GRIPPER_Z_LF || nAxisNo == REMOTE_AXIS_AJIN_GRIPPER_Z_RF)
+		{
+			if (SharedInfo::AxisHomeStatus[nAxisNo] == TRUE)
+			{
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_GRIPPER_Z_LF] = FALSE;
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_GRIPPER_Z_RF] = FALSE;
+			}
+			else
+			{
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_GRIPPER_Z_LF] = TRUE;
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_GRIPPER_Z_RF] = TRUE;
+			}
+		}
+		else if (nAxisNo == REMOTE_AXIS_AJIN_GRIPPER_Z_LB || nAxisNo == REMOTE_AXIS_AJIN_GRIPPER_Z_RB)
+		{
+			if (SharedInfo::AxisHomeStatus[nAxisNo] == TRUE)
+			{
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_GRIPPER_Z_LB] = FALSE;
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_GRIPPER_Z_RB] = FALSE;
+			}
+			else
+			{
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_GRIPPER_Z_LB] = TRUE;
+				SharedInfo::AxisHomeStatus[REMOTE_AXIS_AJIN_GRIPPER_Z_RB] = TRUE;
+			}
+		}
+		else if (nAxisNo == REMOTE_AXIS_AJIN_GRIPPER_PITCH_LF1 || nAxisNo == REMOTE_AXIS_AJIN_GRIPPER_PITCH_LB1 || nAxisNo == REMOTE_AXIS_AJIN_GRIPPER_PITCH_RF1 || nAxisNo == REMOTE_AXIS_AJIN_GRIPPER_PITCH_RB1)
+		{
+			if (SharedInfo::AxisHomeStatus[nAxisNo] == TRUE)
+			{
+				SharedInfo::AxisHomeStatus[nAxisNo] = FALSE;
+				SharedInfo::AxisHomeStatus[nAxisNo + 1] = FALSE;
+				SharedInfo::AxisHomeStatus[nAxisNo + 2] = FALSE;
+				SharedInfo::AxisHomeStatus[nAxisNo + 3] = FALSE;
+			}
+			else
+			{
+				SharedInfo::AxisHomeStatus[nAxisNo] = TRUE;
+				SharedInfo::AxisHomeStatus[nAxisNo + 1] = TRUE;
+				SharedInfo::AxisHomeStatus[nAxisNo + 2] = TRUE;
+				SharedInfo::AxisHomeStatus[nAxisNo + 3] = TRUE;
+			}
+		}
+		else
+		{
+			if (SharedInfo::AxisHomeStatus[nAxisNo] == TRUE)
+			{
+				SharedInfo::AxisHomeStatus[nAxisNo] = FALSE;
+			}
+			else
+			{
+				SharedInfo::AxisHomeStatus[nAxisNo] = TRUE;
+			}
+		}
+		break;
+	}
+	*/
+#endif  // SIM_MODE
+
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::AlarmReset(enum_Axis eAxis)
+{
+#ifndef SIM_MODE
+	int nAxisType = -1, nAxisNo = -1;
+	if (!SharedInfo::GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo)) return FALSE;
+
+	if (nAxisType == AXIS_TYPE_DIRECT_AJIN)
+	{
+		AxmSignalServoAlarmReset(nAxisNo, ENABLE);
+	}
+	else if (nAxisType == AXIS_TYPE_REMOTE_UMAC)
+	{
+		//Devs::MotionIf.UmacSetAlarmClear(nAxisNo, ENABLE);
+	}
+	else if (nAxisType == AXIS_TYPE_REMOTE_AJIN)
+	{
+		//Devs::MotionIf.AxisSetAlarmClear(nAxisNo, ENABLE);
+	}
+#endif // !SIM_MODE
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::ServoOnOff(enum_Axis eAxis, BOOL nOnOff)
+{
+	int nAxisType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxisNo = -1;
+	double dPos = 0.0;
+	int nRet, nStatus;
+
+	SharedInfo::GetActualAxisNoByEnumAxis(eAxis, &nAxisType, &nAxisNo);
+	nStatus = nOnOff;
+
+#ifndef SIM_MODE
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN:
+		AxmSignalServoOn(nAxisNo, nStatus);
+		break;
+	case AXIS_TYPE_REMOTE_UMAC:
+		Devs::MotionIf.UmacSetServoOnStatus(nAxisNo, nStatus);
+		break;
+	case AXIS_TYPE_REMOTE_AJIN:
+		Devs::MotionIf.AxisSetServoOnStatus(nAxisNo, nStatus);
+		break;
+	}
+#endif // !SIM_MODE
+
+#ifdef SIM_MODE
+	switch (nAxisType)
+	{
+	case AXIS_TYPE_DIRECT_AJIN:
+		SharedInfo::VisionAxisServoOnStatus[nAxisNo] = nStatus;
+		break;
+	case AXIS_TYPE_REMOTE_UMAC:
+		SharedInfo::UmacServoOnStatus[nAxisNo] = nStatus;
+		break;
+	case AXIS_TYPE_REMOTE_AJIN:
+		SharedInfo::AxisServoOnStatus[nAxisNo] = nStatus;
+		break;
+	}
+#endif  // SIM_MODE
+
+	return TRUE;
+}
+//--------------------------------------------------------------------------
+BOOL CBaseMotion::GetActualAxisNoByEnumAxis(enum_Axis eAxis, int* pAxisType, int* nRemoteAxis)
+{
+	int nType = -1; // 0 DirectAjin, 1:RemoteUmac, 2:RemoteAjin
+	int nAxis = -1;
+	BOOL bResult = TRUE;
+
+	switch (eAxis)
+	{
+	case AXIS_GANTRY_YL:		nType = AXIS_TYPE_REMOTE_UMAC;		nAxis = REMOTE_AXIS_UMAC_GANTRY_YL;		break;
+	case AXIS_GANTRY_YR:	nType = AXIS_TYPE_REMOTE_UMAC;		nAxis = REMOTE_AXIS_UMAC_GANTRY_YR;		break;
+	case AXIS_GANTRY_X:		nType = AXIS_TYPE_REMOTE_UMAC;		nAxis = REMOTE_AXIS_UMAC_GANTRY_X;		break;
+
+	case AXIS_CAMERA_Z1:		nType = AXIS_TYPE_DIRECT_AJIN;		nAxis = DIRECT_AXIS_AJIN_CAMERA_Z1;		break;
+	case AXIS_CAMERA_Z2:		nType = AXIS_TYPE_DIRECT_AJIN;		nAxis = DIRECT_AXIS_AJIN_CAMERA_Z2;		break;
+
+	case AXIS_LOADER_Z:			nType = AXIS_TYPE_REMOTE_AJIN;	nAxis = REMOTE_AXIS_AJIN_LOADER_Z;			break;
+	case AXIS_BACKLIGHT_X:		nType = AXIS_TYPE_REMOTE_AJIN;	nAxis = REMOTE_AXIS_AJIN_BACKLIGHT_X;		break;
+	case AXIS_GRIPPER_CLAMP_L1:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L1;		break;
+	case AXIS_GRIPPER_CLAMP_L2:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L2;		break;
+	case AXIS_GRIPPER_CLAMP_L3:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L3;		break;
+	case AXIS_GRIPPER_CLAMP_L4:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L4;		break;
+	case AXIS_GRIPPER_CLAMP_L5:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L5;		break;
+	case AXIS_GRIPPER_CLAMP_L6:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L6;		break;
+	case AXIS_GRIPPER_CLAMP_L7:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L7;		break;
+	case AXIS_GRIPPER_CLAMP_L8:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_L8;		break;
+	case AXIS_GRIPPER_CLAMP_R1:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R1;		break;
+	case AXIS_GRIPPER_CLAMP_R2:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R2;		break;
+	case AXIS_GRIPPER_CLAMP_R3:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R3;		break;
+	case AXIS_GRIPPER_CLAMP_R4:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R4;		break;
+	case AXIS_GRIPPER_CLAMP_R5:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R5;		break;
+	case AXIS_GRIPPER_CLAMP_R6:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R6;		break;
+	case AXIS_GRIPPER_CLAMP_R7:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R7;		break;
+	case AXIS_GRIPPER_CLAMP_R8:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_CLAMP_R8;		break;
+	case AXIS_GRIPPER_STRETCH_L1:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L1;		break;
+	case AXIS_GRIPPER_STRETCH_L2:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L2;		break;
+	case AXIS_GRIPPER_STRETCH_L3:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L3;		break;
+	case AXIS_GRIPPER_STRETCH_L4:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L4;		break;
+	case AXIS_GRIPPER_STRETCH_L5:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L5;		break;
+	case AXIS_GRIPPER_STRETCH_L6:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L6;		break;
+	case AXIS_GRIPPER_STRETCH_L7:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L7;		break;
+	case AXIS_GRIPPER_STRETCH_L8:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_L8;		break;
+	case AXIS_GRIPPER_STRETCH_R1:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R1;		break;
+	case AXIS_GRIPPER_STRETCH_R2:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R2;		break;
+	case AXIS_GRIPPER_STRETCH_R3:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R3;		break;
+	case AXIS_GRIPPER_STRETCH_R4:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R4;		break;
+	case AXIS_GRIPPER_STRETCH_R5:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R5;		break;
+	case AXIS_GRIPPER_STRETCH_R6:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R6;		break;
+	case AXIS_GRIPPER_STRETCH_R7:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R7;		break;
+	case AXIS_GRIPPER_STRETCH_R8:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_STRETCH_R8;		break;
+	case AXIS_GRIPPER_PITCH_L1:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L1;		break;
+	case AXIS_GRIPPER_PITCH_L2:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L2;		break;
+	case AXIS_GRIPPER_PITCH_L3:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L3;		break;
+	case AXIS_GRIPPER_PITCH_L4:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L4;		break;
+	case AXIS_GRIPPER_PITCH_L5:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L5;		break;
+	case AXIS_GRIPPER_PITCH_L6:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L6;		break;
+	case AXIS_GRIPPER_PITCH_L7:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L7;		break;
+	case AXIS_GRIPPER_PITCH_L8:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_L8;		break;
+	case AXIS_GRIPPER_PITCH_R1:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R1;		break;
+	case AXIS_GRIPPER_PITCH_R2:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R2;		break;
+	case AXIS_GRIPPER_PITCH_R3:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R3;		break;
+	case AXIS_GRIPPER_PITCH_R4:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R4;		break;
+	case AXIS_GRIPPER_PITCH_R5:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R5;		break;
+	case AXIS_GRIPPER_PITCH_R6:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R6;		break;
+	case AXIS_GRIPPER_PITCH_R7:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R7;		break;
+	case AXIS_GRIPPER_PITCH_R8:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_PITCH_R8;		break;
+	case AXIS_GRIPPER_WEDGE_ZL:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_WEDGE_ZL;		break;
+	case AXIS_GRIPPER_WEDGE_ZR:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_GRIPPER_WEDGE_ZR;		break;
+	case AXIS_BOX_ALIGN_CAMERA_YL:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_BOX_ALIGN_CAMERA_YL;		break;
+	case AXIS_BOX_ALIGN_CAMERA_YR:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_BOX_ALIGN_CAMERA_YR;		break;
+	case AXIS_3D_CAMERA_MAIN_Z:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_3D_CAMERA_Z1;		break;
+	case AXIS_3D_CAMERA_SUB_Z:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_3D_CAMERA_Z2;		break;
+	case AXIS_UNLOADER_Z:			nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_UNLOADER_Z;		break;
+	case AXIS_UNLOADER_YL:			nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_UNLOADER_YL;		break;
+	case AXIS_UNLOADER_YR:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_UNLOADER_YR;		break;
+	case AXIS_MAGAZINE_LIFT_Z:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_MAGAZINE_LIFT_Z;		break;
+	case AXIS_INKJET_Y:				nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_INKJET_Y;		break;
+
+	case AXIS_LOADER_X:						nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_LOADER_X;		break;
+	case AXIS_LOADING_STAGE_X1:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_LOADING_STAGE_X1;		break;
+	case AXIS_LOADING_STAGE_X2:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_LOADING_STAGE_X2;		break;
+	case AXIS_LOADING_STAGE_Y:			nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_LOADING_STAGE_Y;			break;
+	case AXIS_INSPECTION_STAGE_X:		nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_INSPECTION_STAGE_X;		break;
+	case AXIS_INSPECTION_STAGE_Y1:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_INSPECTION_STAGE_Y1;		break;
+	case AXIS_INSPECTION_STAGE_Y2:	nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_INSPECTION_STAGE_Y2;		break;
+	case AXIS_UNLOADER_X:					nType = AXIS_TYPE_REMOTE_AJIN;		nAxis = REMOTE_AXIS_AJIN_UNLOADER_X;		break;
+
+	case AXIS_VIRTUAL_GANTRY_Y:		nType = AXIS_TYPE_REMOTE_UMAC;		nAxis = REMOTE_AXIS_UMAC_VIRTUAL_GANTRY_Y;		break;
+
+	default: bResult = FALSE;
+		break;
+	}
+#pragma endregion
+
+	*pAxisType = nType;
+	*nRemoteAxis = nAxis;
+
+	return bResult;
+}
+//--------------------------------------------------------------------------
+BOOL CBaseMotion::GetAxisJogParam(enum_Axis pAxis, double* pJogSpeed, double* pAccel, double* pDecel, int nSelJogSpeed)
+{
+	BOOL bResult = TRUE;
+	int nTemp = (int)pAxis;
+	/*Choi
+	if (pAxis == AXIS_GRIPPER_VIRTUAL_F)
+	{
+		nTemp = AXIS_GRIPPER_Y_LF;
+	}
+
+	if (pAxis == AXIS_GRIPPER_VIRTUAL_B)
+	{
+		nTemp = AXIS_GRIPPER_Y_LB;
+	}
+
+	*pJogSpeed = CSystemData::m_Velocity.m_dJog[nTemp][nSelJogSpeed];
+	*pAccel = CSystemData::m_Velocity.m_dAcc[nTemp];
+	*pDecel = CSystemData::m_Velocity.m_dDec[nTemp];
+
+	if (*pJogSpeed > CSystemData::m_Velocity.m_dMaxLimit[nTemp])
+	{
+		bResult = FALSE;
+	}
+	*/
+	return bResult;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::GetAxisWorkParam(enum_Axis pAxis, double* pSpeed, double* pAccel, double* pDecel)
+{
+	//저장된 파라미터 값을 가져온다
+	BOOL bResult = TRUE;
+	//Machine Data에서 저장된 축의 속도 & 가속 & 감속 값을 가져온다
+	
+	*pSpeed = CMachineData::m_MachineDataMotor.Info.dAutoVel[pAxis];
+	*pAccel = CMachineData::m_MachineDataMotor.Info.dAutoAccel[pAxis];
+	*pDecel = CMachineData::m_MachineDataMotor.Info.dAutoDecel[pAxis];
+	
+	//최대속도 Limit 제한
+	if (*pSpeed > CMachineData::m_MachineDataMotor.Info.dMaxVel[pAxis])
+	{
+		bResult = FALSE;
+	}
+	
+	return bResult;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::SetDOutputBitValue(enum_Do eBit, int nValue)
+{
+#ifndef SIM_MODE
+	int nBit = -1;
+
+#if 0
+	if (!m_Safety.AxisAllDoSafetyCheck(eBit, nValue))
+	{
+		return FALSE;
+	}
+#endif
+
+	SharedInfo::GetActualIoNumByEnumDo(eBit, &nBit);
+	if (nBit == -1)
+		return FALSE;
+
+
+	Devs::MotionIf.DOutputSetBitValue(nBit, nValue);
+#endif
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::SetAOutputValue(enum_Ao eChannel, double dValue)
+{
+	int nChannel = -1;
+	/*Choi
+	if (!m_Safety.AxisAllAoSafetyCheck(eChannel, dValue))
+	{
+		return FALSE;
+	}
+
+	SharedInfo::GetActualIoNumByEnumAo(eChannel, &nChannel);
+
+	if (nChannel == -1)
+		return FALSE;
+
+	Devs::MotionIf.AOutputSetChannelValue(nChannel, dValue);
+	*/
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::GetDInputValue(enum_Di eBit)
+{
+	int nBit = -1;
+	/*Choi
+	SharedInfo::GetActualIoNumByEnumDi(eBit, &nBit);
+	if (nBit == -1)
+		return FALSE;
+	return SharedInfo::DInputValue[nBit];
+	*/
+	return FALSE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::GetAinputValue(enum_Ai eChannel)
+{
+	int nChannel = -1;
+	/*Choi
+	SharedInfo::GetActualIoNumByEnumAi(eChannel, &nChannel);
+	if (nChannel == -1)
+		return FALSE;
+
+	return SharedInfo::AInputValue[nChannel];
+	*/
+	return FALSE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::SimulAxisAbsMove(enum_Axis eAxisNo, double dPos, double dVel, double dAcc, double dDec)
+{
+	SimulMotion.nSimual_Mode	= 0;
+	SimulMotion.eAxis			= eAxisNo;
+	SimulMotion.dTargetPos		= dPos;
+	SimulMotion.dVel			= dVel;
+	SimulMotion.dAcc			= dAcc;
+	SimulMotion.dDec			= dDec;
+	SimulMotion.nJogDir			= 0;
+	AfxBeginThread(SimulThreadProc, this);
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::SimulAxisJogMove(enum_Axis eAxisNo, double dPos, double dVel, double dAcc, double dDec)
+{
+	SimulMotion.nSimual_Mode	= 1;
+	SimulMotion.eAxis			= eAxisNo;
+	SimulMotion.dTargetPos		= dPos;
+	SimulMotion.dVel			= dVel;
+	SimulMotion.dAcc			= dAcc;
+	SimulMotion.dDec			= dDec;
+	if (dVel > 0)
+	{
+		SimulMotion.nJogDir = 1;
+	}
+	else
+	{
+		SimulMotion.nJogDir = -1;
+	}
+	m_bJogStop = FALSE;
+	AfxBeginThread(SimulThreadProc, this);
+
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::SimulAxisJogStop(enum_Axis eAxisNo)
+{
+	m_bJogStop = TRUE;
+	return TRUE;
+}
+//----------------------------------------------------------
+BOOL CBaseMotion::IsSimulAixsDone()
+{
+	return TRUE;
+}
+//----------------------------------------------------------
+UINT SimulThreadProc(LPVOID lpParam)
+{
+	CBaseMotion *pParents;
+	pParents = (CBaseMotion *)lpParam;
+
+	DOUBLE dPos = 0, dCurPos = 0;
+	SimulMotion MotionData = pParents->SimulMotion;
+	DOUBLE dStartTick = 0., dCurrentTick = 0., dWaitTick;
+	DOUBLE dStartPos	= SharedInfo::GetCmdPos(MotionData.eAxis);
+	double dMove_Pos	= 0.000;
+	
+	pParents->m_bStopSimulThread = FALSE;
+	dStartTick = GetTickCount64();
+
+	DOUBLE dCalAcc = fabs(MotionData.dVel / (MotionData.dAcc / 1000));
+
+	while (1)
+	{
+		if (pParents->m_bStopSimulThread == TRUE)
+		{
+			break;
+		}
+		dCurrentTick = GetTickCount64();
+		dWaitTick = dCurrentTick - dStartTick;
+		if (dWaitTick > (1000 * 30 * 1))
+		{
+			break;
+		}
+		if (MotionData.nSimual_Mode == 0)
+		{
+			// Rel Mode			
+			double dDiff_Pos = 0.000;
+			dDiff_Pos = MotionData.dTargetPos - dStartPos;
+			if (fabs(dDiff_Pos) <= 0.002)
+			{
+				break;
+			}
+			if (dDiff_Pos > 0)
+			{
+				dMove_Pos = (0.5 * dCalAcc * ((dCurrentTick - dStartTick) * (dCurrentTick - dStartTick) / 1000000));
+				dPos = dStartPos + dMove_Pos;
+				SharedInfo::SetCmdPos(MotionData.eAxis, dPos);
+				if (dPos > MotionData.dTargetPos)
+				{
+					break;
+				}
+			}
+			else
+			{
+				dMove_Pos = (-1) * (0.5 * dCalAcc * ((dCurrentTick - dStartTick) * (dCurrentTick - dStartTick) / 1000000));
+				dPos = dStartPos + dMove_Pos;
+				SharedInfo::SetCmdPos(MotionData.eAxis, dPos);
+				if (dPos < MotionData.dTargetPos)
+				{
+					break;
+				}
+			}
+		}
+		else if (MotionData.nSimual_Mode == 1)
+		{
+			// Jog Mode
+			if (pParents->m_bJogStop == TRUE)
+			{
+				break;
+			}
+			if (MotionData.nJogDir > 0)
+			{
+				dMove_Pos = (0.5 * dCalAcc * ((dCurrentTick - dStartTick) * (dCurrentTick - dStartTick) / 1000000));
+				dPos = dStartPos + dMove_Pos;
+				SharedInfo::SetCmdPos(MotionData.eAxis, dPos);				
+			}
+			else
+			{
+				dMove_Pos = (-1) * (0.5 * dCalAcc * ((dCurrentTick - dStartTick) * (dCurrentTick - dStartTick) / 1000000));
+				dPos = dStartPos + dMove_Pos;
+				SharedInfo::SetCmdPos(MotionData.eAxis, dPos);
+			}
+		}
+		Sleep(1);
+	}
+	
+	return 0;
+}
+//----------------------------------------------------------

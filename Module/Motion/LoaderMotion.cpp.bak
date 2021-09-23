@@ -1,0 +1,254 @@
+#include "stdafx.h"
+#include "LoaderMotion.h"
+#include "Vision/Devs.h"
+#include "Vision/SharedInfo.h"
+#include "CalcAlign/CalcAlign.h"
+
+CLoaderMotion::CLoaderMotion()
+{
+}
+
+
+CLoaderMotion::~CLoaderMotion()
+{
+}
+
+BOOL CLoaderMotion::InitProcess()
+{
+	//m_bTerminate = FALSE;
+	m_StateFinish = TRUE;
+	//SetProcessLog(Process_Msg);
+	//SetAlarmLog(Alarm_Msg);
+	hMotionHandle = CreateEvent(NULL, TRUE, FALSE, NULL);
+	SetHandle(hMotionHandle);
+	pMotionThread = AfxBeginThread(MotionThreadFunction, this);// , THREAD_PRIORITY_ABOVE_NORMAL);
+
+	return TRUE;
+}
+
+BOOL CLoaderMotion::EndProcess()
+{
+	int i = 0;
+
+	m_StateFinish = FALSE;
+
+	SetStep(eLOADER_MOTION_IDLE, FALSE);
+
+	if (hMotionHandle != NULL)
+	{
+		CloseHandle(hMotionHandle);
+		hMotionHandle = NULL;
+	}
+#if 0
+	do
+	{
+		Sleep(10);
+	} while (m_bTerminate == 0);
+#endif
+	//delete this;
+
+	return TRUE;
+}
+
+BOOL CLoaderMotion::Start()
+{
+	m_bMotionDone = FALSE;
+	m_bStopBit = FALSE;
+	m_nCurStep = eLOADER_MOTION_START;
+	SetStep(m_nCurStep, _T("m_nCurStep"));
+	return TRUE;
+}
+
+BOOL CLoaderMotion::Stop()
+{
+	if (this == NULL)
+		return FALSE;
+
+	m_bStopBit = TRUE;
+	return TRUE;
+}
+
+UINT CLoaderMotion::MotionThreadFunction(LPVOID lpParam)
+{
+	CLoaderMotion* pLoaderMotion = NULL;
+
+	pLoaderMotion = (CLoaderMotion*)lpParam;
+
+	pLoaderMotion->MotionThreadFunctionEntry();
+
+	pLoaderMotion->m_bTerminate = 1;
+
+	return 0;
+}
+
+VOID CLoaderMotion::MotionThreadFunctionEntry(VOID)
+{
+	int ErrorCheck = 0;
+	CString szMsg;
+
+	while (m_StateFinish)
+	{
+		WaitForSingleObject(hMotionHandle, INFINITE);
+		ResetEvent(hMotionHandle);
+
+		if (m_bStopBit == TRUE)
+		{
+			m_bStopBit = FALSE;
+			SetStop();
+			continue;
+		}
+		switch (GetCurrentTotalStep())
+		{
+		case eLOADER_MOTION_START:
+			SetStep(eLOADER_MOTION_DONE, _T("eLOADER_MOTION_DONE"));
+			break;
+
+		
+		case eLOADER_MOTION_DONE:
+			m_bMotionDone = TRUE;
+			SetStep(eLOADER_MOTION_IDLE, _T("eLOADER_MOTION_IDLE"));
+			break;
+
+		case eLOADER_MOTION_EXIT:
+			m_StateFinish = FALSE;
+			break;
+		}
+	}
+}
+
+BOOL CLoaderMotion::IsAxisHome(UINT nAxisNo)
+{
+	return SharedInfo::AxisHomeStatus[nAxisNo];
+}
+
+BOOL CLoaderMotion::MoveAxis(enum_Axis eAxis, double dPos)
+{
+	double	dSpeed = 0.0, dAccel = 0.0, dDecel = 0.0;
+
+	//현재 모터의 파라미터 받아오기
+	if (!GetAxisWorkParam(eAxis, &dSpeed, &dAccel, &dDecel)) return FALSE;
+	//해당 모터에 파라미터 전달
+	AbsMove(eAxis, dPos, dSpeed, dAccel, dDecel);
+	return TRUE;
+}
+BOOL CLoaderMotion::IsMoveDone(enum_Axis eAxis, double dPos)
+{
+	double dCmdPos = SharedInfo::GetCmdPos(eAxis);
+	return (IsSamePosition(dCmdPos, dPos) && IsMotionDone(eAxis));
+}
+
+#pragma region //Loader Z
+//Move
+BOOL CLoaderMotion::LoaderZ_WaitPos()
+{
+	enum_Axis eAxis = AXIS_LOADER_Z;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderZ_Wait_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Loader Z Move To Wait Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+BOOL CLoaderMotion::LoaderZ_StickLoadInBoxPos()
+{
+	enum_Axis eAxis = AXIS_LOADER_Z;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderZ_StickLoadInBox_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Loader Z Move To Stick Load In Box Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+BOOL CLoaderMotion::LoaderZ_PaperUnloadPos()
+{
+	enum_Axis eAxis = AXIS_LOADER_Z;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderZ_PaperUnloader_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Loader Z Move To Paper Unload Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+BOOL CLoaderMotion::LoaderZ_StickUnloadInStagePos()
+{
+	enum_Axis eAxis = AXIS_LOADER_Z;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderZ_StickUnloadInStage_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Loader Z Move To Stick Unload In Stage Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+BOOL CLoaderMotion::LoaderZ_StickLoadInStagePos()
+{
+	enum_Axis eAxis = AXIS_LOADER_Z;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderZ_StickLoadInStage_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Loader Z Move To Stick Load In Stage Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+BOOL CLoaderMotion::LoaderZ_StickUnloadInBoxPos()
+{
+	enum_Axis eAxis = AXIS_LOADER_Z;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderZ_StickUnoadInBox_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Loader Z Move To Stick Unload In Box Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+//MoveDone Check
+BOOL CLoaderMotion::IsLoaderZ_WaitPos()
+{
+	enum_Axis eAxis = AXIS_LOADER_Z;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderZ_Wait_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+BOOL CLoaderMotion::IsLoaderZ_StickLoadInBoxPos()
+{
+	enum_Axis eAxis = AXIS_LOADER_Z;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderZ_StickLoadInBox_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+BOOL CLoaderMotion::IsLoaderZ_PaperUnloadPos()
+{
+	enum_Axis eAxis = AXIS_LOADER_Z;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderZ_PaperUnloader_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+BOOL CLoaderMotion::IsLoaderZ_StickLoadInStagePos()
+{
+	enum_Axis eAxis = AXIS_LOADER_Z;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderZ_StickLoadInStage_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+BOOL CLoaderMotion::IsLoaderZ_StickUnloadInBoxPos()
+{
+	enum_Axis eAxis = AXIS_LOADER_Z;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderZ_StickUnoadInBox_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+#pragma endregion
+
+#pragma region //Loader X
+//Move
+BOOL CLoaderMotion::LoaderX_WaitPos()
+{
+	enum_Axis eAxis = AXIS_LOADER_X;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderX_Wait_Pos;
+	BOOL bRtn = MoveAxis(eAxis, dPos);
+	if (bRtn == TRUE)
+		LogMsg_Total(_T("Loader X Move To Wait Pos (Pos : %.5f)"), dPos);
+
+	return bRtn;
+}
+//MoveDone Check
+BOOL CLoaderMotion::IsLoaderX_WaitPos()
+{
+	enum_Axis eAxis = AXIS_LOADER_X;
+	double dPos = CManualData::m_ManualDataLoader.Loader.m_dLoaderX_Wait_Pos;
+	return IsMoveDone(eAxis, dPos);
+}
+#pragma endregion

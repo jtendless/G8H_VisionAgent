@@ -1,0 +1,956 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="리소스 파일">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="01_Module">
+      <UniqueIdentifier>{a5e67f20-aa32-4b3b-a4ae-0d884f3eada2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\Control">
+      <UniqueIdentifier>{66da029d-9590-4c8e-a22b-8d9e2a267447}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="01_Module\Log">
+      <UniqueIdentifier>{3e477efd-1cd6-4fd1-92df-e595cc8e601e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\Data">
+      <UniqueIdentifier>{16ff8650-fb90-4beb-86e2-6513b5fc2851}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\CalcAlign">
+      <UniqueIdentifier>{ce1ec385-73b2-4d01-b0a6-161d72d1061d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\Vision">
+      <UniqueIdentifier>{b7c11f10-4d01-49a5-b44d-7655672961a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\DirectoryManager">
+      <UniqueIdentifier>{9b08fc1c-157d-4d57-8248-9c6874d8079a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\FileIni">
+      <UniqueIdentifier>{7540eaa3-c3fb-4397-9616-55a4b1b32974}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\Flow">
+      <UniqueIdentifier>{cc745d41-8303-43d3-a2b6-3bcde1da6cb9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\Simulator">
+      <UniqueIdentifier>{5e9aa713-da0b-4b49-9957-50e443a38312}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\DLL">
+      <UniqueIdentifier>{10ad00cd-bc92-438a-9303-4201eb85bef4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\DLL\Ajin">
+      <UniqueIdentifier>{5dd0681e-a5d1-4cc8-b3b2-7fda847757ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\DLL\Ajin\Include">
+      <UniqueIdentifier>{91095dcd-b282-4dbd-aa9b-501008578c97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\DLL\Ajin\lib">
+      <UniqueIdentifier>{be004449-197d-4ec0-841f-339c000fb6a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\Motion">
+      <UniqueIdentifier>{0ee0f2da-2787-4167-be78-e592448f5b00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\Module">
+      <UniqueIdentifier>{a35351b2-0d80-43b8-9c0c-d12bebbaf39d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\Common">
+      <UniqueIdentifier>{882e87ae-2c1b-479d-bfa5-5dd6f9179a2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\ServerClient">
+      <UniqueIdentifier>{0d6f99f7-4c26-4d07-88f5-6781dc035a6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\Ftp">
+      <UniqueIdentifier>{e2ed50d0-b92d-4f54-821a-eadcc2364ecd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\Cim">
+      <UniqueIdentifier>{9414f2bd-6476-409c-ae6e-b89befa02158}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\LLC4AF">
+      <UniqueIdentifier>{04cfd2a8-38d5-4f9d-9942-37240109023d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01_Module\FileIni\ListCtrl">
+      <UniqueIdentifier>{71a7525d-159e-49fd-b0d9-57153c5fe0e4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="VisionAgent.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Control\ColorStatic.h">
+      <Filter>01_Module\Control</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Control\ClrButton.h">
+      <Filter>01_Module\Control</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Vision\VisionAgentDefine.h">
+      <Filter>01_Module\Vision</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Vision\Devs.h">
+      <Filter>01_Module\Vision</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Vision\SharedInfo.h">
+      <Filter>01_Module\Vision</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Data\ModelData.h">
+      <Filter>01_Module\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Data\SystemData.h">
+      <Filter>01_Module\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="ManualDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Motion\BaseMotion.h">
+      <Filter>01_Module\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="CommunicationDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasurementDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemOptionSubDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\CalcAlign\CalcAlign.h">
+      <Filter>01_Module\CalcAlign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\DirectoryManager\FileManager.h">
+      <Filter>01_Module\DirectoryManager</Filter>
+    </ClInclude>
+    <ClInclude Include="PositionKeyInDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawMask.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Motion\Frame_Unit_Motion.h">
+      <Filter>01_Module\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Dll\Ajin\include\AXA.h">
+      <Filter>01_Module\DLL\Ajin\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Dll\Ajin\include\AXC.h">
+      <Filter>01_Module\DLL\Ajin\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Dll\Ajin\include\AXD.h">
+      <Filter>01_Module\DLL\Ajin\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Dll\Ajin\include\AXDev.h">
+      <Filter>01_Module\DLL\Ajin\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Dll\Ajin\include\AXHD.h">
+      <Filter>01_Module\DLL\Ajin\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Dll\Ajin\include\AXHS.h">
+      <Filter>01_Module\DLL\Ajin\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Dll\Ajin\include\AXL.h">
+      <Filter>01_Module\DLL\Ajin\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Dll\Ajin\include\AXM.h">
+      <Filter>01_Module\DLL\Ajin\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemMachineCommunicationSubDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="CommunicationDIODlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Manual_Sub_Gantry_Fixed_Pos.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Manual_Sub_Gantry_Manual.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemSaftySubDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="MachineDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Motion\JogMotion.h">
+      <Filter>01_Module\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Data\ManualData.h">
+      <Filter>01_Module\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Data\MachineData.h">
+      <Filter>01_Module\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Module\UmacAxis.h">
+      <Filter>01_Module\Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Module\MotionModule.h">
+      <Filter>01_Module\Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Module\AjinAxis.h">
+      <Filter>01_Module\Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Common\CommonDefine.h">
+      <Filter>01_Module\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Module\Runtime.h">
+      <Filter>01_Module\Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Module\IO.h">
+      <Filter>01_Module\Module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Log\Autolock.h">
+      <Filter>01_Module\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Log\CeFileFind.h">
+      <Filter>01_Module\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Log\exHandle.h">
+      <Filter>01_Module\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Log\exThread.h">
+      <Filter>01_Module\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Log\LogDefine.h">
+      <Filter>01_Module\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Log\LogFile.h">
+      <Filter>01_Module\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Log\Logger.h">
+      <Filter>01_Module\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Log\SimpleTaskManager.h">
+      <Filter>01_Module\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentLogDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="StretchParaDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="InspectionParaDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Control\NumEdit.h">
+      <Filter>01_Module\Control</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\FileIni\FileIni.h">
+      <Filter>01_Module\FileIni</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentMachineOriginDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentMachineJogDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentMachineJogInfoDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentMachineMotorDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ListCtrl\AdvancedEditCell.h">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ListCtrl\CheckButton.h">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ListCtrl\CommonListCtrl.h">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ListCtrl\ListCtrlCustomDraw.h">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ListCtrl\WizardCombo.h">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentSystem_CoordinateDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Manual_Sub_Clamp_Manual.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Manual_Sub_Clamp_Fixed_Pos.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Manual_Sub_Stretch_Manual.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Manual_Sub_Stretch_Fixed_Pos.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Motion\MotionAgentDefine.h">
+      <Filter>01_Module\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Common\ClientInterface.h">
+      <Filter>01_Module\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Common\Miscellaneous.h">
+      <Filter>01_Module\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Common\ServerInterface.h">
+      <Filter>01_Module\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Common\SHMInterface.h">
+      <Filter>01_Module\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Light\CommThread.h">
+      <Filter>01_Module\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ServerClient\ClientSocket.h">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ServerClient\ListenSocket.h">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ServerClient\ModbusData.h">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ServerClient\SocketComm.h">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ServerClient\SocketManager.h">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ServerClient\Sr1000Cmds.h">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ServerClient\TCPIP.h">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentAlarmDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Vision\Safety.h">
+      <Filter>01_Module\Vision</Filter>
+    </ClInclude>
+    <ClInclude Include="FmmLight1.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="FmmLight2.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Motion\InspectionStageMotion.h">
+      <Filter>01_Module\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Motion\ClampMotion.h">
+      <Filter>01_Module\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentSimulationViewDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Motion\GantryMotion.h">
+      <Filter>01_Module\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="CamAreaModul.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Vision\MappingProc.h">
+      <Filter>01_Module\Vision</Filter>
+    </ClInclude>
+    <ClInclude Include="GlassParaDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentMeasurementBrightnessDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentModelModelChangeDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentModelModelChangeNewDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Motion\StretchMotion.h">
+      <Filter>01_Module\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="Manual_Sub_GripperZ_Manual.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Manual_Sub_GripperZ_Fixed_Pos.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Motion\GripperZMotion.h">
+      <Filter>01_Module\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentProcessDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="AlignParaDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="AlignPara2Dlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="AutoRunStartDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ListCtrl\RepeatListCtrl.h">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Flow\BaseFlow.h">
+      <Filter>01_Module\Flow</Filter>
+    </ClInclude>
+    <ClInclude Include="CommunicationAIODlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Vision\StudioMap.h">
+      <Filter>01_Module\Vision</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessPpaDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentECSDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentECSMainDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentECSJobManagementDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentECSSheetDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentECSErrorDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentECSDfsDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\FTP\CommFTP.h">
+      <Filter>01_Module\Ftp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\FTP\Define_FTP.h">
+      <Filter>01_Module\Ftp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\FTP\Hash.h">
+      <Filter>01_Module\Ftp</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentECSJobHistoryDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelSubMaterialParaDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelSubMaterialParaAlignStickDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelSubAtMaterialParaAlignStickDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelSubAtMaterialParaDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelSubPpaParaDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Data\XmlFile.h">
+      <Filter>01_Module\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Flow\Origin_AllAxis_Flow.h">
+      <Filter>01_Module\Flow</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentSystem_ESCDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\CIM\CimDefine.h">
+      <Filter>01_Module\Cim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\CIM\CimInfo.h">
+      <Filter>01_Module\Cim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\CIM\CimModule.h">
+      <Filter>01_Module\Cim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\CIM\InterfaceModule.h">
+      <Filter>01_Module\Cim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\CIM\MelsecBase.h">
+      <Filter>01_Module\Cim</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelSubAtMaterialPara2Dlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelSubMaterialPara2Dlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ListCtrl\HalfEdgeListCtrl.h">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\ListCtrl\3DListCtrl.h">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\LLC4AF\INCLUDE\atf_def.h">
+      <Filter>01_Module\LLC4AF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\LLC4AF\INCLUDE\atf_lib_exp.h">
+      <Filter>01_Module\LLC4AF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\LLC4AF\INCLUDE\Sol_LLC.h">
+      <Filter>01_Module\LLC4AF</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelSubManualParaDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\CIM\Secs.h">
+      <Filter>01_Module\Cim</Filter>
+    </ClInclude>
+    <ClInclude Include="xcomproctrl1.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentSafetyMap.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Module\Control\ColorButton.h">
+      <Filter>01_Module\Control</Filter>
+    </ClInclude>
+    <ClInclude Include="VisionAgentModelModelChangeRenameDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelSubAtMaterialPara3Dlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelSubMaterialPara3Dlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="VisionAgent.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Control\ColorStatic.cpp">
+      <Filter>01_Module\Control</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Control\ClrButton.cpp">
+      <Filter>01_Module\Control</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Vision\VisionAgentDefine.cpp">
+      <Filter>01_Module\Vision</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemOptionSubDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Vision\Devs.cpp">
+      <Filter>01_Module\Vision</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Vision\SharedInfo.cpp">
+      <Filter>01_Module\Vision</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Data\ModelData.cpp">
+      <Filter>01_Module\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Data\SystemData.cpp">
+      <Filter>01_Module\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="ManualDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Motion\BaseMotion.cpp">
+      <Filter>01_Module\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="CommunicationDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasurementDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\CalcAlign\CalcAlign.cpp">
+      <Filter>01_Module\CalcAlign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\DirectoryManager\FileManager.cpp">
+      <Filter>01_Module\DirectoryManager</Filter>
+    </ClCompile>
+    <ClCompile Include="PositionKeyInDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawMask.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Motion\Frame_Unit_Motion.cpp">
+      <Filter>01_Module\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemMachineCommunicationSubDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CommunicationDIODlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Manual_Sub_Gantry_Fixed_Pos.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Manual_Sub_Gantry_Manual.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemSaftySubDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="MachineDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Motion\JogMotion.cpp">
+      <Filter>01_Module\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Data\ManualData.cpp">
+      <Filter>01_Module\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Data\MachineData.cpp">
+      <Filter>01_Module\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Module\UmacAxis.cpp">
+      <Filter>01_Module\Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Module\MotionModule.cpp">
+      <Filter>01_Module\Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Module\AjinAxis.cpp">
+      <Filter>01_Module\Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Module\Runtime.cpp">
+      <Filter>01_Module\Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Module\IO.cpp">
+      <Filter>01_Module\Module</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Log\Autolock.cpp">
+      <Filter>01_Module\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Log\CeFileFind.cpp">
+      <Filter>01_Module\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Log\exThread.cpp">
+      <Filter>01_Module\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Log\LogDefine.cpp">
+      <Filter>01_Module\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Log\LogFile.cpp">
+      <Filter>01_Module\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Log\Logger.cpp">
+      <Filter>01_Module\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Log\SimpleTaskManager.cpp">
+      <Filter>01_Module\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentLogDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="InspectionParaDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="StretchParaDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Control\NumEdit.cpp">
+      <Filter>01_Module\Control</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\FileIni\FileIni.cpp">
+      <Filter>01_Module\FileIni</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentMachineOriginDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentMachineJogDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentMachineJogInfoDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentMachineMotorDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ListCtrl\AdvancedEditCell.cpp">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ListCtrl\CheckButton.cpp">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ListCtrl\CommonListCtrl.cpp">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ListCtrl\ListCtrlCustomDraw.cpp">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ListCtrl\WizardCombo.cpp">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentSystem_CoordinateDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Manual_Sub_Clamp_Manual.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Manual_Sub_Clamp_Fixed_Pos.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Manual_Sub_Stretch_Manual.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Manual_Sub_Stretch_Fixed_Pos.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Motion\MotionAgentDefine.cpp">
+      <Filter>01_Module\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Common\ClientInterface.cpp">
+      <Filter>01_Module\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Common\Miscellaneous.cpp">
+      <Filter>01_Module\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Common\ServerInterface.cpp">
+      <Filter>01_Module\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Light\CommThread.cpp">
+      <Filter>01_Module\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ServerClient\ClientSocket.cpp">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ServerClient\ListenSocket.cpp">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ServerClient\ModbusData.cpp">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ServerClient\SocketComm.cpp">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ServerClient\SocketManager.cpp">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ServerClient\Sr1000Cmds.cpp">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ServerClient\TCPIP.cpp">
+      <Filter>01_Module\ServerClient</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentAlarmDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Vision\Safety.cpp">
+      <Filter>01_Module\Vision</Filter>
+    </ClCompile>
+    <ClCompile Include="FmmLight1.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="FmmLight2.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Motion\InspectionStageMotion.cpp">
+      <Filter>01_Module\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Motion\ClampMotion.cpp">
+      <Filter>01_Module\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentSimulationViewDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Motion\GantryMotion.cpp">
+      <Filter>01_Module\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="CamAreaModul.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Vision\MappingProc.cpp">
+      <Filter>01_Module\Vision</Filter>
+    </ClCompile>
+    <ClCompile Include="GlassParaDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentMeasurementBrightnessDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentModelModelChangeDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentModelModelChangeNewDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Motion\StretchMotion.cpp">
+      <Filter>01_Module\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="Manual_Sub_GripperZ_Manual.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Manual_Sub_GripperZ_Fixed_Pos.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Motion\GripperZMotion.cpp">
+      <Filter>01_Module\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentProcessDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="AlignParaDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="AlignPara2Dlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="AutoRunStartDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ListCtrl\RepeatListCtrl.cpp">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Flow\BaseFlow.cpp">
+      <Filter>01_Module\Flow</Filter>
+    </ClCompile>
+    <ClCompile Include="CommunicationAIODlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Vision\StudioMap.cpp">
+      <Filter>01_Module\Vision</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessPpaDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\FTP\CommFTP.cpp">
+      <Filter>01_Module\Ftp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\FTP\Hash.cpp">
+      <Filter>01_Module\Ftp</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelSubMaterialParaDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelSubMaterialParaAlignStickDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelSubAtMaterialParaAlignStickDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelSubAtMaterialParaDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelSubPpaParaDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Data\XmlFile.cpp">
+      <Filter>01_Module\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Flow\Origin_AllAxis_Flow.cpp">
+      <Filter>01_Module\Flow</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentSystem_ESCDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\CIM\CimInfo.cpp">
+      <Filter>01_Module\Cim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\CIM\CimModule.cpp">
+      <Filter>01_Module\Cim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\CIM\InterfaceModule.cpp">
+      <Filter>01_Module\Cim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\CIM\MelsecBase.cpp">
+      <Filter>01_Module\Cim</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelSubAtMaterialPara2Dlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelSubMaterialPara2Dlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ListCtrl\HalfEdgeListCtrl.cpp">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\ListCtrl\3DListCtrl.cpp">
+      <Filter>01_Module\FileIni\ListCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelSubManualParaDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\CIM\Secs.cpp">
+      <Filter>01_Module\Cim</Filter>
+    </ClCompile>
+    <ClCompile Include="xcomproctrl1.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentSafetyMap.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Module\Control\ColorButton.cpp">
+      <Filter>01_Module\Control</Filter>
+    </ClCompile>
+    <ClCompile Include="VisionAgentModelModelChangeRenameDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelSubAtMaterialPara3Dlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelSubMaterialPara3Dlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="VisionAgent.rc">
+      <Filter>리소스 파일</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\VisionAgent.rc2">
+      <Filter>리소스 파일</Filter>
+    </None>
+    <None Include="..\Module\Dll\Ajin\lib\64Bit\AXL.dll">
+      <Filter>01_Module\DLL\Ajin\lib</Filter>
+    </None>
+    <None Include="..\Module\Dll\Ajin\lib\64Bit\EzBasicAxl.dll">
+      <Filter>01_Module\DLL\Ajin\lib</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\VisionAgent.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\Module\Dll\Ajin\lib\64Bit\AXL.lib">
+      <Filter>01_Module\DLL\Ajin\lib</Filter>
+    </Library>
+    <Library Include="..\Module\Dll\Ajin\lib\64Bit\EzBasicAxl.lib">
+      <Filter>01_Module\DLL\Ajin\lib</Filter>
+    </Library>
+  </ItemGroup>
+</Project>

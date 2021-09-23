@@ -1,0 +1,104 @@
+#pragma once
+
+#include "Common/CommonDefine.h"
+
+class CGlassFlatnessFlow : public CBaseFlow
+{
+public:
+	CGlassFlatnessFlow();
+	~CGlassFlatnessFlow();
+
+private:
+	CWinThread*		pThread;
+	VOID			ThreadFunctionEntry(VOID);
+	static UINT		ThreadFunction(LPVOID lpParam);
+	BOOL			m_FlowFinish;
+	BOOL			m_bFlowDone;
+	BOOL			m_bStopBit;
+	void(*m_StateComplete)(void *pArgument);
+
+public:
+	BOOL			InitProcess();
+	BOOL			EndProcess();
+	BOOL			StateStop();
+
+	HANDLE			hHandle;
+	BOOL			m_bTerminate;
+	BOOL			IsTerminate() { return m_bTerminate; }
+	BOOL			IsFlowDone() { return m_bFlowDone; }
+
+	BOOL			Start();
+	BOOL			Stop();
+
+	CTime m_timeStart; //KJT 20210329
+
+	double m_dTargetPosX;
+	double m_dTargetPosY;
+	double m_dTargetPosZ;
+
+	int m_nCurRepeatCount;
+	int m_nMaxRepeatCount;
+
+	int m_nMeasurePoint;
+	double m_dResultLaserValue[MAX_FLATNESS_COUNT];
+
+	CString m_strFilePath;
+
+	BOOL			FlowInterlock();
+
+	int SaveFlatnessResult(int nMeasurePointNo, int nRepeatCount);
+
+	enum eGlassFlatnessFlow
+	{
+		eGLASS_FLATNESS_FLOW_ERROR = -1,
+
+		eGLASS_FLATNESS_FLOW_IDLE = 0,
+		eGLASS_FLATNESS_FLOW_START,
+		eGLASS_FLATNESS_FLOW_INTERLOCK,
+
+#pragma region //Unloader Ready
+		eGLASS_FLATNESS_FLOW_UNLOADER_READY,
+		eGLASS_FLATNESS_FLOW_UNLOADER_READY_CHECK,
+#pragma endregion
+
+#pragma region //Loader Ready
+		eGLASS_FLATNESS_FLOW_LOADER_READY,
+		eGLASS_FLATNESS_FLOW_LOADER_READY_CHECK,
+#pragma endregion
+
+#pragma region //Box Camera Ready
+		eGLASS_FLATNESS_FLOW_BOX_CAMERA_READY,
+		eGLASS_FLATNESS_FLOW_BOX_CAMERA_READY_CHECK,
+#pragma endregion
+
+#pragma region //Gantry Z,X Ready
+		eGLASS_FLATNESS_FLOW_GANTRY_ZX_READY,
+		eGLASS_FLATNESS_FLOW_GANTRY_ZX_READY_CHECK,
+#pragma endregion
+
+		eGLASS_FLATNESS_FLOW_AXIS_GANTRY_XY_MEASURE_POS_1ST,
+		eGLASS_FLATNESS_FLOW_AXIS_GANTRY_XY_MEASURE_POS_1ST_CHECK,
+		//eGLASS_FLATNESS_FLOW_AXIS_CAMERA_Z1_INSPECTION_POS,
+		//eGLASS_FLATNESS_FLOW_AXIS_CAMERA_Z1_INSPECTION_POS_CHECK,
+		eGLASS_FLATNESS_FLOW_AXIS_CAMERA_Z3_INSPECTION_POS,
+		eGLASS_FLATNESS_FLOW_AXIS_CAMERA_Z3_INSPECTION_POS_CHECK,
+		eGLASS_FLATNESS_FLOW_AXIS_GANTRY_XY_MEASURE_POS_2ND,
+		eGLASS_FLATNESS_FLOW_AXIS_GANTRY_XY_MEASURE_POS_2ND_CHECK,
+		eGLASS_FLATNESS_FLOW_AUTOFOCUS_CHECK,
+		eGLASS_FLATNESS_FLOW_LASER_FOCUS_START,
+		eGLASS_FLATNESS_FLOW_LASER_FOCUS_CHECK,
+		eGLASS_FLATNESS_FLOW_IMAGE_FOCUS_START,
+		eGLASS_FLATNESS_FLOW_IMAGE_FOCUS_CHECK,
+		eGLASS_FLATNESS_FLOW_MEASURE_LASER_FOCUS_VALUE,
+
+		//eGLASS_FLATNESS_FLOW_FINISH_GANTRY_Z1_WAIT_POS,
+		//eGLASS_FLATNESS_FLOW_FINISH_GANTRY_Z1_WAIT_POS_CHECK,
+		eGLASS_FLATNESS_FLOW_FINISH_GANTRY_Z3_WAIT_POS,
+		eGLASS_FLATNESS_FLOW_FINISH_GANTRY_Z3_WAIT_POS_CHECK,
+		eGLASS_FLATNESS_FLOW_FINISH_GANTRY_XY_WAIT_POS,
+		eGLASS_FLATNESS_FLOW_FINISH_GANTRY_XY_WAIT_POS_CHECK,
+
+		eGLASS_FLATNESS_FLOW_DONE,
+	};
+};
+

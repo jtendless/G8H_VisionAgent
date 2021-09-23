@@ -1,0 +1,399 @@
+﻿#pragma once
+
+#include "VisionAgentDefine.h"
+#include "Common/CommonDefine.h"
+#include "FileIni/FileIni.h"
+#define MAX_RECIPE_COUNT		1000
+
+typedef struct _ACTIVE_STATE {
+	int ProcessMain;
+	int ProcessSub;
+
+	INT nRecipeNum;
+
+	TCHAR PanelId[256];
+	TCHAR UserId[256];
+
+} ACTIVE_STATE, *PACTIVE_STATE;
+
+typedef struct _CURRENT_STATE {
+	bool bErrorFlag;
+	bool bAutoRunFlag;
+	bool bSemiAutoRunFlag;
+	bool bRecipeChangeDone;
+	bool bAutoStopDoneCheck;
+	bool bLcRun;
+	bool bDoorState;
+	bool bEmsState;
+
+	bool bPcModeState;
+	bool bPlcModeState;
+
+	int nMainStep;
+	int nSubStep;
+	
+} CURRENT_STATE, *PCURRENT_STATE;
+
+typedef struct _MACHINE_RECIPE_TABLE
+{
+	BOOL			bRecipeTableUseFlag[MAX_RECIPE_COUNT];
+	WORD			wRecipeNumber[MAX_RECIPE_COUNT];
+	char				strRecipeName[MAX_RECIPE_COUNT][100];
+	WORD			wRecipeCount;
+
+	DOUBLE			dBluSettingLc;//Auto Blu Setting
+	INT			    dBluSetting;//Auto Blu Setting
+}MACHINE_RECIPE_TABLE, *PMACHINE_RECIPE_TABLE;
+
+typedef struct _RESULT_STATE {
+	INT nCnt;
+	double dGap_LT_X[FILM_MAX_NUM];
+	double dGap_LT_Y[FILM_MAX_NUM];
+	double dGap_LB_X[FILM_MAX_NUM];
+	double dGap_LB_Y[FILM_MAX_NUM];
+	double dGap_RT_X[FILM_MAX_NUM];
+	double dGap_RT_Y[FILM_MAX_NUM];
+	double dGap_RB_X[FILM_MAX_NUM];
+	double dGap_RB_Y[FILM_MAX_NUM];
+
+	double dOffsetX[FILM_MAX_NUM];
+	double dOffsetY[FILM_MAX_NUM];
+	double dOffsetT[FILM_MAX_NUM];
+
+	BOOL bResult[FILM_MAX_NUM];
+} RESULT_STATE, *PRESULT_STATE;
+
+typedef struct _DIRECT_AXIS_HOME_INFO
+{
+	double dCmdPos[DIRECT_AXIS_AJIN_MAX];
+	BOOL	bHomeStatus[DIRECT_AXIS_AJIN_MAX];
+
+}DIRECT_AXIS_HOME_INFO, **PDIRECT_AXIS_HOME_INFO;
+
+class DIRECT_AXIS_HOME
+{
+public:
+	DIRECT_AXIS_HOME_INFO Info;
+	void Save();
+	void Load();
+};
+
+class SharedInfo
+{
+public:
+	SharedInfo();
+	~SharedInfo();
+
+	static void Initialize(void);
+	static void Finalize(void);
+
+public:
+	//! File path constants 
+	//!
+	static LPCTSTR STR_MODEL_PARA_FILE_DIR;
+	static LPCTSTR STR_INSPECT_PARA_FILE_DIR;
+
+	static LPCTSTR STR_ALARM_LIST_FILE_PATH;
+
+	static LPCTSTR STR_SYSTEM_FILE_PATH;
+	static LPCTSTR STR_VELOCITY_PARA_FILE_PATH;
+
+	//static CString VisionAgentPath;			//!< the location of executable.
+
+	static ACTIVE_STATE		Active;
+	static void ActiveInfoSave();
+	static void ActiveInfoLoad();
+
+	static CURRENT_STATE MachineState;
+	static MACHINE_RECIPE_TABLE m_MachineRecipeTable;
+	static CStringArray m_strModelNames;
+
+	static BOOL	bMachineStopFlag;
+
+	static ALARM_LIST AlarmList[100];
+	static int	AlarmCount;
+
+	//검사 결과.
+	static RESULT_STATE Result;
+	static void ResultInfoSave();
+	static void ResultInfoLoad();
+
+	static DIRECT_AXIS_HOME DirectAixsHome;
+	//Flow State  저장 관련 - parkcm
+	static int nCurFlowID;
+	static int nCurFlowStep;
+
+	/////////////////////////////////////////////////////////////////////////////////////////////
+
+	static int FindCurrentRecipeNumber(CString strRecipeName);
+	static int FindRecipeNumber(WORD wRecipeID);
+	static CString FindRecipeName(INT nReceipeNumber);
+	static BOOL RecipeCheck();
+	static BOOL FindRecipeUse(INT nNumber);
+	static CString GetExeFilePath();
+	
+	//static CString		GetExeFolder(CString strFullDir) { return strFullDir.Left(strFullDir.ReverseFind('\\') + 1); }
+	static CString		GetModelDataFolder() { return GetExeFilePath() + _T("\\Data\\Model"); }
+	static CString		GetSystemDataFolder() { return GetExeFilePath() + _T("\\Data\\System"); }
+
+	static CString		GetImageFolder() { return GetExeFilePath() + _T("\\Data\\Image"); }
+	
+
+	
+	static CString	GetBeamAxisDataFolder();
+	static CString GetLcmDataFolder();
+	static CString GetLclDataFolder();
+	static CString GetBlackLcDataFolder();
+	static CString GetSamplePolDataFolder();
+	static CString GetBluSettingDataFolder();
+
+	static BOOL SetAlarm(UINT nErrCode = 0);
+	static BOOL SetAutoAlarm();
+	static BOOL GetFlowAlarm();
+	static BOOL GetAlarm();
+	static BOOL ResetAlarm();
+
+	
+	static BOOL SaveNewModelData(LPCTSTR strDirectory);
+	static void FindModelNames();
+	static BOOL NewDirectoryFile(LPCTSTR RootDir);
+	static BOOL LoadModelData(CString strModelName);
+	static BOOL DeleteDirectoryFile(LPCTSTR RootDir);
+	static BOOL RenameDirectoryFile(LPCTSTR NewDirName, CString strCurrentName);
+	static void AddMachineRecipeTable(WORD wRecipID, CString strNewDirName);
+	static void ResetModel();
+
+	//Data Load & Save----------------------------------------
+	//Model
+	static BOOL SaveModelData();
+	static BOOL LoadModelData();
+	//Manual
+	static BOOL SaveManualData();
+	static BOOL LoadManualData();
+	//Machine
+	static BOOL SaveMaachineData();
+	static BOOL LoadMaachineData();
+	//System
+	static BOOL SaveSystemData();
+	static BOOL LoadSystemData();
+
+	static BOOL SaveRecipeTable();
+
+	//Axis Infomation-----------------------------
+	static BOOL	GetActualAxisNoByEnumAxis(enum_Axis eAxis, int* pAxisType, int* nRemoteAxis);
+	static enum_Axis GetUmacAxisNoByActualAxis(enum_REMOTE_AXIS_UMAC eUAxis);
+	static enum_Axis GetAjinAxisNoByActualAxis(enum_REMOTE_AXIS_AJIN eAAxis);
+
+	static enum_Axis	m_eAxisJog;
+	static INT			m_nJogDir;
+	static int			m_eAxisJogInterlock;
+	static INT			m_nJogInterlockDir;
+
+	//Stretch
+	static double dStretchCmdPos[MAX_STRETCH_AXIS_SIZE];//Left, Right
+	static double dStretchCmdVel[MAX_STRETCH_AXIS_SIZE];//Left, Right
+	static double dStretchValue[MAX_STRETCH_AXIS_SIZE];//Left, Right
+	static double dStretchTargetValue[MAX_STRETCH_AXIS_SIZE];//Left, Right
+	static int nStretchStatus[MAX_STRETCH_AXIS_SIZE];
+
+	//clamp
+	static double m_nClampTorquedMonitorValue[MAX_STRETCH_AXIS_SIZE];
+	static double dSF_LoadcellForce[MAX_SF_NUM];
+
+	static double dVisionoffsetX[2];
+	static double AlignCamMarkPixelSize[2];
+	static double AlignCamMarkPos[2];
+	static int AlignCamMarkCD[2];
+	static double AlignCamScore;
+	static BOOL	bResult;
+
+	static BOOL bAlignVisionReceiveFlag;
+
+	////////Mapping
+	//MAPPING_TABLE SharedInfo::m_sMappingTable[MAX_GLASS_MAPPING_COUNT];
+	//int			SharedInfo::m_nMappingTableCnt;
+
+	//Other Alarm
+	static int m_nOtherAlarm[10];
+
+	static BOOL bAlignVisionSetLightFlag;
+	static BOOL bAlignVisionLightOnFlag;
+
+#pragma region BoxAndCassette
+	static CString m_strBoxId;
+	static BOOL m_bBoxDataInterface[eBOX_DATA_INTERFACE_MAX];
+	static CString m_strMaskIdInBox[MASK_IN_BOX_COUNT];
+	static BOOL m_bMaskInBox[MASK_IN_BOX_COUNT];
+	static CString m_strMaskIdInCassette[CASSETTE_ROW][CASSETTE_SLOT];
+	static BOOL m_bMaskInCassette[CASSETTE_ROW][CASSETTE_SLOT];
+
+#pragma endregion
+
+	//UMAC Axis
+	static int		Is_Umac_Open;
+	static int		Umac_Axis_Home_Status[REMOTE_AXIS_UMAC_MAX];
+	static int		Umac_Axis_Home_Signal[REMOTE_AXIS_UMAC_MAX];
+	static int		Umac_Axis_PLimit_Signal[REMOTE_AXIS_UMAC_MAX];
+	static int		Umac_Axis_NLimit_Signal[REMOTE_AXIS_UMAC_MAX];
+	static int		Umac_Axis_ServoOn_Status[REMOTE_AXIS_UMAC_MAX];
+	static int		Umac_Axis_Alarm_Status[REMOTE_AXIS_UMAC_MAX];
+	static int		Umac_Axis_Isolator_Alarm;
+	static int		Umac_Axis_Status[REMOTE_AXIS_UMAC_MAX]; //0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+	static int		Umac_Axis_InMotion_Status[REMOTE_AXIS_UMAC_MAX];
+	static double	Umac_Axis_Cmd_Pos[REMOTE_AXIS_UMAC_MAX];
+	static double	Umac_Axis_Act_Pos[REMOTE_AXIS_UMAC_MAX];
+	static double	Umac_Axis_Cmd_Vel[REMOTE_AXIS_UMAC_MAX];
+
+	// Ajin Axis
+	static int		Is_Ajin_Open;
+	static int		Ajin_Axis_HomeStatus[REMOTE_AXIS_AJIN_MAX];
+	static int		Ajin_Axis_HomeSignal[REMOTE_AXIS_AJIN_MAX];
+	static int		Ajin_Axis_PLimitSignal[REMOTE_AXIS_AJIN_MAX];
+	static int		Ajin_Axis_NLimitSignal[REMOTE_AXIS_AJIN_MAX];
+	static int		Ajin_Axis_ServoOnStatus[REMOTE_AXIS_AJIN_MAX];
+	static int		Ajin_Axis_AlarmStatus[REMOTE_AXIS_AJIN_MAX];
+	static int		Ajin_Axis_InMotionStatus[REMOTE_AXIS_AJIN_MAX];
+	static int		Ajin_Axis_Status[REMOTE_AXIS_AJIN_MAX]; //0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+	static double	Ajin_Axis_Cmd_Pos[REMOTE_AXIS_AJIN_MAX];
+	static double	Ajin_Axis_Act_Pos[REMOTE_AXIS_AJIN_MAX];
+	static double	Ajin_Axis_Cmd_Vel[REMOTE_AXIS_AJIN_MAX];
+
+	static double		m_dLaserDispVal;
+
+	static int MotionAgentAXLOpen;
+	static int MaxAxisSize;
+	static int MaxDInputSize;
+	static int MaxDOutputSize;
+	static int MaxAInputSize;
+	static int MaxAOutputSize;
+
+	//Common
+	static int SystemHomeStatus;
+	static int SystemHomeSignal;
+	static int SystemNLimitSignal;
+	static int SystemPLimitSignal;
+	static int SystemServoOnStatus;
+	static int SystemAlarmStatus;
+	static int SystemMotionDoneStatus;
+	static int SystemStatus; //0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+
+	//Ajin
+	static int AxisHomeStatus[MAX_AXIS_SIZE];
+	static int AxisHomeSignal[MAX_AXIS_SIZE];
+	static int AxisPLimitSignal[MAX_AXIS_SIZE];
+	static int AxisNLimitSignal[MAX_AXIS_SIZE];
+	static int AxisServoOnStatus[MAX_AXIS_SIZE];
+	static int AxisAlarmStatus[MAX_AXIS_SIZE];
+	static int AxisInMotionStatus[MAX_AXIS_SIZE];	// 0:End Move, 1:Moving
+	static int AxisStatus[MAX_AXIS_SIZE];	//0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+	static double AxisCmdPos[MAX_AXIS_SIZE];
+	static double AxisActPos[MAX_AXIS_SIZE];		//wkohÃß°¡
+	static double AxisCmdVel[MAX_AXIS_SIZE];
+	static double AxisTorque[MAX_AXIS_SIZE];
+
+	//Umac
+	static int UmacHomeStatus[MAX_UMAC_AXIS_SIZE];
+	static int UmacHomeSignal[MAX_UMAC_AXIS_SIZE];
+	static int UmacPLimitSignal[MAX_UMAC_AXIS_SIZE];
+	static int UmacNLimitSignal[MAX_UMAC_AXIS_SIZE];
+	static int UmacServoOnStatus[MAX_UMAC_AXIS_SIZE];
+	static int UmacAlarmStatus[MAX_UMAC_AXIS_SIZE];
+	static int UmacInMotionStatus[MAX_UMAC_AXIS_SIZE];
+	static int UmacStatus[MAX_UMAC_AXIS_SIZE];	//0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+	static double UmacCmdPos[MAX_UMAC_AXIS_SIZE];
+	static double UmacActPos[MAX_UMAC_AXIS_SIZE];
+	static double UmacCmdVel[MAX_UMAC_AXIS_SIZE];
+	static double UmacTorque[MAX_UMAC_AXIS_SIZE];
+
+	//! VisionAgent 직접 제어 축
+	static int VisionAxisHomeStatus[DIRECT_AXIS_AJIN_MAX];
+	static int VisionAxisHomeSignal[DIRECT_AXIS_AJIN_MAX];
+	static int VisionAxisPLimitSignal[DIRECT_AXIS_AJIN_MAX];
+	static int VisionAxisNLimitSignal[DIRECT_AXIS_AJIN_MAX];
+	static int VisionAxisServoOnStatus[DIRECT_AXIS_AJIN_MAX];
+	static int VisionAxisAlarmStatus[DIRECT_AXIS_AJIN_MAX];
+	static int VisionAxisInMotionStatus[DIRECT_AXIS_AJIN_MAX];	// 0:End Move, 1:Moving
+	static int VisionAxisStatus[DIRECT_AXIS_AJIN_MAX];	//0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+	static double VisionAxisCmdPos[DIRECT_AXIS_AJIN_MAX];
+	static double VisionAxisActPos[DIRECT_AXIS_AJIN_MAX];
+	static double VisionAxisCmdVel[DIRECT_AXIS_AJIN_MAX];
+	static double VisionAxisTorque[DIRECT_AXIS_AJIN_MAX];
+
+	//Dio
+	static int DInputValue[MAX_DINPUT_SIZE];
+	static int DOutputValue[MAX_DOUTPUT_SIZE];
+	static DWORD DInputDWordValue[MAX_DINPUT_DWORD_SIZE];
+	static DWORD DOutputDWordValue[MAX_DOUTPUT_DWORD_SIZE];
+
+	//Aio
+	static double AInputValue[MAX_AINPUT_SIZE];
+	static double AOutputValue[MAX_AOUTPUT_SIZE];
+
+	//UVW
+	static double UvwCmdPos[MAX_UVW][3];
+	static double UvwCmdVel[MAX_UVW][3];
+	static int UvwHomeStatus[MAX_UVW];
+	static int UvwServoOnStatus[MAX_UVW];
+	static int UvwAlarmStatus[MAX_UVW];
+	static int UvwMotionDoneStatus[MAX_UVW];
+	static int UvwStatus[MAX_UVW];	//0:HomeStatus, 1:ServoOnStatus, 2:AlarmStatus, 3:MotionDoneStatus
+
+	//Clamp
+	static double dClampValue[GRIPPER_ROW];//Left, Right
+	static int nClampStatus[GRIPPER_ROW];//Left, Right
+	static int nClampAllUnClampStatus;
+	static int nClampAlarmStatus;
+
+	static bool		GetInMotion(enum_Axis eAxis);
+	static double	GetCmdPos(enum_Axis eAxis);
+	static double	SetCmdPos(enum_Axis eAxis, double dPos);
+	static double	GetActPos(enum_Axis eAxis);
+	static double	SetActPos(enum_Axis eAxis, double dPos);
+	static double	GetCmdVel(enum_Axis eAxis);
+	static double	SetCmdVel(enum_Axis eAxis, double dVel);
+
+	static int		GetHomeStatus(enum_Axis eAxis);
+	static int		GetHomeSignal(enum_Axis eAxis);
+	static int		GetPLimitSignal(enum_Axis eAxis);
+	static int		GetNLimitSignal(enum_Axis eAxis);
+	static int		GetServoOnStatus(enum_Axis eAxis);
+	static int		GetAlarmStatus(enum_Axis nAxis);
+	//DI	
+	static	BOOL	Is_Dig_Input(int nIndex);
+	//DO	
+	static	BOOL	Set_Dig_Output(int nIndex, bool bOnOff);
+	static	BOOL	Is_Dig_Output(int nIndex);
+	//AI	
+	static	double	Get_AI_Data(int nIndex);
+
+	//IO Label Name
+	static CString m_DInputName[MAX_DINPUT_SIZE];
+	static CString m_DOutputName[MAX_DOUTPUT_SIZE];
+	static CString m_AInputName[MAX_AINPUT_SIZE];
+	static CString m_AOutputName[MAX_AOUTPUT_SIZE];
+	static BOOL LoadDInputNameData();
+	static BOOL SaveDInputNameData(int nStartNum);
+	static BOOL LoadDOutputNameData();
+	static BOOL SaveDOutputNameData(int nStartNum);
+	static BOOL LoadAInputNameData();
+	static BOOL SaveAInputNameData(int nStartNum);
+	static BOOL LoadAOutputNameData();
+	static BOOL SaveAOutputNameData();
+
+	//Model Data Get Funtion
+	static	int GetFrameAlignMode();
+
+	static BOOL GetActualIoNumByEnumDo(enum_Do eIoNum, int* pAxisNo);
+	static BOOL GetActualIoNumByEnumAo(enum_Ao eIoNum, int* pAxisNo);
+
+	static BOOL GetActualIoNumByEnumDi(enum_Di eIoNum, int* pAxisNo);
+	static BOOL GetActualIoNumByEnumAi(enum_Ai eIoNum, int* pAxisNo);
+
+	static BOOL SaveAlarmList();
+	static BOOL LoadAlarmList();
+
+	static BOOL GetAutoSpeed(enum_Axis eAxis, double *pdVel, double *pdAccel, double *pdDecel);
+	static BOOL GetManualSpeed(enum_Axis eAxis, enum_AXIS_SPEED eSpeedType, double *pdVel, double *pdAccel, double *pdDecel);
+	static CString GetAxisName(enum_Axis eAxis);
+};
+

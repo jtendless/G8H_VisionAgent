@@ -1,0 +1,268 @@
+#include "stdafx.h"
+#include "Devs.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+CClientInterface Devs::MotionIf;
+
+#if 0
+CWkLibBdc*				Devs::m_LightController;
+CWkLibPua310*			Devs::m_Pua310;
+#endif
+
+//Awk MIL
+CWkLibVision*			Devs::m_Camera10X;
+CWkLibVision*			Devs::m_Camera20X;
+CWkLibVision*			Devs::m_CameraPreAlign;
+CWkLibVision*			Devs::m_CameraBoxAlignLeft;
+CWkLibVision*			Devs::m_CameraBoxAlignRight;
+
+MIL_ID						Devs::MilApplication;
+MIL_ID						Devs::MilSysSol0;
+MIL_ID						Devs::MilSysSol1;
+MIL_ID						Devs::MilSysSol2;
+
+MIL_ID						Devs::MilDigReview10X;
+MIL_ID						Devs::MilDigReview20X;
+MIL_ID						Devs::MilDigPreAlign;
+MIL_ID						Devs::MilDigBoxAlignLeft;
+MIL_ID						Devs::MilDigBoxAlignRight;
+
+CBaseMotion					Devs::m_BaseMotion;
+CWorkInfoMotion			Devs::m_WorkInfoMotion;
+CFrame_Unit_Motion		Devs::m_Frame_Unit_Motion;
+CBoxMotion					Devs::m_BoxMotion;
+CLoaderMotion				Devs::m_LoaderMotion;
+CGripper_Unit_Motion		Devs::m_Gripper_Unit_Motion;
+CJogMotion					Devs::m_JogMotion;
+
+//Folder Manager
+CFileManager				Devs::m_FolderManager;
+
+//CMappingProc				Devs::m_MappingProc;
+
+//Log
+CLogger						Devs::m_Logger;
+
+CWinThread*					Devs::m_pMonitoringThread;
+int							Devs::m_nIsRunningMonitoringThread;
+int							Devs::m_nStopMonitoringThread;
+
+#if 0
+CMotionModule				Devs::m_MotionModule;
+#endif
+bool						Devs::m_bEntry;
+
+
+
+Devs::Devs()
+{
+	m_Camera10X		= NULL;
+	m_Camera20X		= NULL;
+	m_CameraPreAlign = NULL;
+	m_CameraBoxAlignLeft = NULL;
+	m_CameraBoxAlignRight = NULL;
+
+#if 0
+	m_LightController	= NULL;
+	m_Pua310 = NULL;
+#endif
+	m_bEntry = NULL;
+}
+
+
+Devs::~Devs()
+{
+
+}
+
+void Devs::Initialize(void)
+{
+	CString strSfCom = _T("");
+	CString strSfBaudRate = _T("");
+
+#if 0
+	m_LightController = new CWkLibBdc();
+	m_LightController->CreateControl();
+
+	//m_MappingProc.Init();
+
+	strSfCom = _T("COM2");
+	strSfBaudRate = _T("19200");
+	m_LightController->Open(strSfCom, strSfBaudRate);
+	
+	if (!m_LightController->m_bIsOpenned)
+	{
+
+	}
+
+	m_MotionModule.InitializeAcl();
+
+	//Pau310
+	m_Pua310 = new CWkLibPua310();
+	m_Pua310->CreateControl();
+#endif
+
+	m_JogMotion;
+	m_WorkInfoMotion.InitMotion();
+	m_Frame_Unit_Motion.InitMotion();
+	
+	m_Gripper_Unit_Motion.InitMotion();
+	//m_AutoRunFlow.InitProcess();
+
+	//FLow InitProcess
+
+	m_nStopMonitoringThread = 0;
+	m_pMonitoringThread = AfxBeginThread(AppMonitoringThreadProc, 0, THREAD_PRIORITY_ABOVE_NORMAL, 0, CREATE_SUSPENDED);
+	Sleep(100);
+	m_pMonitoringThread->ResumeThread();
+
+}
+
+void Devs::Finalize(void)
+{
+	if (m_nIsRunningMonitoringThread)
+	{
+		m_nStopMonitoringThread = TRUE;
+		do
+		{
+			Sleep(100);
+		} while (m_nIsRunningMonitoringThread);
+	}
+
+
+	//Flow EndProcess
+
+#if 0
+	if (m_LightController != NULL) delete m_LightController;
+
+	if (m_Pua310 != NULL)
+	{
+		m_Pua310->DestroyWindow();
+		delete m_Pua310;
+	}
+#endif
+}
+
+void Devs::Reset(void)
+{
+	
+}
+
+void Devs::StopAll(void)
+{
+	//Flow Stop
+}
+
+VOID Devs::MachineStateCheck(void)
+{
+	//SharedInfo::Active.ProcessMain = Devs::AutoRunState.GetFinal();
+
+	SharedInfo::MachineState.nMainStep = GetMainStep();
+	
+	if (SharedInfo::MachineState.nMainStep < 0)
+	{
+		SharedInfo::MachineState.bAutoRunFlag = FALSE;
+	}
+	else
+	{
+		SharedInfo::MachineState.bAutoRunFlag = TRUE;
+	}
+
+	SharedInfo::MachineState.nSubStep = Devs::GetSubStep();
+	if (SharedInfo::MachineState.nSubStep < 0)
+	{
+		SharedInfo::MachineState.bSemiAutoRunFlag = FALSE;
+	}
+	else
+	{
+		SharedInfo::MachineState.bSemiAutoRunFlag = TRUE;
+	}
+}
+
+INT Devs::GetMainStep()
+{
+	//if (AutoRunState.GetStep() > 1) return AutoRunState.GetStep();
+
+	return -1;
+}
+
+INT Devs::GetSubStep()
+{	
+	return -1;
+}
+
+UINT AppMonitoringThreadProc(LPVOID lpParam)
+{
+	CVisionAgentDlg *pVisionAgentDlg;
+	pVisionAgentDlg = (CVisionAgentDlg *)AfxGetMainWnd();
+	DOUBLE dX = 0, dY = 0;
+	WORD wTest = 0; 
+	Devs::m_nIsRunningMonitoringThread = 1;
+	
+	CString strFilePath;
+	//INT nCount = 0;
+	while (!Devs::m_nStopMonitoringThread)
+	{		
+		if (!Devs::m_bEntry)
+		{
+			Sleep(1000);
+			continue;
+		}
+
+		if (CSystemData::m_Option.Info.m_bImageAutoDel)
+		{
+			//Glass.
+			strFilePath = SharedInfo::GetExeFilePath();
+
+			strFilePath.AppendFormat(_T("%s"), (CString)FILENAME_IMAGE_PATH);
+			strFilePath.AppendFormat(_T("\\GlassAlign"));
+
+			Devs::m_FolderManager.setFolderPath(strFilePath);
+			Devs::m_FolderManager.doDeleteOverTimeFolder(CSystemData::m_Option.Info.nImageDelPeriod);
+
+			//Film.
+			strFilePath = SharedInfo::GetExeFilePath();
+
+			strFilePath.AppendFormat(_T("%s"), (CString)FILENAME_IMAGE_PATH);
+			strFilePath.AppendFormat(_T("\\FilmAlign"));
+
+			Devs::m_FolderManager.setFolderPath(strFilePath);
+			Devs::m_FolderManager.doDeleteOverTimeFolder(CSystemData::m_Option.Info.nImageDelPeriod);
+
+			//Inspect.
+			strFilePath = SharedInfo::GetExeFilePath();
+
+			strFilePath.AppendFormat(_T("%s"), (CString)FILENAME_IMAGE_PATH);
+			strFilePath.AppendFormat(_T("\\Inspect"));
+
+			Devs::m_FolderManager.setFolderPath(strFilePath);
+			Devs::m_FolderManager.doDeleteOverTimeFolder(CSystemData::m_Option.Info.nImageDelPeriod);
+
+			//Hole Mark.
+			strFilePath = SharedInfo::GetExeFilePath();
+
+			strFilePath.AppendFormat(_T("%s"), (CString)FILENAME_IMAGE_PATH);
+			strFilePath.AppendFormat(_T("\\HoleMark"));
+
+			Devs::m_FolderManager.setFolderPath(strFilePath);
+			Devs::m_FolderManager.doDeleteOverTimeFolder(CSystemData::m_Option.Info.nImageDelPeriod);
+		}
+
+		if (SharedInfo::MachineState.bPcModeState && CSystemData::m_Option.Info.m_bImageAutoSave)
+		{
+			if (!pVisionAgentDlg->IsWindowVisible())
+			{
+				pVisionAgentDlg->ShowWindow(SW_MAXIMIZE);
+			}
+		}
+		
+		Sleep(1000);
+	}
+
+	Devs::m_nIsRunningMonitoringThread = 0;
+	//	GetWindowRect
+	return 0;
+}

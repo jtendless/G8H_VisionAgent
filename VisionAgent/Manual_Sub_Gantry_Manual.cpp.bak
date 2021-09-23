@@ -1,0 +1,936 @@
+﻿// Manual_Sub_Gantry_Manual.cpp: 구현 파일
+//
+
+#include "stdafx.h"
+#include "VisionAgent.h"
+#include "VisionAgentDlg.h"
+#include "Manual_Sub_Gantry_Manual.h"
+#include "afxdialogex.h"
+
+
+// CManual_Sub_Gantry_Manual 대화 상자
+
+IMPLEMENT_DYNAMIC(CManual_Sub_Gantry_Manual, CDialogEx)
+
+CManual_Sub_Gantry_Manual::CManual_Sub_Gantry_Manual(CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_DLG_MANUAL_SUB_GANTRY_MANUAL, pParent)
+{
+	Create(IDD_DLG_MANUAL_SUB_GANTRY_MANUAL, pParent);
+}
+
+CManual_Sub_Gantry_Manual::~CManual_Sub_Gantry_Manual()
+{
+}
+
+void CManual_Sub_Gantry_Manual::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+}
+
+
+BEGIN_MESSAGE_MAP(CManual_Sub_Gantry_Manual, CDialogEx)
+	ON_WM_SHOWWINDOW()
+	ON_WM_SIZE()
+	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_GANTRY_X_WAIT_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonWaitPosGantryX)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_WAIT_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonWaitPosGantryY)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_STICK_LOAD_IN_BOX_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualGantryYStickLoadInBoxPos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_UNLOAD_PAPER_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualGantryYUnloadPaperPos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_STICK_UNLOAD_TO_STAGE_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualGantryYStickUnloadToStagePos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_STICK_LOAD_IN_STAGE_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualGantryYStickLoadInStagePos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_STICK_UNLOAD_TO_BOX_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualGantryYStickUnloadToBoxPos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_CAMERA_Z1_WAIT_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualCameraZ1WaitPos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_CAMERA_Z1_PRE_ALIGN_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualCameraZ1PreAlignPos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_CAMERA_Z1_INSPECTION_REVIEW_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualCameraZ1InspectionReviewPos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_CAMERA_Z2_WAIT_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualCameraZ2WaitPos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_CAMERA_Z2_INSPECTION_AOI_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualCameraZ2InspectionAoiPos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_3D_CAMERA_MAIN_Z_WAIT_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManual3dCameraMainZWaitPos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_3D_CAMERA_MAIN_Z_INSPECTION_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManual3dCameraMainZInspectionPos)
+	ON_BN_CLICKED(IDC_BUTTON_MANUAL_SUB_GANTRY_MANUAL_3D_CAMERA_SUB_Z_WAIT_POS, &CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManual3dCameraSubZWaitPos)
+END_MESSAGE_MAP()
+
+
+// CManual_Sub_Gantry_Manual 메시지 처리기
+BOOL CManual_Sub_Gantry_Manual::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	InitCtrl();
+
+	return TRUE;
+}
+
+void	CManual_Sub_Gantry_Manual::InitCtrl()
+{
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_X_WAIT_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_GANTRY_X_WAIT_POS, this);
+
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Y_WAIT_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_WAIT_POS, this);
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Y_STICK_LOAD_IN_BOX_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_STICK_LOAD_IN_BOX_POS, this);
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Y_PAPER_UNLOAD_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_PAPER_UNLOAD_POS, this);
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Y_STICK_UNLOAD_TO_STAGE_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_STICK_UNLOAD_TO_STAGE_POS, this);
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Y_STICK_LOAD_IN_STAGE_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_STICK_LOAD_IN_STAGE_POS, this);
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Y_STICK_UNLOAD_TO_BOX_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_GANTRY_Y_STICK_UNLOAD_TO_BOX_POS, this);
+
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_WAIT_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_CAMERA_Z1_WAIT_POS, this);
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_PRE_ALIGN_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_CAMERA_Z1_PRE_ALIGN_POS, this);
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_INSPECTION_REVIEW_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_CAMERA_Z1_INSPECTION_REVIEW_POS, this);
+
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z2_WAIT_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_CAMERA_Z2_WAIT_POS, this);
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z2_INSPECTION_AOI_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_CAMERA_Z2_INSPECTION_AOI_POS, this);
+
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_3D_CAMERA_MAIN_Z_WAIT_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_3D_CAMERA_MAIN_Z_WAIT_POS, this);
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_3D_CAMERA_MAIN_Z_INSPECTION_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_3D_CAMERA_MAIN_Z_INSPECTION_POS, this);
+
+	m_stLamp_Work[_eMANUAL_WORK_INDEX_3D_CAMERA_SUB_Z_WAIT_POS].SubclassDlgItem(IDC_LAMP_MANUAL_SUB_GANTRY_MANUAL_3D_CAMERA_SUB_Z_WAIT_POS, this);
+
+	for (int k = 0; k < _eMANUAL_WORK_INDEX_GANTRY_MAX; k++)
+	{
+		m_stLamp_Work[k].SetParaChangeColor(BK_GND);
+		m_stLamp_Work[k].SetParaOriginColor(STATEBAR_NAME_BK_RGB);
+		m_stLamp_Work[k].SetBackgroundColor(STATEBAR_NAME_BK_RGB);
+		m_stLamp_Work[k].SetTextColor(LED_LAMP_OFF);
+		m_stLamp_Work[k].SetBackgroundColor(BTN_LAMP_OFF);
+	}
+}
+
+void	CManual_Sub_Gantry_Manual::InitPara()
+{
+	for (int k = 0; k < _eMANUAL_WORK_INDEX_GANTRY_MAX; k++)
+	{
+		m_nWork_State[k] = _eSTATE_NONE;
+		m_stLamp_Work[k].SetBackgroundColor(BTN_LAMP_OFF);
+
+		m_bMotionDone[k] = FALSE;
+		m_bPrevStatus_InPos[k] = FALSE;
+	}
+}
+
+
+void CManual_Sub_Gantry_Manual::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	CDialogEx::OnShowWindow(bShow, nStatus);
+
+	if (bShow == TRUE)
+	{
+		InitPara();
+
+		SetTimer(1, 100, NULL);
+	}
+	else if (bShow == FALSE)
+	{
+		KillTimer(1);
+	}
+}
+//--------------------------------------------------------
+void CManual_Sub_Gantry_Manual::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+	if (Is_Comp_Usable() == FALSE)	return;
+}
+//--------------------------------------------------------
+void CManual_Sub_Gantry_Manual::OnTimer(UINT_PTR nIDEvent)
+{
+	double dEnd_Tick, dWait_Tick;
+	int k = 0;
+
+	for (k = 0; k < _eMANUAL_WORK_INDEX_GANTRY_MAX; k++)
+	{
+		if (m_nWork_State[k] == _eSTATE_START)
+		{
+			dEnd_Tick = GetTickCount();
+			dWait_Tick = (dEnd_Tick - m_dMotion_Strt_Tick[k]) / 1000;
+			if (dWait_Tick > 0.5)
+			{
+				m_dMotion_Strt_Tick[k] = GetTickCount();
+				m_bWork_Lamp_State[k] = !m_bWork_Lamp_State[k];
+			}
+			if (m_bWork_Lamp_State[k])
+				m_stLamp_Work[k].SetBackgroundColor(BTN_LAMP_ON);
+			else
+				m_stLamp_Work[k].SetBackgroundColor(BTN_LAMP_OFF);
+		}
+		if (m_nWork_State[k] == _eSTATE_COMPLETE)
+		{
+			m_stLamp_Work[k].SetBackgroundColor(BTN_LAMP_ON);
+			m_nWork_State[k] = _eSTATE_NONE;
+		}
+	}
+
+#pragma region //Motion Done
+	//Gantry X
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_X_WAIT_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_GANTRY_X, CManualData::m_ManualDataGantry.Gantry.m_dGantry_X_Wait_Pos);
+
+	//Gantry Y
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_Y_WAIT_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_VIRTUAL_GANTRY_Y, CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Wait_Pos);
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_Y_STICK_LOAD_IN_BOX_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_VIRTUAL_GANTRY_Y, CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Stick_Load_In_Box_Pos);
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_Y_PAPER_UNLOAD_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_VIRTUAL_GANTRY_Y, CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Paper_Unload_Pos);
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_Y_STICK_UNLOAD_TO_STAGE_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_VIRTUAL_GANTRY_Y, CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Stick_Unload_To_Stage_Pos);
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_Y_STICK_LOAD_IN_STAGE_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_VIRTUAL_GANTRY_Y, CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Stick_Load_In_Stage_Pos);
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_Y_STICK_UNLOAD_TO_BOX_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_VIRTUAL_GANTRY_Y, CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Stick_Unload_To_Box_Pos);
+
+	//Gantry Z1
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_Z1_WAIT_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_CAMERA_Z1, CManualData::m_ManualDataGantry.Gantry.m_dGantry_Z1_Wait_Pos);
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_Z1_PRE_ALIGN_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_CAMERA_Z1, CManualData::m_ManualDataGantry.Gantry.m_dGantry_Z1_PreAlign_Pos);
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_Z1_INSPECTION_REVIEW_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_CAMERA_Z1, CManualData::m_ManualDataGantry.Gantry.m_dGantry_Z1_InspectionReview_Pos);
+
+	//Gantry Z2
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_Z2_WAIT_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_CAMERA_Z2, CManualData::m_ManualDataGantry.Gantry.m_dGantry_Z2_Wait_Pos);
+	m_bMotionDone[_eMANUAL_WORK_INDEX_GANTRY_Z2_INSPECTION_AOI_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_CAMERA_Z2, CManualData::m_ManualDataGantry.Gantry.m_dGantry_Z2_InspectionAOI_Pos);
+
+	//3D Camera Main Z
+	m_bMotionDone[_eMANUAL_WORK_INDEX_3D_CAMERA_MAIN_Z_WAIT_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_3D_CAMERA_MAIN_Z, CManualData::m_ManualDataGantry.Gantry.m_d3D_Camera_Main_Z_Wait_Pos);
+	m_bMotionDone[_eMANUAL_WORK_INDEX_3D_CAMERA_MAIN_Z_INSPECTION_POS] = Devs::m_BaseMotion.IsAxisMoveDone(AXIS_3D_CAMERA_MAIN_Z, CManualData::m_ManualDataGantry.Gantry.m_d3D_Camera_Main_Z_Inspection_Pos);
+
+	for (k = 0; k < _eMANUAL_WORK_INDEX_GANTRY_MAX; k++)
+	{
+		if (m_bPrevStatus_InPos[k] != m_bMotionDone[k])
+		{
+			if (m_bMotionDone[k])
+			{
+				m_nWork_State[k] = _eSTATE_COMPLETE;
+				m_stLamp_Work[k].SetBackgroundColor(LED_LAMP_ON);
+			}
+			else
+				m_stLamp_Work[k].SetBackgroundColor(LED_LAMP_OFF);
+		}
+		m_bPrevStatus_InPos[k] = m_bMotionDone[k];
+	}
+#pragma endregion
+
+	CDialogEx::OnTimer(nIDEvent);
+}
+//--------------------------------------------------------
+BOOL	CManual_Sub_Gantry_Manual::Is_Comp_Usable()
+{
+	int i = 0;
+	for (i = 0; i < _eMANUAL_WORK_INDEX_GANTRY_MAX; i++)
+	{
+		if (m_stLamp_Work[i].GetSafeHwnd() == NULL)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+#pragma region //Gantry X
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonWaitPosGantryX()
+{
+	CString Str =_T("");
+	BOOL bRtn = FALSE;
+
+#pragma region //Interlock
+	if (Devs::m_GantryMotion.Is_GantryZ1_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z1 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_GantryZ2_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z2 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_3D_Camera_Main_Z_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("3D Camera Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_UnloaderMotion.Is_UnloaderY_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Unloader Y Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYL_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYL Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYR_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYR Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_LoaderZ_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Loader Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_Cylinder_Up() == FALSE)
+	{
+		Str.Format(_T("Loader Cylinder Up Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+#pragma endregion
+
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_X_Wait_Pos;
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_X_WAIT_POS;
+
+	Str.Format(_T("Gantry X Move ? (Wait_Pos : %.5f)"), dPos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_Gantry_X_Wait_Pos();
+	if (bRtn == TRUE)
+	{
+		m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+#pragma endregion
+
+#pragma region //Gantry Y
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonWaitPosGantryY()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+
+#pragma region //Interlock
+	if (Devs::m_GantryMotion.Is_GantryZ1_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z1 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_GantryZ2_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z2 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_3D_Camera_Main_Z_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("3D Camera Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_UnloaderMotion.Is_UnloaderY_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Unloader Y Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYL_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYL Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYR_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYR Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_LoaderZ_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Loader Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_Cylinder_Up() == FALSE)
+	{
+		Str.Format(_T("Loader Cylinder Up Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+#pragma endregion
+
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_Y_WAIT_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Wait_Pos;
+
+	Str.Format(_T("Gantry Y Move ? (Wait_Pos : %.5f)"), CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Wait_Pos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_Gantry_Y_Wait_Pos();
+	if (bRtn == TRUE)
+	{
+		m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualGantryYStickLoadInBoxPos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+
+#pragma region //Interlock
+	if (Devs::m_GantryMotion.Is_GantryZ1_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z1 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_GantryZ2_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z2 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_3D_Camera_Main_Z_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("3D Camera Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_UnloaderMotion.Is_UnloaderY_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Unloader Y Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYL_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYL Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYR_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYR Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_LoaderZ_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Loader Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_Cylinder_Up() == FALSE)
+	{
+		Str.Format(_T("Loader Cylinder Up Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+#pragma endregion
+
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_Y_STICK_LOAD_IN_BOX_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Stick_Load_In_Box_Pos;
+
+	Str.Format(_T("Gantry Y Move ? (Stick_Load_In_Box_Pos : %.5f)"), CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Stick_Load_In_Box_Pos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_Gantry_Y_StickLoadInBox_Pos();
+	if (bRtn == TRUE)
+	{
+		m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualGantryYUnloadPaperPos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+
+#pragma region //Interlock
+	if (Devs::m_GantryMotion.Is_GantryZ1_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z1 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_GantryZ2_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z2 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_3D_Camera_Main_Z_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("3D Camera Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_UnloaderMotion.Is_UnloaderY_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Unloader Y Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYL_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYL Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYR_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYR Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_LoaderZ_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Loader Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_Cylinder_Up() == FALSE)
+	{
+		Str.Format(_T("Loader Cylinder Up Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+#pragma endregion
+
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_Y_PAPER_UNLOAD_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Paper_Unload_Pos;
+
+	Str.Format(_T("Gantry Y Move ? (Paper_Unload_Pos : %.5f)"), CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Paper_Unload_Pos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_Gantry_Y_PaperUnload_Pos();
+	if (bRtn == TRUE)
+	{
+		m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualGantryYStickUnloadToStagePos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+
+#pragma region //Interlock
+	if (Devs::m_GantryMotion.Is_GantryZ1_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z1 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_GantryZ2_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z2 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_3D_Camera_Main_Z_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("3D Camera Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_UnloaderMotion.Is_UnloaderY_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Unloader Y Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYL_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYL Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYR_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYR Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_LoaderZ_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Loader Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_Cylinder_Up() == FALSE)
+	{
+		Str.Format(_T("Loader Cylinder Up Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+#pragma endregion
+
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_Y_STICK_UNLOAD_TO_STAGE_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Stick_Unload_To_Stage_Pos;
+
+	Str.Format(_T("Gantry Y Move ? (Stick_Unload_To_Stage_Pos : %.5f)"), dPos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_Gantry_Y_StickUnloadToStage_Pos();
+	if (bRtn == TRUE)
+	{
+		m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualGantryYStickLoadInStagePos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+
+#pragma region //Interlock
+	if (Devs::m_GantryMotion.Is_GantryZ1_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z1 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_GantryZ2_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z2 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_3D_Camera_Main_Z_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("3D Camera Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_UnloaderMotion.Is_UnloaderY_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Unloader Y Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYL_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYL Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYR_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYR Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_LoaderZ_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Loader Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_Cylinder_Up() == FALSE)
+	{
+		Str.Format(_T("Loader Cylinder Up Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+#pragma endregion
+
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_Y_STICK_LOAD_IN_STAGE_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Stick_Load_In_Stage_Pos;
+
+	Str.Format(_T("Gantry Y Move ? (Stick_Load_In_Stage_Pos : %.5f)"), dPos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_Gantry_Y_StickLoadInStage_Pos();
+	if (bRtn == TRUE)
+	{
+		m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualGantryYStickUnloadToBoxPos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+
+#pragma region //Interlock
+	if (Devs::m_GantryMotion.Is_GantryZ1_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z1 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_GantryZ2_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("Camera Z2 Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_GantryMotion.Is_3D_Camera_Main_Z_Wait_Pos() == FALSE)
+	{
+		Str.Format(_T("3D Camera Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_UnloaderMotion.Is_UnloaderY_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Unloader Y Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYL_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYL Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_BoxMotion.Is_BoxAlignCameraYR_WaitPos() == FALSE)
+	{
+		Str.Format(_T("BoxCameraYR Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_LoaderZ_WaitPos() == FALSE)
+	{
+		Str.Format(_T("Loader Z Pos Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+	if (Devs::m_LoaderMotion.Is_Cylinder_Up() == FALSE)
+	{
+		Str.Format(_T("Loader Cylinder Up Check !!!"));
+		AfxMessageBox(Str);
+		return;
+	}
+#pragma endregion
+
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_Y_STICK_UNLOAD_TO_BOX_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_Y_Stick_Unload_To_Box_Pos;
+
+	Str.Format(_T("Gantry Y Move ? (Stick_Unload_To_Box_Pos : %.5f)"), dPos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_Gantry_Y_StickUnloadToBox_Pos();
+	if (bRtn == TRUE)
+	{
+		m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+#pragma endregion
+
+#pragma region //Camera Z1
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualCameraZ1WaitPos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_Z1_WAIT_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_Z1_Wait_Pos;
+
+	Str.Format(_T("Camera Z1 Move ? (Wait_Pos : %.5f)"), dPos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_GantryZ1_Wait_Pos();
+	if (bRtn == TRUE)
+	{		
+		m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_WAIT_POS].SetBackgroundColor(BTN_LAMP_OFF);
+		m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_PRE_ALIGN_POS].SetBackgroundColor(BTN_LAMP_OFF);
+		m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_INSPECTION_REVIEW_POS].SetBackgroundColor(BTN_LAMP_OFF);
+
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualCameraZ1PreAlignPos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+
+#pragma region //Interlock
+	
+#pragma endregion
+
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_Z1_PRE_ALIGN_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_Z1_PreAlign_Pos;
+
+	Str.Format(_T("Camera Z1 Move ? (PreAlign_Pos : %.5f)"), dPos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_GantryZ1_PreAlign_Pos();
+	if (bRtn == TRUE)
+	{		
+		m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_WAIT_POS].SetBackgroundColor(BTN_LAMP_OFF);
+		m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_PRE_ALIGN_POS].SetBackgroundColor(BTN_LAMP_OFF);
+		m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_INSPECTION_REVIEW_POS].SetBackgroundColor(BTN_LAMP_OFF);
+
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualCameraZ1InspectionReviewPos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+
+#pragma region //Interlock
+
+#pragma endregion
+
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_Z1_INSPECTION_REVIEW_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_Z1_InspectionReview_Pos;
+
+	Str.Format(_T("Camera Z1 Move ? (InspectionReview_Pos : %.5f)"), dPos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_GantryZ1_InspectionReview_Pos();
+	if (bRtn == TRUE)
+	{		
+		m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_WAIT_POS].SetBackgroundColor(BTN_LAMP_OFF);
+		m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_PRE_ALIGN_POS].SetBackgroundColor(BTN_LAMP_OFF);
+		m_stLamp_Work[_eMANUAL_WORK_INDEX_GANTRY_Z1_INSPECTION_REVIEW_POS].SetBackgroundColor(BTN_LAMP_OFF);
+
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+#pragma endregion
+
+#pragma region //Camera Z2
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualCameraZ2WaitPos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_Z2_WAIT_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_Z2_Wait_Pos;
+
+	Str.Format(_T("Camera Z2 Move ? (Wait_Pos : %.5f)"), dPos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_GantryZ2_Wait_Pos();
+	if (bRtn == TRUE)
+	{
+		m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManualCameraZ2InspectionAoiPos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+
+#pragma region //Interlock
+
+#pragma endregion
+
+	int nIndex = _eMANUAL_WORK_INDEX_GANTRY_Z2_INSPECTION_AOI_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_dGantry_Z2_InspectionAOI_Pos;
+
+	Str.Format(_T("Camera Z2 Move ? (InspectionAOI_Pos : %.5f)"), dPos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_GantryZ2_InspectionAOI_Pos();
+	if (bRtn == TRUE)
+	{
+		m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+#pragma region
+
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManual3dCameraMainZWaitPos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+	int nIndex = _eMANUAL_WORK_INDEX_3D_CAMERA_MAIN_Z_WAIT_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_d3D_Camera_Main_Z_Wait_Pos;
+
+	Str.Format(_T("3D Camera Main Z Move ? (Wait_Pos : %.5f)"), dPos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_3D_Camera_Main_Z_Wait_Pos();
+	if (bRtn == TRUE)
+	{
+		m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManual3dCameraMainZInspectionPos()
+{
+	CString Str = _T("");
+	BOOL bRtn = FALSE;
+	int nIndex = _eMANUAL_WORK_INDEX_3D_CAMERA_MAIN_Z_INSPECTION_POS;
+	double dPos = CManualData::m_ManualDataGantry.Gantry.m_d3D_Camera_Main_Z_Inspection_Pos;
+
+	Str.Format(_T("3D Camera Main Z Move ? (Inspection_Pos : %.5f)"), dPos);
+	if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	SharedInfo::m_eAoiMachineStatus = CAOIProtocolDefine::AOI_MACHINE_STATUS_NOT_READY; //!!
+	LogMsg_Total(_T("Set AOI_MACHINE_STATUS_NOT_READY"));
+
+	bRtn = Devs::m_GantryMotion.Move_3D_Camera_Main_Z_Inspection_Pos();
+	if (bRtn == TRUE)
+	{
+		m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+		m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+		m_nWork_State[nIndex] = _eSTATE_START;
+	}
+}
+
+
+void CManual_Sub_Gantry_Manual::OnBnClickedButtonManualSubGantryManual3dCameraSubZWaitPos()
+{
+	//CString Str = _T("");
+	//BOOL bRtn = FALSE;
+	//int nIndex = _eMANUAL_WORK_INDEX_3D_CAMERA_SUB_Z_WAIT_POS;
+	//double dPos = CManualData::m_ManualDataGantry.Gantry.m_d3D_Camera_Sub_Z_Wait_Pos;
+
+	//Str.Format(_T("3D Camera Sub Z Move ? (Wait_Pos : %.5f)"), dPos);
+	//if (IDOK != AfxMessageBox(Str, MB_OKCANCEL)) return;
+
+	//bRtn = Devs::m_GantryMotion.Move_3D_Camera_Sub_Z_Wait_Pos();
+	//if (bRtn == TRUE)
+	//{
+	//	LogMsg_Total(_T("3D Camera Sub Z Move To Wait Pos %.5f"), dPos);
+	//	m_stLamp_Work[nIndex].SetBackgroundColor(BTN_LAMP_OFF);
+	//	m_dMotion_Strt_Tick[nIndex] = GetTickCount();
+	//	m_nWork_State[nIndex] = _eSTATE_START;
+	//}
+}

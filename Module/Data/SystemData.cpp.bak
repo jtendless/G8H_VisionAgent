@@ -1,0 +1,174 @@
+#include "stdafx.h"
+#include "SystemData.h"
+
+CSystemDataSafety		CSystemData::m_Safety;
+CSystemDataOption		CSystemData::m_Option;
+CSystemDataCoordinate	CSystemData::m_Coordinate;
+CSystemDataStage			CSystemData::m_Stage;
+//-------------------------------------------------------------------
+CSystemData::CSystemData()
+{
+
+}
+//-------------------------------------------------------------------
+CSystemData::~CSystemData()
+{
+
+}
+//-------------------------------------------------------------------
+void CSystemData::Initialize(void)
+{
+
+}
+//-------------------------------------------------------------------
+void CSystemData::Finalize(void)
+{
+
+
+}
+BOOL CSystemData::Load()
+{
+	m_Safety.Load();
+	m_Option.Load();
+	m_Coordinate.Load();
+	m_Stage.Load();
+
+	return TRUE;
+}
+//-------------------------------------------------------------------
+BOOL CSystemData::Save( )
+{
+	m_Safety.Save();
+	m_Option.Save();
+	m_Coordinate.Save();
+	m_Stage.Save();
+
+	return TRUE;
+}
+
+#pragma region //System Option
+BOOL CSystemDataOption::Save( )
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\System"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Option.dat"));
+	file.Open(szFilePath, CFile::modeCreate | CFile::modeWrite);
+	file.Write(&Info, sizeof(Info));
+	file.Close();
+
+	return TRUE;
+}
+BOOL CSystemDataOption::Load()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\System"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Option.dat"));
+	if (file.Open(szFilePath, CFile::modeRead) == FALSE)
+	{
+		file.Open(szFilePath, CFile::modeCreate | CFile::modeWrite);
+		file.Write(&Info, sizeof(Info));
+		return FALSE;
+	}
+
+	file.Read(&Info, sizeof(Info));
+	file.Close();
+
+	//LogMsg_Etc(_T("System Coordinate Load (%s)", szFilePath));
+	return TRUE;
+}
+#pragma endregion
+
+#pragma region
+BOOL CSystemDataCoordinate::Save()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\System"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Coordinate.dat"));
+	file.Open(szFilePath, CFile::modeCreate | CFile::modeWrite);
+	file.Write(&Info, sizeof(Info));
+	file.Close();
+
+	return TRUE;
+}
+//-------------------------------------------------------------------
+BOOL CSystemDataCoordinate::Load()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\System"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Coordinate.dat"));
+	if (file.Open(szFilePath, CFile::modeRead) == FALSE)
+	{
+		file.Open(szFilePath, CFile::modeCreate | CFile::modeWrite);
+		file.Write(&Info, sizeof(Info));
+		return FALSE;
+	}
+
+	file.Read(&Info, sizeof(Info));
+	file.Close();
+
+	//LogMsg_Etc(_T("System Coordinate Load (%s)", szFilePath));
+	return TRUE;
+}
+#pragma endregion
+
+#pragma region //Machine Stage Info
+BOOL CSystemDataStage::Save()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\System"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Stage.dat"));
+	file.Open(szFilePath, CFile::modeCreate | CFile::modeWrite);
+	file.Write(&Info, sizeof(Info));
+	file.Close();
+
+	return TRUE;
+}
+BOOL CSystemDataStage::Load()
+{
+	CString szFilePath;
+	CFile file;
+	szFilePath = SharedInfo::GetExeFilePath();
+	szFilePath.AppendFormat(_T("\\Data"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\System"));
+	::CreateDirectory(szFilePath, NULL);
+	szFilePath.AppendFormat(_T("\\Stage.dat"));
+	if (file.Open(szFilePath, CFile::modeRead) == FALSE)
+	{
+		file.Open(szFilePath, CFile::modeCreate | CFile::modeWrite);
+		file.Write(&Info, sizeof(Info));
+		return FALSE;
+	}
+
+	file.Read(&Info, sizeof(Info));
+	file.Close();
+
+	//LogMsg_Etc(_T("System Coordinate Load (%s)", szFilePath));
+	return TRUE;
+}
+#pragma endregion
