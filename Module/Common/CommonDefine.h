@@ -2,7 +2,7 @@
 #define _COMMON_DEFINE_H_
 
 //#define GRIPPER_8
-#define GRIPPER_0
+//#define GRIPPER_0
 
 
 #define XML_USE					1
