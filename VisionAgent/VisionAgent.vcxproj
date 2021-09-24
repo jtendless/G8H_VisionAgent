@@ -694,6 +694,7 @@
   <ItemGroup>
     <None Include="..\Module\Dll\Ajin\lib\64Bit\AXL.dll" />
     <None Include="..\Module\Dll\Ajin\lib\64Bit\EzBasicAxl.dll" />
+    <None Include="res\test.rc2" />
     <None Include="res\VisionAgent.rc2" />
   </ItemGroup>
   <ItemGroup>

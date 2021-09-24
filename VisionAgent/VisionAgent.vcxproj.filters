@@ -939,6 +939,9 @@
     <None Include="..\Module\Dll\Ajin\lib\64Bit\EzBasicAxl.dll">
       <Filter>01_Module\DLL\Ajin\lib</Filter>
     </None>
+    <None Include="res\test.rc2">
+      <Filter>리소스 파일</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\VisionAgent.ico">

@@ -1,5 +1,5 @@
 ﻿// AlignParaDlg.cpp: 구현 파일
-//
+//test
 
 #include "stdafx.h"
 #include "VisionAgent.h"
